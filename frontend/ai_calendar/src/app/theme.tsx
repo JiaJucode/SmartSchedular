@@ -1,0 +1,29 @@
+"use client";
+
+import { createTheme } from "@mui/material";
+import { ThemeProvider } from "@mui/material/styles";
+
+let theme = createTheme({
+    palette: {
+        primary: {
+            light: "#414344",
+            main: "#292b2d",
+            dark: "#161818",
+            contrastText: "#ededed",
+        },
+        secondary: {
+            light: "#f4eee1",
+            main: "#e4dac2",
+            dark: "#baaf9d",
+            contrastText: "#0a0a0a",
+        },
+    },
+});
+
+export default function ThemeProviderWrapper({ children }: Readonly<{ children: React.ReactNode }>) {
+    return (
+        <ThemeProvider theme={theme}>
+            {children}
+        </ThemeProvider>
+    );
+}
