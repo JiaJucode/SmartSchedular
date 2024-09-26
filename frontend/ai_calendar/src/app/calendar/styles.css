@@ -1,0 +1,21 @@
+.react-calendar {
+    background: #414344;
+    padding: 10px;
+}
+
+.react-calendar__month-view__days__day {
+    background: #414344; 
+    color: #ededed;
+  }
+  
+.react-calendar__tile--active {
+    background: #6b6e70;
+    color: #ededed;
+    height: 30px;
+}
+
+.react-calendar__tile {
+    border: 1px solid #161818;
+    border-radius: 4px;
+    height: 30px;
+}

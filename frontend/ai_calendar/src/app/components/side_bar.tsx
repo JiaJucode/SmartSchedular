@@ -54,7 +54,6 @@ const SideBar: React.FC<SideBarProps> = ({ children, hide, setHide, currentHide,
                         height: '100%',
                         width: '100%',
                         backgroundColor: 'primary.light',
-                        paddingLeft: '10px',
                     }}>
                         <Box sx={{
                             width: '100%',

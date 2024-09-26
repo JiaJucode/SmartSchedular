@@ -27,7 +27,7 @@ export default function ThemeProviderWrapper({ children }: Readonly<{ children: 
             <Box sx={{
                 display: 'flex',
                 flexDirection: 'column',
-                minHeight: '100vh',
+                Height: '100vh',
             }}>
             {children}
             </Box>
