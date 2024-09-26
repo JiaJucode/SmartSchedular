@@ -1,18 +1,17 @@
 "use client";
 
-import { AppBar, Box, IconButton, Toolbar, Typography, Button, Stack, Menu, MenuItem } from "@mui/material"
+import { Box, IconButton, Toolbar, Typography, Button, Stack, Menu, MenuItem } from "@mui/material"
 import React from "react"
 import { useState } from "react";
 import Person4Icon from '@mui/icons-material/Person4';
 
 const menuNavigation: Record<string, string> = {
-    "Chat": "/chat",
     "Calendar": "/calendar",
-    "About": "/about",
+    "Tasks": "/tasks",
+    "Chat": "/chat",
 }
 
 const userSettingNav: Record<string, string> = {
-    "Profile": "/profile",
     "Settings": "/settings",
     "Logout": "/logout",
 }
@@ -24,7 +23,6 @@ const NavBar = () => {
 
     return (
         <Box>
-        <AppBar>
         <Toolbar sx={{ backgroundColor: 'primary.main' }}>
             <Box sx={{
                 height: '100%',
@@ -46,7 +44,9 @@ const NavBar = () => {
                 <Stack spacing={4} direction={'row'} justifyContent={'center'}>
                     {Object.keys(menuNavigation).map((key) => (
                         <div key={key}>
-                            <Button variant="text" color="primary" href={menuNavigation[key]}>
+                            <Button variant="text" color="primary" onClick={() => {
+                                window.location.href = window.location.origin + menuNavigation[key];
+                            }}>
                             <Typography fontSize={20} sx={{ textAlign: 'center', textTransform: 'none' }} 
                                 color="primary.contrastText">
                                 {key}
@@ -97,7 +97,7 @@ const NavBar = () => {
                                     setLoggedIn(false);
                                 }
                                 else {
-                                    window.location.href = userSettingNav[key];
+                                    window.location.href = window.location.origin + userSettingNav[key];
                                 }
                             }}>
                                 {key}
@@ -118,7 +118,6 @@ const NavBar = () => {
             </Box>
             
         </Toolbar>
-        </AppBar>
         </Box>
     );
 };

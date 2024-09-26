@@ -1,7 +1,8 @@
 "use client";
 
-import { createTheme } from "@mui/material";
+import { Box, createTheme } from "@mui/material";
 import { ThemeProvider } from "@mui/material/styles";
+import { light } from "@mui/material/styles/createPalette";
 
 let theme = createTheme({
     palette: {
@@ -23,7 +24,13 @@ let theme = createTheme({
 export default function ThemeProviderWrapper({ children }: Readonly<{ children: React.ReactNode }>) {
     return (
         <ThemeProvider theme={theme}>
+            <Box sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                minHeight: '100vh',
+            }}>
             {children}
+            </Box>
         </ThemeProvider>
     );
 }

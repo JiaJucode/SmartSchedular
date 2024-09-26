@@ -3,6 +3,7 @@ import localFont from "next/font/local";
 import "./globals.css";
 import NavBar from "./components/nav_bar";
 import ThemeProviderWrapper from "./theme";
+import { Box } from "@mui/system";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -30,7 +31,15 @@ export default function RootLayout({
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <ThemeProviderWrapper>
           <NavBar />
-          {children}
+          <Box
+            sx={{
+              flex: 1,
+              overflow: "auto",
+              display: "flex",
+              flexDirection: "row",
+            }}>
+            {children}
+          </Box>
         </ThemeProviderWrapper>
       </body>
     </html>
