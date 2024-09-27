@@ -90,6 +90,8 @@ const CalendarPage = () => {
             <Box sx={{ 
                 width: delayedHide ? '100vw' : 'calc(100vw - 330px)',
                 position: 'relative',
+                overflowY: 'auto',
+                height: '93vh',
                 }}>
                 <Toolbar sx={{ flexDirection: 'row', justifyContent: 'space-between', 
                     color: 'primary.contrastText', position: 'sticky', zIndex: 1, 

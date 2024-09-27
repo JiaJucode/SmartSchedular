@@ -2,7 +2,6 @@
 
 import { Box, createTheme } from "@mui/material";
 import { ThemeProvider } from "@mui/material/styles";
-import { light } from "@mui/material/styles/createPalette";
 
 let theme = createTheme({
     palette: {
