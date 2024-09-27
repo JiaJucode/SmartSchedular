@@ -94,7 +94,7 @@ const CalendarPage = () => {
                 height: '93vh',
                 }}>
                 <Toolbar sx={{ flexDirection: 'row', justifyContent: 'space-between', 
-                    color: 'primary.contrastText', position: 'sticky', zIndex: 1, 
+                    color: 'primary.contrastText', position: 'sticky', zIndex: 10, 
                     top: 0, backgroundColor: 'primary.dark' }}>
                     <Typography variant="h5" paddingLeft={2.6}>
                         {selectedDate.toDateString()}
