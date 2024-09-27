@@ -20,25 +20,60 @@ interface Event {
 const exampleEvents: Event[] = [
     {
         title: "Event 1",
-        startDateTime: new Date(2022, 2, 1, 9),
-        endDateTime: new Date(2022, 2, 1, 10),
+        startDateTime: new Date(2024, 9, 27, 9),
+        endDateTime: new Date(2024, 9, 27, 10),
         Tags: ["Google Drive"],
-        description: "Event 1 description",
+        description: "This is a test event",
     },
     {
         title: "Event 2",
-        startDateTime: new Date(2022, 2, 1, 14),
-        endDateTime: new Date(2022, 2, 1, 15),
+        startDateTime: new Date(2024, 9, 27, 12),
+        endDateTime: new Date(2024, 9, 27, 13),
         Tags: ["Google Drive"],
-        description: "Event 2 description",
+        description: "This is a test event",
     },
     {
         title: "Event 3",
-        startDateTime: new Date(2022, 2, 1, 17),
-        endDateTime: new Date(2022, 2, 1, 18),
+        startDateTime: new Date(2024, 9, 27, 15),
+        endDateTime: new Date(2024, 9, 27, 16),
         Tags: ["Google Drive"],
-        description: "Event 3 description",
+        description: "This is a test event",
     },
+    {
+        title: "Event 4",
+        startDateTime: new Date(2024, 9, 27, 18),
+        endDateTime: new Date(2024, 9, 27, 19),
+        Tags: ["Google Drive"],
+        description: "This is a test event",
+    },
+    {
+        title: "Event 5",
+        startDateTime: new Date(2024, 9, 27, 21),
+        endDateTime: new Date(2024, 9, 27, 22),
+        Tags: ["Google Drive"],
+        description: "This is a test event",
+    },
+    {
+        title: "Event 6",
+        startDateTime: new Date(2024, 9, 27, 23),
+        endDateTime: new Date(2024, 9, 28, 0),
+        Tags: ["Google Drive"],
+        description: "This is a test event",
+    },
+    {
+        title: "Event 7",
+        startDateTime: new Date(2024, 9, 28, 1),
+        endDateTime: new Date(2024, 9, 28, 2),
+        Tags: ["Google Drive"],
+        description: "This is a test event",
+    },
+    {
+        title: "Event 8",
+        startDateTime: new Date(2024, 9, 28, 4),
+        endDateTime: new Date(2024, 9, 28, 5),
+        Tags: ["Google Drive"],
+        description: "This is a test event",
+    }
 ];
 
 const DayComponent: React.FC<DayProps> = ({date, setDate}) => {
@@ -46,6 +81,8 @@ const DayComponent: React.FC<DayProps> = ({date, setDate}) => {
     const [isCreatingEvent, setIsCreatingEvent] = useState(false);
     const [eventStartTime, setEventStartTime] = useState(new Date());
     const [eventCreationAnchor, setEventCreationAnchor] = useState<null | HTMLElement>(null);
+
+    // TODO: Implement event fetching from backend
     
     const addToEvents = (title: string, startDateTime: Date, 
         endDateTime: Date, description: string) => {
@@ -68,13 +105,40 @@ const DayComponent: React.FC<DayProps> = ({date, setDate}) => {
 		<Stack 
         sx={{
             flexDirection: 'column',
-            alignItems: 'flex-end',
             height: '100%',
             overflowY: 'auto',
             width: '100%',
             marginTop: '10px',
             position: 'relative',
         }}>
+            {/* TODO: Implement smarter event placement */}
+            <Box sx={{
+                display: 'flex',
+                alignItems: 'flex-start',
+            }}>
+                {events.map((event, index) => (
+                    <Button
+                    key={index}
+                    sx={{
+                        marginTop: `${event.startDateTime.getHours() * 70 + 35}px`,
+                        marginLeft: '100px',
+                        width: '88%',
+                        height: `${(event.endDateTime.getHours() - event.startDateTime.getHours()) * 70}px`,
+                        backgroundColor: 'primary.main',
+                        zIndex: 1,
+                        position: 'absolute',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        borderRadius: '10px',
+                    }}>
+                        <Typography sx={{ color: 'primary.contrastText', zIndex: 3}}>
+                            {event.title}
+                        </Typography>
+                    </Button>
+                ))}
+            </Box>
+
+
 			{Array.from({length: timeBlockCount}, (_, i) => (
                 <Box key={i}
                 sx={{ 
@@ -100,7 +164,7 @@ const DayComponent: React.FC<DayProps> = ({date, setDate}) => {
                             width: '88%',
                             marginTop: '35px',
                             position: 'absolute',
-                            zIndex: 1,
+                            zIndex: 2,
                         }} />
 
                         <Button variant='text'
