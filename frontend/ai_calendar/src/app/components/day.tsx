@@ -1,4 +1,4 @@
-import React, { createRef, useEffect, useState } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import { Box, Button, Stack, Divider, Typography, Menu } from '@mui/material';
 import CreateEvent from "./create_event";
 
@@ -76,13 +76,45 @@ const exampleEvents: Event[] = [
     }
 ];
 
+const server_base_url = process.env.SERVER_BASE_URL;
+
 const DayComponent: React.FC<DayProps> = ({date, setDate}) => {
     const [events, setEvents] = useState<Event[]>(exampleEvents);
     const [isCreatingEvent, setIsCreatingEvent] = useState(false);
     const [eventStartTime, setEventStartTime] = useState(new Date());
     const [eventCreationAnchor, setEventCreationAnchor] = useState<null | HTMLElement>(null);
+    const [widthOffset, setWidthOffset] = useState(0);
+    const widthOffsetRef = useRef<HTMLHRElement>(null);
+    const componentRef = useRef<HTMLDivElement>(null);
+
+    const calculateWidthOffset = () => {
+        if (widthOffsetRef.current && componentRef.current) {
+            const rect = widthOffsetRef.current.getBoundingClientRect();
+            const componentRect = componentRef.current.getBoundingClientRect();
+            setWidthOffset(rect.left - componentRect.left);
+        }
+    };
+
+    useEffect(() => {
+        
+        calculateWidthOffset();
+        window.addEventListener('resize', calculateWidthOffset);
+        return () => {
+            window.removeEventListener('resize', calculateWidthOffset);
+        };
+    }, []);
 
     // TODO: Implement event fetching from backend
+    useEffect(() => {
+        fetch(`${server_base_url}/calendar/get_events?
+            start_datetime=${date.toISOString()}
+            &end_datetime=${date.toISOString()}`)
+            .then(response => response.json())
+            .then(data => {
+                console.log(data);
+                setEvents(data);
+            });
+    }, []);
     
     const addToEvents = (title: string, startDateTime: Date, 
         endDateTime: Date, description: string) => {
@@ -103,6 +135,7 @@ const DayComponent: React.FC<DayProps> = ({date, setDate}) => {
     }
 	return (
 		<Stack 
+        ref={componentRef}
         sx={{
             flexDirection: 'column',
             height: '100%',
@@ -121,7 +154,7 @@ const DayComponent: React.FC<DayProps> = ({date, setDate}) => {
                     key={index}
                     sx={{
                         marginTop: `${event.startDateTime.getHours() * 70 + 35}px`,
-                        marginLeft: '100px',
+                        marginLeft: `${widthOffset - 5}px`,
                         width: '88%',
                         height: `${(event.endDateTime.getHours() - event.startDateTime.getHours()) * 70}px`,
                         backgroundColor: 'primary.main',
@@ -146,8 +179,8 @@ const DayComponent: React.FC<DayProps> = ({date, setDate}) => {
                     flexDirection: 'row', 
                     display: 'flex', 
                     alignItems: 'center', 
-                    justifyContent:'space-between' }}>
-                    <Typography sx={{ paddingLeft: '4%'}}>
+                    justifyContent:'center' }}>
+                    <Typography sx={{ paddingRight: "10px"}}>
                         {i}:00
                     </Typography>
                     <Box 
@@ -158,6 +191,7 @@ const DayComponent: React.FC<DayProps> = ({date, setDate}) => {
 
                     }}>
                         <Divider key={i} 
+                        ref={widthOffsetRef}
                         sx={{ 
                             backgroundColor: 'primary.contrastText', 
                             height: '1px',
