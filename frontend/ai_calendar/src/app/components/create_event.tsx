@@ -69,7 +69,7 @@ const CreateEvent = ({eventStartTime, setEventStartTime,
                 }}
                 />
                 <DateTimePicker label="End Date and Time" value={dayjs(eventEndTime)}
-                onChange={(newValue) => newValue ? setEventStartTime(newValue.toDate()) : null}
+                onChange={(newValue) => newValue ? setEventEndTime(newValue.toDate()) : null}
                 disableOpenPicker
                 sx={{
                     marginTop: '10px',

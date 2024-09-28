@@ -19,69 +19,10 @@ interface Event {
     description: string;
 }
 
-const exampleEvents: Event[] = [
-    {
-        title: "Event 1",
-        startDateTime: new Date(2024, 9, 27, 9),
-        endDateTime: new Date(2024, 9, 27, 10),
-        Tags: ["Google Drive"],
-        description: "This is a test event",
-    },
-    {
-        title: "Event 2",
-        startDateTime: new Date(2024, 9, 27, 12),
-        endDateTime: new Date(2024, 9, 27, 13),
-        Tags: ["Google Drive"],
-        description: "This is a test event",
-    },
-    {
-        title: "Event 3",
-        startDateTime: new Date(2024, 9, 27, 15),
-        endDateTime: new Date(2024, 9, 27, 16),
-        Tags: ["Google Drive"],
-        description: "This is a test event",
-    },
-    {
-        title: "Event 4",
-        startDateTime: new Date(2024, 9, 27, 18),
-        endDateTime: new Date(2024, 9, 27, 19),
-        Tags: ["Google Drive"],
-        description: "This is a test event",
-    },
-    {
-        title: "Event 5",
-        startDateTime: new Date(2024, 9, 27, 21),
-        endDateTime: new Date(2024, 9, 27, 22),
-        Tags: ["Google Drive"],
-        description: "This is a test event",
-    },
-    {
-        title: "Event 6",
-        startDateTime: new Date(2024, 9, 27, 23),
-        endDateTime: new Date(2024, 9, 28, 0),
-        Tags: ["Google Drive"],
-        description: "This is a test event",
-    },
-    {
-        title: "Event 7",
-        startDateTime: new Date(2024, 9, 28, 1),
-        endDateTime: new Date(2024, 9, 28, 2),
-        Tags: ["Google Drive"],
-        description: "This is a test event",
-    },
-    {
-        title: "Event 8",
-        startDateTime: new Date(2024, 9, 28, 4),
-        endDateTime: new Date(2024, 9, 28, 5),
-        Tags: ["Google Drive"],
-        description: "This is a test event",
-    }
-];
-
 const server_base_url = process.env.NEXT_PUBLIC_SERVER_BASE_URL;
 
 const DayComponent: React.FC<DayProps> = ({date, setDate}) => {
-    const [events, setEvents] = useState<Event[]>(exampleEvents);
+    const [events, setEvents] = useState<Event[]>([]);
     const [isCreatingEvent, setIsCreatingEvent] = useState(false);
     const [eventStartTime, setEventStartTime] = useState(new Date());
     const [eventCreationAnchor, setEventCreationAnchor] = useState<null | HTMLElement>(null);
@@ -154,16 +95,18 @@ const DayComponent: React.FC<DayProps> = ({date, setDate}) => {
                     <Button
                     key={index}
                     sx={{
-                        marginTop: `${event.startDateTime.getHours() * 70 + 35}px`,
+                        marginTop: `${event.startDateTime.getHours() * 70 + 
+                            event.startDateTime.getMinutes() * 1.2 + 35}px`,
                         marginLeft: `${widthOffset - 5}px`,
                         width: '88%',
-                        height: `${(event.endDateTime.getHours() - event.startDateTime.getHours()) * 70}px`,
+                        height: `${(event.endDateTime.getTime() - event.startDateTime.getTime()) / 60000 * 1.2}px`,
                         backgroundColor: 'primary.main',
-                        zIndex: 1,
+                        zIndex: 3,
                         position: 'absolute',
                         alignItems: 'center',
                         justifyContent: 'center',
                         borderRadius: '10px',
+                        opacity: 0.9,
                     }}>
                         <Typography sx={{ color: 'primary.contrastText', zIndex: 3}}>
                             {event.title}
