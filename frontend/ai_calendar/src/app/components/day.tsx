@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useRef, useEffect, useState } from "react";
 import { Box, Button, Stack, Divider, Typography, Menu } from '@mui/material';
 import CreateEvent from "./create_event";
@@ -76,7 +78,7 @@ const exampleEvents: Event[] = [
     }
 ];
 
-const server_base_url = process.env.SERVER_BASE_URL;
+const server_base_url = process.env.NEXT_PUBLIC_SERVER_BASE_URL;
 
 const DayComponent: React.FC<DayProps> = ({date, setDate}) => {
     const [events, setEvents] = useState<Event[]>(exampleEvents);
@@ -106,13 +108,12 @@ const DayComponent: React.FC<DayProps> = ({date, setDate}) => {
 
     // TODO: Implement event fetching from backend
     useEffect(() => {
-        fetch(`${server_base_url}/calendar/get_events?
-            start_datetime=${date.toISOString()}
-            &end_datetime=${date.toISOString()}`)
+        fetch(`${server_base_url}/calendar/get_events?` +
+            `start_datetime=${date.toISOString()}` +
+            `&end_datetime=${date.toISOString()}`)
             .then(response => response.json())
             .then(data => {
-                console.log(data);
-                setEvents(data);
+                setEvents(data.events);
             });
     }, []);
     

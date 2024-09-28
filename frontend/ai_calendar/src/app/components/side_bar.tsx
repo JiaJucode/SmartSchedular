@@ -1,8 +1,7 @@
 "use client";
 
-import React, { useEffect } from 'react';
-import { Box, Button, IconButton } from '@mui/material';
-import { useState } from 'react';
+import React from 'react';
+import { Box, Button } from '@mui/material';
 import KeyboardDoubleArrowRightIcon from '@mui/icons-material/KeyboardDoubleArrowRight';
 import KeyboardDoubleArrowLeftIcon from '@mui/icons-material/KeyboardDoubleArrowLeft';
 

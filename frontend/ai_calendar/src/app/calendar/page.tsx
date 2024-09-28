@@ -26,10 +26,6 @@ const CalendarPage = () => {
         setPossibleEventTags([true]);
     }, []);
 
-    useEffect(() => {
-        console.log(selectedDate);
-    }, [selectedDate]);
-
     const handleFilterEventTag = (index: number) => {
         let newEventTags = [...eventTags];
         newEventTags[index] = !newEventTags[index];

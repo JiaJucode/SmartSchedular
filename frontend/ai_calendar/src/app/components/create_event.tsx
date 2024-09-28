@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import { useState } from "react";
 import { Stack, Box, TextField, Typography, Button } from "@mui/material";
@@ -17,7 +19,7 @@ interface CreateEventProps {
 const CreateEvent = ({eventStartTime, setEventStartTime, 
     addToEvents, closeCreateEvent}: CreateEventProps) => {
     const [eventTitle, setEventTitle] = useState<string>("Event name");
-    const [eventDescription, setEventDescription] = useState<string>("Event description");
+    const [eventDescription, setEventDescription] = useState<string>("");
     const [eventEndTime, setEventEndTime] = 
         useState<Date>(new Date(eventStartTime.getTime() + 60 * 60 * 1000));
     const [eventTags, setEventTags] = useState<string[]>([]);
@@ -106,6 +108,7 @@ const CreateEvent = ({eventStartTime, setEventStartTime,
                 })}
             </Box>
             <TextField id="description" label="Event Description" variant="standard"
+            value={eventDescription} onChange={(e) => setEventDescription(e.target.value)}
             sx={{
                 width: '100%',
                 input: {
