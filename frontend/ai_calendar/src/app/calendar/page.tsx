@@ -51,7 +51,7 @@ const CalendarPage = () => {
     }
 
     const handleDateChange = (
-        value: Value, 
+        value: Values, 
         event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
         setSelectedDate(value as Date);
     }
@@ -60,7 +60,7 @@ const CalendarPage = () => {
         <Box sx={{ width: '100vw', display: 'flex', flexDirection: 'row', justifyContent: 'space-between', overflow: "visible"}}>
             <SideBar hide={hideSideBar} setHide={setHideSideBar} currentHide={delayedHide} setCurrentHide={setDelayedHide}>
                 <Stack>
-                    <Calendar onChange={handleDateChange} value={selectedDate} selectRange={false} />
+                    <Calendar locale='en-GB' onChange={handleDateChange} value={selectedDate} selectRange={false} />
 
                     <Divider sx={{ 
                         backgroundColor: 'primary.contrastText', width: '94%', marginLeft: '3%',
