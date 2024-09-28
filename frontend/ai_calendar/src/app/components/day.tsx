@@ -47,7 +47,6 @@ const DayComponent: React.FC<DayProps> = ({date, setDate}) => {
         };
     }, []);
 
-    // TODO: Implement event fetching from backend
     useEffect(() => {
         fetch(`${server_base_url}/calendar/get_events?` +
             `start_datetime=${date.toISOString()}` +
@@ -67,6 +66,18 @@ const DayComponent: React.FC<DayProps> = ({date, setDate}) => {
             Tags: ["Google Drive"],
             description: description,
         }]);
+        fetch(`${server_base_url}/calendar/add_event`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                title: title,
+                start_datetime: startDateTime.toISOString(),
+                end_datetime: endDateTime.toISOString(),
+                description: description,
+            })
+        });
     }
 
     const handleTimeBlockClick = (time: number, event: React.MouseEvent<HTMLButtonElement>) => {
