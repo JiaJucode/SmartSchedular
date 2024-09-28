@@ -1,0 +1,18 @@
+services:
+  backend:
+    build: .
+    ports:
+      - "5148:5148"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/calendar_events
+    depends_on:
+      - db
+
+  db:
+    image: postgres
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=calendar_events
+    ports:
+      - "5432:5432"

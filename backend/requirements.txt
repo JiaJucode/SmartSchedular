@@ -1,3 +1,4 @@
 Flask
 flask-cors
 llama-index-embeddings-nvidia
+psycopg2
