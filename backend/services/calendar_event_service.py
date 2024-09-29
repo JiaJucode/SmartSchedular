@@ -20,7 +20,7 @@ def _split_event(event: Dict) -> List[Dict]:
         split_events.append(event_copy)
     return split_events
 
-def get_calendar_events(start_datetime: str, end_datetime: str) -> List[Dict]:
+def get_calendar_events(start_datetime_str: str, end_datetime_str: str) -> List[Dict]:
     """
     return:
         [{
@@ -33,8 +33,12 @@ def get_calendar_events(start_datetime: str, end_datetime: str) -> List[Dict]:
         },
         ...]
     """
+    if start_datetime_str > end_datetime_str:
+        raise ValueError("start_datetime must be before end_datetime")
     # query database for events between start_datetime and end_datetime
-    events = db.get_events(start_datetime, end_datetime)
+    events = db.get_events(start_datetime_str, end_datetime_str)
+    start_datetime = datetime.fromisoformat(start_datetime_str).replace(tzinfo=None)
+    end_datetime = datetime.fromisoformat(end_datetime_str).replace(tzinfo=None)
 
     # trim the events to the requested time range 
     # and split events that span multiple days
@@ -51,10 +55,10 @@ def get_calendar_events(start_datetime: str, end_datetime: str) -> List[Dict]:
     return trimmed_events
 
 
-def add_calendar_event(name: str, tags: List[str], str_start_datetime: str,
+def add_calendar_event(title: str, tags: List[str], str_start_datetime: str,
                        str_end_datetime: str, description: str):
-    if str_start_datetime > str_end_datetime:
-        raise ValueError("start_datetime must be before end_datetime")
     start_datetime = datetime.fromisoformat(str_start_datetime)
     end_datetime = datetime.fromisoformat(str_end_datetime)
-    db.add_event(name, tags, start_datetime, end_datetime, description)
+    if start_datetime > end_datetime:
+        raise ValueError("start_datetime must be before end_datetime")
+    return db.add_event(title, tags, start_datetime, end_datetime, description)

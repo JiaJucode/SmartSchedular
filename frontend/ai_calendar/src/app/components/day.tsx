@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useEffect, useState } from "react";
+import React, { useRef, useEffect, useState, useCallback } from "react";
 import { Box, Button, Stack, Divider, Typography, Menu } from '@mui/material';
 import CreateEvent from "./create_event";
 
@@ -14,7 +14,7 @@ const timeBlockCount = 25;
 interface Event {
     title: string;
     startDateTime: Date;
-    Tags: string[];
+    tags: string[];
     endDateTime: Date;
     description: string;
 }
@@ -49,11 +49,23 @@ const DayComponent: React.FC<DayProps> = ({date, setDate}) => {
 
     useEffect(() => {
         fetch(`${server_base_url}/calendar/get_events?` +
-            `start_datetime=${date.toISOString()}` +
-            `&end_datetime=${date.toISOString()}`)
+            `start_datetime=${new Date(date.getFullYear(), date.getMonth(),
+                date.getDate(), 0, 0, 0).toISOString()}` +
+            `&end_datetime=${new Date(date.getFullYear(), date.getMonth(),
+                date.getDate(), 23, 59, 59).toISOString()}`)
             .then(response => response.json())
-            .then(data => {
-                setEvents(data.events);
+            .then((data: {events: {title: string, start_datetime: string, 
+                end_datetime: string, description: string}[]}) => {
+                setEvents(data.events.map((event) => {
+                    console.log(event);
+                    return {
+                        title: event.title,
+                        startDateTime: new Date(event.start_datetime),
+                        endDateTime: new Date(event.end_datetime),
+                        tags: ["Google Drive"],
+                        description: event.description,
+                    };
+                }));
             });
     }, []);
     
@@ -63,9 +75,10 @@ const DayComponent: React.FC<DayProps> = ({date, setDate}) => {
             title: title,
             startDateTime: startDateTime,
             endDateTime: endDateTime,
-            Tags: ["Google Drive"],
+            tags: ["Google Drive"],
             description: description,
         }]);
+        console.log("posting event: ", title, startDateTime, endDateTime, description);
         fetch(`${server_base_url}/calendar/add_event`, {
             method: 'POST',
             headers: {
@@ -174,9 +187,9 @@ const DayComponent: React.FC<DayProps> = ({date, setDate}) => {
                                 }}>
                                 <CreateEvent 
                                     eventStartTime={eventStartTime} 
-                                    setEventStartTime={setEventStartTime} 
                                     addToEvents={addToEvents}
-                                    closeCreateEvent={() => setIsCreatingEvent(false)}
+                                    closeCreateEvent={useCallback(() => 
+                                        setIsCreatingEvent(false), [])}
                                 />
                             </Box>
                         </Menu>

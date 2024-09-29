@@ -6,7 +6,7 @@ from typing import List, Optional, Dict
 
 DATABASE_URL = os.getenv('DATABASE_URL')
 
-calendar_events_columns = ['id', 'name', 'tags', 'start_datetime', 'end_datetime', 'description']
+calendar_events_columns = ['id', 'title', 'tags', 'start_datetime', 'end_datetime', 'description']
 
 class CalendarEventDB:
     def __init__(self):
@@ -19,7 +19,7 @@ class CalendarEventDB:
             """
             CREATE TABLE IF NOT EXISTS calendar_events (
                 id SERIAL PRIMARY KEY,
-                name TEXT NOT NULL,
+                title TEXT NOT NULL,
                 tags TEXT[],
                 start_datetime TIMESTAMP NOT NULL,
                 end_datetime TIMESTAMP NOT NULL,
@@ -44,16 +44,19 @@ class CalendarEventDB:
         self.cursor.execute(query)
         return [dict(zip(calendar_events_columns, row)) for row in self.cursor.fetchall()]
     
-    def add_event(self, name: str, tags: List[str], start_datetime: datetime, 
-                  end_datetime: datetime, description: str) -> None:
+    def add_event(self, title: str, tags: List[str], start_datetime: datetime, 
+                  end_datetime: datetime, description: str) -> int:
         self.cursor.execute(
             """
-            INSERT INTO calendar_events (name, tags, start_datetime, end_datetime, description)
+            INSERT INTO calendar_events (title, tags, start_datetime, end_datetime, description)
             VALUES (%s, %s, %s, %s, %s)
+            RETURNING id
             """,
-            (name, tags, start_datetime, end_datetime, description)
+            (title, ",".join(tags) if tags else None, start_datetime, end_datetime, description)
         )
+        event_id = self.cursor.fetchone()[0]
         self.conn.commit()
+        return event_id
 
     def delete_event(self, event_id: int) -> None:
         self.cursor.execute(
@@ -65,13 +68,13 @@ class CalendarEventDB:
         )
         self.conn.commit()
 
-    def update_event(self, event_id: int, name: Optional[str] = None,
+    def update_event(self, event_id: int, title: Optional[str] = None,
                      tags: Optional[List[str]] = None, start_datetime: Optional[datetime] = None,
                      end_datetime: Optional[datetime] = None, 
                      description: Optional[str] = None) -> None:
         set_clause = []
-        if name is not None:
-            set_clause.append(f"name = {name}")
+        if title is not None:
+            set_clause.append(f"title = {title}")
         if tags is not None:
             set_clause.append(f"tags = {tags}")
         if start_datetime is not None:
