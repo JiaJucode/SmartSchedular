@@ -80,5 +80,16 @@ def edit_event():
                         str_end_datetime, description)
     return jsonify({})
 
+@bp.route("/delete_event", methods=["POST"])
+def delete_event():
+    """
+    params:
+        "id": int
 
+    Returns:
+        None
+    """
+    id = request.json.get("id")
+    delete_calendar_event(id)
+    return jsonify({})
 

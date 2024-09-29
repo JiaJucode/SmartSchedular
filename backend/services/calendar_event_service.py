@@ -68,3 +68,6 @@ def edit_calendar_event(id: int, title: str, tags: List[str], str_start_datetime
     start_datetime = datetime.fromisoformat(str_start_datetime)
     end_datetime = datetime.fromisoformat(str_end_datetime)
     return db.update_event(id, title, tags, start_datetime, end_datetime, description)
+
+def delete_calendar_event(id: int):
+    db.delete_event(id)

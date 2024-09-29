@@ -139,6 +139,19 @@ const DayComponent: React.FC<DayProps> = ({date, setDate}) => {
         }
     }
 
+    const deleteEvent = (id: number) => {
+        setEvents(events.filter((event) => event.id !== id));
+        fetch(`${server_base_url}/calendar/delete_event`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                id: id,
+            })
+        });
+    }
+
     const constructNewEvent = (startDateTime: Date) => {
         return {
             id: -1,
@@ -253,6 +266,7 @@ const DayComponent: React.FC<DayProps> = ({date, setDate}) => {
                                 <EditEvent 
                                     eventInfo={selectedEvent}
                                     updateEvent={updateEvents}
+                                    deleteEvent={deleteEvent}
                                     closeCreateEvent={useCallback(() => 
                                         setIsEditingEvent(false), [])}
                                 />

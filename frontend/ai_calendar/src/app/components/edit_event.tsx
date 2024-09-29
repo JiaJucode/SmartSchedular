@@ -21,11 +21,11 @@ interface CreateEventProps {
     eventInfo: Event;
     updateEvent: (title: string, startDateTime: Date, 
         endDateTime: Date, description: string, id: number) => void;
-    // deleteEvent: (id: number) => void;
+    deleteEvent: (id: number) => void;
     closeCreateEvent: () => void;
 }
 
-const EditEvent = ({eventInfo, updateEvent, closeCreateEvent}: CreateEventProps) => {
+const EditEvent = ({eventInfo, updateEvent, deleteEvent, closeCreateEvent}: CreateEventProps) => {
     const [eventTitle, setEventTitle] = useState<string>(eventInfo.title);
     const [eventDescription, setEventDescription] = useState<string>(eventInfo.description);
     const [startTime, setStartTime] = useState<Date>(eventInfo.startDateTime);
@@ -130,7 +130,10 @@ const EditEvent = ({eventInfo, updateEvent, closeCreateEvent}: CreateEventProps)
             <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
                 {eventInfo.id !== -1 ?
                     <Button 
-                    // onClick={() => }
+                    onClick={() => {
+                        deleteEvent(eventInfo.id)
+                        closeCreateEvent()
+                    }}
                     variant="contained" color="primary"
                     sx={{ width: '30%', marginRight: '10px'}}>
                         Delete
