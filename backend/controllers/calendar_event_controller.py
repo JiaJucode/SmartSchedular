@@ -89,7 +89,7 @@ def delete_event():
     Returns:
         None
     """
-    id = request.json.get("id")
+    id = int(request.json.get("id"))
     delete_calendar_event(id)
     return jsonify({})
 
