@@ -72,27 +72,27 @@ class CalendarEventDB:
                      tags: Optional[List[str]] = None, start_datetime: Optional[datetime] = None,
                      end_datetime: Optional[datetime] = None, 
                      description: Optional[str] = None) -> None:
-        set_clause = []
-        if title is not None:
-            set_clause.append(f"title = {title}")
-        if tags is not None:
-            set_clause.append(f"tags = {tags}")
-        if start_datetime is not None:
-            set_clause.append(f"start_datetime = {start_datetime}")
-        if end_datetime is not None:
-            set_clause.append(f"end_datetime = {end_datetime}")
-        if description is not None:
-            set_clause.append(f"description = {description}")
+
+        set_clause = {}
+        input = [event_id, title, tags, start_datetime, end_datetime, description]
+        for i in range(1, len(calendar_events_columns)):
+            if input[i]:
+                set_clause[calendar_events_columns[i]] = input[i]
 
         query = sql.SQL(
             """
             UPDATE calendar_events
-            SET {}
-            WHERE id = {}
+            SET {set_clause}
+            WHERE id = {event_id}
             """
         ).format(
-            sql.SQL(', ').join(map(sql.Identifier, set_clause)),
-            sql.Literal(event_id)
+            set_clause=sql.SQL(', ').join(
+                sql.SQL("{column} = {value}").format(
+                    column=sql.Identifier(column),
+                    value=sql.Literal(set_clause[column])
+                ) for column in set_clause
+            ),
+            event_id=sql.Literal(event_id)
         )
         self.cursor.execute(query)
         self.conn.commit()

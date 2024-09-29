@@ -8,24 +8,33 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import dayjs from 'dayjs';
 
+interface Event {
+    id: number;
+    title: string;
+    startDateTime: Date;
+    tags: string[];
+    endDateTime: Date;
+    description: string;
+}
+
 interface CreateEventProps {
-    eventStartTime: Date;
-    addToEvents: (title: string, startDateTime: Date, 
-        endDateTime: Date, description: string) => void;
+    eventInfo: Event;
+    updateEvent: (title: string, startDateTime: Date, 
+        endDateTime: Date, description: string, id: number) => void;
+    // deleteEvent: (id: number) => void;
     closeCreateEvent: () => void;
 }
 
-const CreateEvent = ({eventStartTime, 
-    addToEvents, closeCreateEvent}: CreateEventProps) => {
-    const [eventTitle, setEventTitle] = useState<string>("Event name");
-    const [eventDescription, setEventDescription] = useState<string>("");
-    const [startTime, setStartTime] = useState<Date>(eventStartTime);
-    const [endTime, setEndTime] = 
-        useState<Date>(new Date(eventStartTime.getTime() + 60 * 60 * 1000));
-    const [eventTags, setEventTags] = useState<string[]>([]);
+const EditEvent = ({eventInfo, updateEvent, closeCreateEvent}: CreateEventProps) => {
+    const [eventTitle, setEventTitle] = useState<string>(eventInfo.title);
+    const [eventDescription, setEventDescription] = useState<string>(eventInfo.description);
+    const [startTime, setStartTime] = useState<Date>(eventInfo.startDateTime);
+    const [endTime, setEndTime] = useState<Date>(eventInfo.endDateTime);
+    // new Date(eventStartTime.getTime() + 60 * 60 * 1000)
+    const [eventTags, setEventTags] = useState<string[]>(eventInfo.tags);
 
     const handleCreateEvent = () => {
-        addToEvents(eventTitle, eventStartTime, endTime, eventDescription);
+        updateEvent(eventTitle, startTime, endTime, eventDescription, eventInfo.id);
         closeCreateEvent();
     }
 
@@ -45,7 +54,7 @@ const CreateEvent = ({eventStartTime,
             }}/>
             <Box width={'100%'}>
             <LocalizationProvider dateAdapter={AdapterDayjs}>
-                <DateTimePicker label="Start Date and Time" value={dayjs(eventStartTime)}
+                <DateTimePicker label="Start Date and Time" value={dayjs(startTime)}
                 onChange={(newValue) => newValue ? setStartTime(newValue.toDate()) : null}
                 disableOpenPicker
                 sx={{
@@ -119,15 +128,23 @@ const CreateEvent = ({eventStartTime,
                 },
             }}/>
             <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <Button 
-            onClick={() => handleCreateEvent()}
-            variant="contained" color="primary"
-            sx={{ width: '30%', marginRight: '10px'}}>
-                Create Event
-            </Button>
+                {eventInfo.id !== -1 ?
+                    <Button 
+                    // onClick={() => }
+                    variant="contained" color="primary"
+                    sx={{ width: '30%', marginRight: '10px'}}>
+                        Delete
+                    </Button>
+                : null}
+                <Button 
+                onClick={() => handleCreateEvent()}
+                variant="contained" color="primary"
+                sx={{ width: '30%', marginRight: '10px'}}>
+                    Save
+                </Button>
             </Box>
         </Stack>
     );
 };
 
-export default CreateEvent;
+export default EditEvent;

@@ -58,5 +58,27 @@ def add_event():
                             str_end_datetime, description)
     return jsonify({"id": id})
 
+@bp.route("/edit_event", methods=["POST"])
+def edit_event():
+    """
+    params:
+        "id": int,
+        "title": str,
+        "start_datetime": ISO datetime string,
+        "end_datetime": ISO datetime string,
+        "description": str
+
+    Returns:
+        None
+    """
+    id = request.json.get("id")
+    title = request.json.get("title")
+    str_start_datetime = request.json.get("start_datetime")
+    str_end_datetime = request.json.get("end_datetime")
+    description = request.json.get("description")
+    edit_calendar_event(id, title, [], str_start_datetime, 
+                        str_end_datetime, description)
+    return jsonify({})
+
 
 

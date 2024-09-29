@@ -62,3 +62,9 @@ def add_calendar_event(title: str, tags: List[str], str_start_datetime: str,
     if start_datetime > end_datetime:
         raise ValueError("start_datetime must be before end_datetime")
     return db.add_event(title, tags, start_datetime, end_datetime, description)
+
+def edit_calendar_event(id: int, title: str, tags: List[str], str_start_datetime: str,
+                        str_end_datetime: str, description: str):
+    start_datetime = datetime.fromisoformat(str_start_datetime)
+    end_datetime = datetime.fromisoformat(str_end_datetime)
+    return db.update_event(id, title, tags, start_datetime, end_datetime, description)

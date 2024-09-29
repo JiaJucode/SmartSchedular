@@ -2,7 +2,7 @@
 
 import React, { useRef, useEffect, useState, useCallback } from "react";
 import { Box, Button, Stack, Divider, Typography, Menu } from '@mui/material';
-import CreateEvent from "./create_event";
+import EditEvent from "./edit_event";
 
 interface DayProps {
     date: Date;
@@ -12,6 +12,7 @@ interface DayProps {
 const timeBlockCount = 25;
 
 interface Event {
+    id: number;
     title: string;
     startDateTime: Date;
     tags: string[];
@@ -23,9 +24,16 @@ const server_base_url = process.env.NEXT_PUBLIC_SERVER_BASE_URL;
 
 const DayComponent: React.FC<DayProps> = ({date, setDate}) => {
     const [events, setEvents] = useState<Event[]>([]);
-    const [isCreatingEvent, setIsCreatingEvent] = useState(false);
-    const [eventStartTime, setEventStartTime] = useState(new Date());
-    const [eventCreationAnchor, setEventCreationAnchor] = useState<null | HTMLElement>(null);
+    const [isEditingEvent, setIsEditingEvent] = useState(false);
+    const [selectedEvent, setSelectedEvent] = useState<Event>({
+        id: -1,
+        title: "",
+        startDateTime: new Date(),
+        tags: [],
+        endDateTime: new Date(),
+        description: "",
+    });
+    const [eventEditAnchor, setEventCreationAnchor] = useState<null | HTMLElement>(null);
     const [widthOffset, setWidthOffset] = useState(0);
     const widthOffsetRef = useRef<HTMLHRElement>(null);
     const componentRef = useRef<HTMLDivElement>(null);
@@ -54,11 +62,12 @@ const DayComponent: React.FC<DayProps> = ({date, setDate}) => {
             `&end_datetime=${new Date(date.getFullYear(), date.getMonth(),
                 date.getDate(), 23, 59, 59).toISOString()}`)
             .then(response => response.json())
-            .then((data: {events: {title: string, start_datetime: string, 
+            .then((data: {events: {id: number, title: string, start_datetime: string, 
                 end_datetime: string, description: string}[]}) => {
                 setEvents(data.events.map((event) => {
                     console.log(event);
                     return {
+                        id: event.id,
                         title: event.title,
                         startDateTime: new Date(event.start_datetime),
                         endDateTime: new Date(event.end_datetime),
@@ -69,35 +78,83 @@ const DayComponent: React.FC<DayProps> = ({date, setDate}) => {
             });
     }, []);
     
-    const addToEvents = (title: string, startDateTime: Date, 
-        endDateTime: Date, description: string) => {
-        setEvents([...events, {
-            title: title,
-            startDateTime: startDateTime,
-            endDateTime: endDateTime,
-            tags: ["Google Drive"],
-            description: description,
-        }]);
-        console.log("posting event: ", title, startDateTime, endDateTime, description);
-        fetch(`${server_base_url}/calendar/add_event`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                title: title,
-                start_datetime: startDateTime.toISOString(),
-                end_datetime: endDateTime.toISOString(),
-                description: description,
-            })
-        });
+    const updateEvents = (title: string, startDateTime: Date, 
+        endDateTime: Date, description: string, id: number) => {
+        if (id === -1) {
+            let id: number;
+            console.log("posting event: ", title, startDateTime, endDateTime, description);
+            fetch(`${server_base_url}/calendar/add_event`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    title: title,
+                    start_datetime: startDateTime.toISOString(),
+                    end_datetime: endDateTime.toISOString(),
+                    description: description,
+                })
+            }).then(response => response.json())
+                .then((data: {id: number}) => {
+                    id = data.id;
+                }
+            ).then(() => {
+                setEvents([...events, {
+                    id: id,
+                    title: title,
+                    startDateTime: startDateTime,
+                    endDateTime: endDateTime,
+                    tags: ["Google Drive"],
+                    description: description,
+                }]);
+            });
+        }
+        else {
+            setEvents(events.map((event, index) => {
+                if (index === id) {
+                    return {
+                        id: id,
+                        title: title,
+                        startDateTime: startDateTime,
+                        endDateTime: endDateTime,
+                        tags: ["Google Drive"],
+                        description: description,
+                    };
+                }
+                return event;
+            }));
+            fetch(`${server_base_url}/calendar/edit_event`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    id: id,
+                    title: title,
+                    start_datetime: startDateTime.toISOString(),
+                    end_datetime: endDateTime.toISOString(),
+                    description: description,
+                })
+            });
+        }
     }
 
-    const handleTimeBlockClick = (time: number, event: React.MouseEvent<HTMLButtonElement>) => {
-        setDate(new Date(date.getFullYear(), date.getMonth(), date.getDate(), time));
-        setIsCreatingEvent(true);
-        setEventStartTime(new Date(date.getFullYear(), date.getMonth(), date.getDate(), time));
-        setEventCreationAnchor(event.currentTarget);
+    const constructNewEvent = (startDateTime: Date) => {
+        return {
+            id: -1,
+            title: "new event",
+            startDateTime: startDateTime,
+            tags: [],
+            endDateTime: new Date(startDateTime.getTime() + 60 * 60 * 1000),
+            description: "",
+        };
+    }
+
+    const handleTimeBlockClick = (event: Event,
+        mouseEvent: React.MouseEvent<HTMLButtonElement>) => {
+        setSelectedEvent(event);
+        setIsEditingEvent(true);
+        setEventCreationAnchor(mouseEvent.currentTarget);
     }
 	return (
 		<Stack 
@@ -116,14 +173,18 @@ const DayComponent: React.FC<DayProps> = ({date, setDate}) => {
                 alignItems: 'flex-start',
             }}>
                 {events.map((event, index) => (
+                    <div key={index}>
                     <Button
                     key={index}
+                    onClick={(click_event) => { 
+                        handleTimeBlockClick(event, click_event)}}
                     sx={{
                         marginTop: `${event.startDateTime.getHours() * 70 + 
-                            event.startDateTime.getMinutes() * 1.2 + 35}px`,
+                            event.startDateTime.getMinutes() * 1.2 + 37}px`,
                         marginLeft: `${widthOffset - 5}px`,
                         width: '88%',
-                        height: `${(event.endDateTime.getTime() - event.startDateTime.getTime()) / 60000 * 1.2}px`,
+                        height: `${(event.endDateTime.getTime() - 
+                            event.startDateTime.getTime()) / 60000 * 1.2 - 4}px`,
                         backgroundColor: 'primary.main',
                         zIndex: 3,
                         position: 'absolute',
@@ -136,6 +197,7 @@ const DayComponent: React.FC<DayProps> = ({date, setDate}) => {
                             {event.title}
                         </Typography>
                     </Button>
+                    </div>
                 ))}
             </Box>
 
@@ -170,26 +232,29 @@ const DayComponent: React.FC<DayProps> = ({date, setDate}) => {
                         }} />
 
                         <Button variant='text'
-                        onClick={(event) => {handleTimeBlockClick(i, event)}}
+                        onClick={(mouseEvent) => {handleTimeBlockClick(
+                            constructNewEvent(new Date(date.getFullYear(), 
+                                date.getMonth(), date.getDate(), i)),
+                            mouseEvent)}}
                         sx={{
                             width: '100%',
                             height: '70px',
                         }}/>
                         <Menu
-                            anchorEl={eventCreationAnchor}
-                            open={isCreatingEvent}
-                            onClose={() => setIsCreatingEvent(false)}
+                            anchorEl={eventEditAnchor}
+                            open={isEditingEvent}
+                            onClose={() => setIsEditingEvent(false)}
                             MenuListProps={{ sx: { py: 0 } }}
                             >
                             <Box sx={{ width: '500px', height: '300px', 
                                 backgroundColor: 'primary.light',
                                 color: 'primary.contrastText',
                                 }}>
-                                <CreateEvent 
-                                    eventStartTime={eventStartTime} 
-                                    addToEvents={addToEvents}
+                                <EditEvent 
+                                    eventInfo={selectedEvent}
+                                    updateEvent={updateEvents}
                                     closeCreateEvent={useCallback(() => 
-                                        setIsCreatingEvent(false), [])}
+                                        setIsEditingEvent(false), [])}
                                 />
                             </Box>
                         </Menu>
