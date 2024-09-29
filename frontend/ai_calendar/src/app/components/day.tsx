@@ -248,7 +248,6 @@ const DayComponent: React.FC<DayProps> = ({date}) => {
                                 height: '70px',
                                 top: '35px',
                                 left: '-5px',
-                                backgroundColor: 'primary.light',
                             }}/>
                         ): null}
 
