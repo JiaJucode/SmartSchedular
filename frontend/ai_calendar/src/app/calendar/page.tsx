@@ -10,6 +10,8 @@ import DayComponent from '../components/day';
 import WeekComponent from '../components/week';
 import Calendar from 'react-calendar';
 import './styles.css';
+import ArrowLeftIcon from '@mui/icons-material/ArrowLeft';
+import ArrowRightIcon from '@mui/icons-material/ArrowRight';
 
 const eventTagNames = ["Google Drive"];
 
@@ -92,9 +94,23 @@ const CalendarPage = () => {
                 <Toolbar sx={{ flexDirection: 'row', justifyContent: 'space-between', 
                     color: 'primary.contrastText', position: 'sticky', zIndex: 10, 
                     top: 0, backgroundColor: 'primary.dark' }}>
-                    <Typography variant="h5" paddingLeft={2.6}>
+                    <Typography variant="h5" paddingLeft={2.6} width={'220px'}>
                         {selectedDate.toDateString()}
                     </Typography>
+                    <ButtonGroup variant="text" color="primary"
+                    sx={{ backgroundColor: 'primary.light', borderRadius: '10px' }}>
+                        <Button onClick={() => setSelectedDate(new Date(selectedDate.setDate(selectedDate.getDate() - 1)))}>
+                            <ArrowLeftIcon sx={{ color: 'primary.contrastText', fontSize: '2rem' }} />
+                        </Button>
+                        <Button onClick={() => setSelectedDate(new Date())}>
+                            <Typography variant="h6" fontWeight="bold" color='primary.contrastText'>
+                                Today
+                            </Typography>
+                        </Button>
+                        <Button onClick={() => setSelectedDate(new Date(selectedDate.setDate(selectedDate.getDate() + 1)))}>
+                            <ArrowRightIcon sx={{ color: 'primary.contrastText', fontSize: '2rem' }} />
+                        </Button>
+                    </ButtonGroup>
                     <ButtonGroup variant="text" color="primary">
                         <Typography paddingTop={'5px'} paddingRight={'10px'}>
                             View Mode:
@@ -113,8 +129,8 @@ const CalendarPage = () => {
                         >Week</Button>
                     </ButtonGroup>
                 </Toolbar>
-                {viewMode === "day" ? <DayComponent date={selectedDate} setDate={setSelectedDate} /> 
-                : <WeekComponent date={selectedDate} setDate={setSelectedDate} />}
+                {viewMode === "day" ? <DayComponent date={selectedDate}/> 
+                : <WeekComponent date={selectedDate}/>}
 
             </Box>
         </Box>

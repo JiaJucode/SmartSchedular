@@ -6,7 +6,6 @@ import EditEvent from "./edit_event";
 
 interface DayProps {
     date: Date;
-    setDate: React.Dispatch<React.SetStateAction<Date>>;
 }
 
 const timeBlockCount = 25;
@@ -22,7 +21,7 @@ interface Event {
 
 const server_base_url = process.env.NEXT_PUBLIC_SERVER_BASE_URL;
 
-const DayComponent: React.FC<DayProps> = ({date, setDate}) => {
+const DayComponent: React.FC<DayProps> = ({date}) => {
     const [events, setEvents] = useState<Event[]>([]);
     const [isEditingEvent, setIsEditingEvent] = useState(false);
     const [selectedEvent, setSelectedEvent] = useState<Event>({
@@ -47,7 +46,6 @@ const DayComponent: React.FC<DayProps> = ({date, setDate}) => {
     };
 
     useEffect(() => {
-        
         calculateWidthOffset();
         window.addEventListener('resize', calculateWidthOffset);
         return () => {
@@ -76,7 +74,7 @@ const DayComponent: React.FC<DayProps> = ({date, setDate}) => {
                     };
                 }));
             });
-    }, []);
+    }, [date]);
     
     const updateEvents = (title: string, startDateTime: Date, 
         endDateTime: Date, description: string, id: number) => {
@@ -177,42 +175,36 @@ const DayComponent: React.FC<DayProps> = ({date, setDate}) => {
             height: '100%',
             overflowY: 'auto',
             width: '100%',
-            marginTop: '10px',
             position: 'relative',
         }}>
             {/* TODO: Implement smarter event placement */}
-            <Box sx={{
-                display: 'flex',
-                alignItems: 'flex-start',
-            }}>
-                {events.map((event, index) => (
-                    <div key={index}>
-                    <Button
-                    key={index}
-                    onClick={(click_event) => { 
-                        handleTimeBlockClick(event, click_event)}}
-                    sx={{
-                        marginTop: `${event.startDateTime.getHours() * 70 + 
-                            event.startDateTime.getMinutes() * 1.2 + 37}px`,
-                        marginLeft: `${widthOffset - 5}px`,
-                        width: '88%',
-                        height: `${(event.endDateTime.getTime() - 
-                            event.startDateTime.getTime()) / 60000 * 1.2 - 4}px`,
-                        backgroundColor: 'primary.main',
-                        zIndex: 3,
-                        position: 'absolute',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        borderRadius: '10px',
-                        opacity: 0.9,
-                    }}>
-                        <Typography sx={{ color: 'primary.contrastText', zIndex: 3}}>
-                            {event.title}
-                        </Typography>
-                    </Button>
-                    </div>
-                ))}
-            </Box>
+            {events.map((event, index) => (
+                <div key={index}>
+                <Button
+                key={index}
+                onClick={(click_event) => { 
+                    handleTimeBlockClick(event, click_event)}}
+                sx={{
+                    marginTop: `${event.startDateTime.getHours() * 70 + 
+                        event.startDateTime.getMinutes() * 1.2 + 37}px`,
+                    marginLeft: `${widthOffset}px`,
+                    width: '88%',
+                    height: `${(event.endDateTime.getTime() - 
+                        event.startDateTime.getTime()) / 60000 * 1.2 - 4}px`,
+                    backgroundColor: 'primary.main',
+                    zIndex: 3,
+                    position: 'absolute',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderRadius: '10px',
+                    opacity: 0.9,
+                }}>
+                    <Typography sx={{ color: 'primary.contrastText', zIndex: 3}}>
+                        {event.title}
+                    </Typography>
+                </Button>
+                </div>
+            ))}
 
 
 			{Array.from({length: timeBlockCount}, (_, i) => (
@@ -223,58 +215,65 @@ const DayComponent: React.FC<DayProps> = ({date, setDate}) => {
                     display: 'flex', 
                     alignItems: 'center', 
                     justifyContent:'center' }}>
-                    <Typography sx={{ paddingRight: "10px"}}>
+                    <Typography align="right"
+                    sx={{ width: '50px', paddingRight: '15px'}}>
                         {i}:00
                     </Typography>
-                    <Box 
-                    sx={{
-                        flexDirection: 'column',
-                        marginRight: '40px',
-                        width: '87%',
-
-                    }}>
-                        <Divider key={i} 
+                    <Divider
                         ref={widthOffsetRef}
                         sx={{ 
                             backgroundColor: 'primary.contrastText', 
                             height: '1px',
                             width: '88%',
-                            marginTop: '35px',
+                            marginTop: '0px',
                             position: 'absolute',
                             zIndex: 2,
                         }} />
+                    <Box 
+                    sx={{
+                        flexDirection: 'column',
+                        marginRight: '40px',
+                        width: '88%',
 
-                        <Button variant='text'
-                        onClick={(mouseEvent) => {handleTimeBlockClick(
-                            constructNewEvent(new Date(date.getFullYear(), 
-                                date.getMonth(), date.getDate(), i)),
-                            mouseEvent)}}
-                        sx={{
-                            width: '100%',
-                            height: '70px',
-                        }}/>
-                        <Menu
-                            anchorEl={eventEditAnchor}
-                            open={isEditingEvent}
-                            onClose={() => setIsEditingEvent(false)}
-                            MenuListProps={{ sx: { py: 0 } }}
-                            >
-                            <Box sx={{ width: '500px', height: '300px', 
+                    }}>
+
+                        {i !== timeBlockCount - 1 ? (
+                            <Button variant='text'
+                            onClick={(mouseEvent) => {handleTimeBlockClick(
+                                constructNewEvent(new Date(date.getFullYear(), 
+                                    date.getMonth(), date.getDate(), i)),
+                                mouseEvent)}}
+                            sx={{
+                                width: '100%',
+                                height: '70px',
+                                top: '35px',
+                                left: '-5px',
                                 backgroundColor: 'primary.light',
-                                color: 'primary.contrastText',
-                                }}>
-                                <EditEvent 
-                                    eventInfo={selectedEvent}
-                                    updateEvent={updateEvents}
-                                    deleteEvent={deleteEvent}
-                                    closeCreateEvent={useCallback(() => 
-                                        setIsEditingEvent(false), [])}
-                                />
-                            </Box>
-                        </Menu>
+                            }}/>
+                        ): null}
+
                     </Box>
                 </Box>
             ))}
+            <Menu
+                anchorEl={eventEditAnchor}
+                open={isEditingEvent}
+                onClose={() => setIsEditingEvent(false)}
+                MenuListProps={{ sx: { py: 0} }}
+                >
+                <Box sx={{ width: '500px', height: '300px', 
+                    backgroundColor: 'primary.light',
+                    color: 'primary.contrastText',
+                    }}>
+                    <EditEvent 
+                        eventInfo={selectedEvent}
+                        updateEvent={updateEvents}
+                        deleteEvent={deleteEvent}
+                        closeCreateEvent={useCallback(() => 
+                            setIsEditingEvent(false), [])}
+                    />
+                </Box>
+            </Menu>
         </Stack>
 	);
 };
