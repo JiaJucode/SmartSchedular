@@ -55,10 +55,13 @@ const CalendarPage = () => {
     }
 
     return (
-        <Box sx={{ width: '100vw', display: 'flex', flexDirection: 'row', justifyContent: 'space-between', overflow: "visible"}}>
-            <SideBar hide={hideSideBar} setHide={setHideSideBar} currentHide={delayedHide} setCurrentHide={setDelayedHide}>
+        <Box sx={{ width: '100vw', display: 'flex', flexDirection: 'row', 
+        justifyContent: 'space-between', overflow: "visible"}}>
+            <SideBar hide={hideSideBar} setHide={setHideSideBar} currentHide={delayedHide} 
+            setCurrentHide={setDelayedHide}>
                 <Stack>
-                    <Calendar locale='en-GB' onChange={handleDateChange} value={selectedDate} selectRange={false} />
+                    <Calendar locale='en-GB' onChange={handleDateChange} value={selectedDate} 
+                    selectRange={false} />
 
                     <Divider sx={{ 
                         backgroundColor: 'primary.contrastText', width: '94%', marginLeft: '3%',
@@ -77,7 +80,8 @@ const CalendarPage = () => {
                                         color: 'primary.contrastText',
                                         margin: 'auto',
                                         border: '1px solid',
-                                        backgroundColor: eventTags[index] ? 'primary.main' : 'primary.light',}}
+                                        backgroundColor: eventTags[index] ? 'primary.main' 
+                                        : 'primary.light',}}
                                     >{name}</Button>
                                 );
                             })}
@@ -88,7 +92,7 @@ const CalendarPage = () => {
             <Box sx={{ 
                 width: delayedHide ? '100vw' : 'calc(100vw - 330px)',
                 position: 'relative',
-                overflowY: 'auto',
+                overflowY: 'hidden',
                 height: '93vh',
                 }}>
                 <Toolbar sx={{ flexDirection: 'row', justifyContent: 'space-between', 
@@ -99,7 +103,17 @@ const CalendarPage = () => {
                     </Typography>
                     <ButtonGroup variant="text" color="primary"
                     sx={{ backgroundColor: 'primary.light', borderRadius: '10px' }}>
-                        <Button onClick={() => setSelectedDate(new Date(selectedDate.setDate(selectedDate.getDate() - 1)))}>
+                        <Button onClick={() => 
+                            {
+                                if (viewMode === "day") {
+                                    setSelectedDate(new Date(selectedDate.setDate(
+                                        selectedDate.getDate() - 1)))
+                                }
+                                else {
+                                    setSelectedDate(new Date(selectedDate.setDate(
+                                        selectedDate.getDate() - 7)))
+                                }
+                            }}>
                             <ArrowLeftIcon sx={{ color: 'primary.contrastText', fontSize: '2rem' }} />
                         </Button>
                         <Button onClick={() => setSelectedDate(new Date())}>
@@ -107,7 +121,17 @@ const CalendarPage = () => {
                                 Today
                             </Typography>
                         </Button>
-                        <Button onClick={() => setSelectedDate(new Date(selectedDate.setDate(selectedDate.getDate() + 1)))}>
+                        <Button onClick={() => 
+                            {
+                                if (viewMode === "day") {
+                                    setSelectedDate(new Date(selectedDate.setDate(
+                                        selectedDate.getDate() + 1)))
+                                }
+                                else {
+                                    setSelectedDate(new Date(selectedDate.setDate(
+                                        selectedDate.getDate() + 7)))
+                                }
+                            }}>
                             <ArrowRightIcon sx={{ color: 'primary.contrastText', fontSize: '2rem' }} />
                         </Button>
                     </ButtonGroup>
@@ -130,8 +154,7 @@ const CalendarPage = () => {
                     </ButtonGroup>
                 </Toolbar>
                 {viewMode === "day" ? <DayComponent date={selectedDate}/> 
-                : <WeekComponent date={selectedDate}/>}
-
+                : <WeekComponent date={selectedDate} sizeChange={delayedHide}/>}
             </Box>
         </Box>
     );

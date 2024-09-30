@@ -1,14 +1,16 @@
 "use client";
 
 import React, { useRef, useEffect, useState, useCallback } from "react";
-import { Box, Button, Stack, Divider, Typography, Menu } from '@mui/material';
+import { Box, Button, Stack, Divider, Typography, Menu, Toolbar } from '@mui/material';
 import EditEvent from "./edit_event";
 
 interface DayProps {
     date: Date;
 }
 
-const timeBlockCount = 25;
+const hourLineCount = 25;
+
+const weekDays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 interface Event {
     id: number;
@@ -63,7 +65,6 @@ const DayComponent: React.FC<DayProps> = ({date}) => {
             .then((data: {events: {id: number, title: string, start_datetime: string, 
                 end_datetime: string, description: string}[]}) => {
                 setEvents(data.events.map((event) => {
-                    console.log(event);
                     return {
                         id: event.id,
                         title: event.title,
@@ -108,8 +109,8 @@ const DayComponent: React.FC<DayProps> = ({date}) => {
             });
         }
         else {
-            setEvents(events.map((event, index) => {
-                if (index === id) {
+            setEvents(events.map((event) => {
+                if (event.id === id) {
                     return {
                         id: id,
                         title: title,
@@ -172,11 +173,29 @@ const DayComponent: React.FC<DayProps> = ({date}) => {
         ref={componentRef}
         sx={{
             flexDirection: 'column',
-            height: '100%',
+            height: '90%',
             overflowY: 'auto',
             width: '100%',
             position: 'relative',
         }}>
+            <Toolbar variant="dense"
+            sx={{ position: 'sticky', zIndex: 10,
+                backgroundColor: 'primary.dark', minHeight: '30px'}}>
+                <Typography fontWeight={"bold"}
+                sx={{
+                    position: 'absolute',
+                    top: '-5px',
+                    color: 'primary.contrastText',
+                    fontSize: '20px',
+                    zIndex: 2,
+                }}>
+                    {weekDays[date.getDay()]}
+                </Typography>
+            <Divider sx={{
+                backgroundColor: 'primary.contrastText', width: '100%', 
+                height: '2px', position: 'absolute', bottom: '0px'}} />
+            </Toolbar>
+
             {/* TODO: Implement smarter event placement */}
             {events.map((event, index) => (
                 <div key={index}>
@@ -207,7 +226,7 @@ const DayComponent: React.FC<DayProps> = ({date}) => {
             ))}
 
 
-			{Array.from({length: timeBlockCount}, (_, i) => (
+			{Array.from({length: hourLineCount}, (_, i) => (
                 <Box key={i}
                 sx={{ 
                     width: '100%', 
@@ -216,8 +235,8 @@ const DayComponent: React.FC<DayProps> = ({date}) => {
                     alignItems: 'center', 
                     justifyContent:'center' }}>
                     <Typography align="right"
-                    sx={{ width: '50px', paddingRight: '15px'}}>
-                        {i}:00
+                        sx={{ width: '50px', paddingRight: '15px'}}>
+                            {i}:00
                     </Typography>
                     <Divider
                         ref={widthOffsetRef}
@@ -234,10 +253,10 @@ const DayComponent: React.FC<DayProps> = ({date}) => {
                         flexDirection: 'column',
                         marginRight: '40px',
                         width: '88%',
-
+                        height: '70px',
                     }}>
 
-                        {i !== timeBlockCount - 1 ? (
+                        {i !== hourLineCount - 1 ? (
                             <Button variant='text'
                             onClick={(mouseEvent) => {handleTimeBlockClick(
                                 constructNewEvent(new Date(date.getFullYear(), 

@@ -33,12 +33,13 @@ def get_calendar_events(start_datetime_str: str, end_datetime_str: str) -> List[
         },
         ...]
     """
-    if start_datetime_str > end_datetime_str:
-        raise ValueError("start_datetime must be before end_datetime")
-    # query database for events between start_datetime and end_datetime
-    events = db.get_events(start_datetime_str, end_datetime_str)
     start_datetime = datetime.fromisoformat(start_datetime_str).replace(tzinfo=None)
     end_datetime = datetime.fromisoformat(end_datetime_str).replace(tzinfo=None)
+    if start_datetime > end_datetime:
+        raise ValueError("start_datetime must be before end_datetime,\
+                         got {} and {}".format(start_datetime, end_datetime))
+    # query database for events between start_datetime and end_datetime
+    events = db.get_events(start_datetime, end_datetime)
 
     # trim the events to the requested time range 
     # and split events that span multiple days
