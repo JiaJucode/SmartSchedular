@@ -29,7 +29,10 @@ const NavBar = () => {
                 width: '25%',
                 // backgroundColor: 'primary.light',
             }}>
-                <IconButton edge="start" color="inherit" aria-label="menu">
+                <IconButton edge="start" color="inherit" aria-label="menu"
+                    onClick={() => {
+                        window.location.href = "/";
+                    }}>
                     <img src="/favicon.ico" alt="Custom Icon" 
                     style={{ width: '35px', height: '35px', filter: 'invert(1)' }} />
                     <Typography variant="h6" padding={1}>

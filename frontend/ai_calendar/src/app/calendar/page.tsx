@@ -32,8 +32,6 @@ const CalendarPage = () => {
         let newEventTags = [...eventTags];
         newEventTags[index] = !newEventTags[index];
         setEventTags(newEventTags);
-        // set date to March 1st, 2022
-        setSelectedDate(new Date(2022, 2, 1));
         if (!eventTags[index]) {
             // TODO: check if account is linked to google drive
             if (false) {
@@ -56,7 +54,7 @@ const CalendarPage = () => {
 
     return (
         <Box sx={{ width: '100vw', display: 'flex', flexDirection: 'row', 
-        justifyContent: 'space-between', overflow: "visible"}}>
+        justifyContent: 'space-between', overflow: 'visible'}}>
             <SideBar hide={hideSideBar} setHide={setHideSideBar} currentHide={delayedHide} 
             setCurrentHide={setDelayedHide}>
                 <Stack>
