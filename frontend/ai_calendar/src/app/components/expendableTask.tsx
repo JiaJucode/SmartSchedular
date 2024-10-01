@@ -17,7 +17,7 @@ interface ExpandableTaskProps {
 
 const tasks1 = [
     {
-        id: 1,
+        id: 4,
         name: 'Task 1',
         description: 'Description 1',
         startDateTime: new Date(2021, 10, 1),
@@ -25,7 +25,7 @@ const tasks1 = [
         completed: false,
     },
     {
-        id: 2,
+        id: 5,
         name: 'Task 2',
         description: 'Description 2',
         startDateTime: new Date(2021, 10, 3),
@@ -36,7 +36,7 @@ const tasks1 = [
 
 const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft}) => {
     const [expandedTasks, setExpandedTasks] = useState(new Set<number>());
-    const [tasks, setTasks] = useState<Task[]>((parentId <= 0) ? tasks1 : []);
+    const [tasks, setTasks] = useState<Task[]>((parentId <= 2) ? tasks1 : []);
 
     useEffect(() => {
         // use parent ID to fetch sub tasks
@@ -68,13 +68,7 @@ const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft}) 
     }
 
     const updateTask = (task: Task) => {
-        if (parentId <= 0) {
-            // TODO: send request to backend to update project
-            const projectId = -parentId;
-        }
-        else {
-            // TODO: send request to backend to update subtask
-        }
+        // TODO: send request to backend to update task
         setTasks((prevTasks) => {
             const newTasks = [...prevTasks];
             const index = newTasks.findIndex((t) => t.id === task.id);

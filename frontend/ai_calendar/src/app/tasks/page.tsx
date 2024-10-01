@@ -15,19 +15,22 @@ export interface Task {
     completed: boolean;
 }
 
-interface Project {
-    id: number;
-    name: string;
-}
-
-const exampleProjects: Project[] = [
+const exampleProjects: Task[] = [
     {
         id: 1,
         name: 'Project 1',
+        description: 'This is a project',
+        startDateTime: new Date(),
+        endDateTime: new Date(),
+        completed: false,
     },
     {
         id: 2,
         name: 'Project 2',
+        description: 'This is a project',
+        startDateTime: new Date(),
+        endDateTime: new Date(),
+        completed: false,
     },
 ];
 
@@ -42,7 +45,7 @@ const TasksPage = () => {
     const [hideSideBar, setHideSideBar] = useState(false);
     const [delayedHide, setDelayedHide] = useState(false);
     const [googleDriveLinked, setGoogleDriveLinked] = useState(false);
-    const [projects, setProjects] = useState<Project[]>(exampleProjects);
+    const [projects, setProjects] = useState<Task[]>(exampleProjects);
     const [selectedProject, setSelectedProject] = useState<number>(1);
 
     useEffect(() => {
@@ -142,7 +145,7 @@ const TasksPage = () => {
                     <Divider sx={{ backgroundColor: 'primary.contrastText', width: '100%' }} />
                 </Toolbar>
                 <Box>
-                    <ExpandableTask parentId={-selectedProject}
+                    <ExpandableTask parentId={selectedProject}
                     paddingLeft={0} />
                 </Box>
             </Box>
