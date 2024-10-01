@@ -5,40 +5,21 @@ import SideBar from '../components/side_bar';
 import { Box, Button, Divider, Stack, Toolbar, Typography } from '@mui/material';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 import ExpandableTask from '../components/expendableTask';
+import AddIcon from '@mui/icons-material/Add';
 
 export interface Task {
     id: number;
-    name: string;
+    title: string;
     description: string;
-    startDateTime: Date | null;
-    endDateTime: Date | null;
+    startDate: Date | null;
+    endDate: Date | null;
     completed: boolean;
 }
 
-const exampleProjects: Task[] = [
-    {
-        id: 1,
-        name: 'Project 1',
-        description: 'This is a project',
-        startDateTime: new Date(),
-        endDateTime: new Date(),
-        completed: false,
-    },
-    {
-        id: 2,
-        name: 'Project 2',
-        description: 'This is a project',
-        startDateTime: new Date(),
-        endDateTime: new Date(),
-        completed: false,
-    },
-];
-
 const tableSettings = {
-    name: {headerName: 'Task Name', width: '60%'},
+    title: {headerName: 'Task Name', width: '70%'},
     startDate: {headerName: 'Start Date', width: '15%'},
     endDate: {headerName: 'End Date', width: '15%'},
-    completed: {headerName: 'Completed', width: '10%'},
 }
 
 const server_base_url = process.env.NEXT_PUBLIC_SERVER_BASE_URL;
@@ -47,28 +28,56 @@ const TasksPage = () => {
     const [hideSideBar, setHideSideBar] = useState(false);
     const [delayedHide, setDelayedHide] = useState(false);
     const [googleDriveLinked, setGoogleDriveLinked] = useState(false);
-    const [projects, setProjects] = useState<Task[]>(exampleProjects);
-    const [selectedProject, setSelectedProject] = useState<number>(1);
+    const [projects, setProjects] = useState<Task[]>([]);
+    const [selectedProject, setSelectedProject] = useState<number>(-1);
 
     useEffect(() => {
         // TODO: check if account is linked to google drive
         // fetch projects from backend
-        console.log(server_base_url);
         fetch(`${server_base_url}/task/get_tasks?parent_id=0`)
             .then((response) => response.json())
-            .then((data: {tasks: {id: number, name: string, description: string,
+            .then((data: {tasks: {id: number, title: string, description: string,
                 start_datetime: Date | null, end_datetime: Date | null,
                 completed: boolean}[]}) => {
                 setProjects(data.tasks.map((task) => ({
                     id: task.id,
-                    name: task.name,
+                    title: task.title,
                     description: task.description,
-                    startDateTime: task.start_datetime,
-                    endDateTime: task.end_datetime,
+                    startDate: task.start_datetime,
+                    endDate: task.end_datetime,
                     completed: task.completed,
                 })));
             });
     }, []);
+
+    const addProject = () => {
+        let project_id = 0;
+        fetch(`${server_base_url}/task/add_task`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                parent_id: 0,
+                title: 'New Project',
+                description: 'This is a new project',
+                start_datetime: null,
+                end_datetime: null,
+                completed: false,
+            }),})
+            .then((response) => response.json())
+            .then((data: {id: number}) => {
+                project_id = data.id;
+                setProjects([...projects, {
+                    id: project_id,
+                    title: 'New Project',
+                    description: 'This is a new project',
+                    startDate: null,
+                    endDate: null,
+                    completed: false,
+                }]);
+            });
+    }
 
     return (
         <Box sx={{ width: '100vw', display: 'flex', flexDirection: 'row', 
@@ -105,10 +114,25 @@ const TasksPage = () => {
                         sx={{ textTransform: 'none' }}
                         onClick={() => setSelectedProject(project.id)}>
                             <Typography sx={{ fontSize: '1.2em' }}>
-                                {project.name}
+                                {project.title}
                             </Typography>
                         </Button>
                     ))}
+                    <Button onClick={addProject}
+                    sx={{ 
+                        width: '100%', justifyContent: 'flex-start',
+                        color: 'primary.contrastText',
+                        '&.MuiButton-root': {
+                            padding: 0,
+                            paddingTop: '3px', paddingBottom: '3px',
+                        }
+                    }}>
+                        <AddIcon sx={{ marginLeft: `10px`, }} />
+                        <Typography 
+                        sx={{ marginLeft: '5px', textTransform: 'none'}}>
+                            Add Task
+                        </Typography>
+                    </Button>
 
                 </Stack>
             </SideBar>
@@ -161,10 +185,12 @@ const TasksPage = () => {
                     </Box>
                     <Divider sx={{ backgroundColor: 'primary.contrastText', width: '100%' }} />
                 </Toolbar>
-                <Box>
-                    <ExpandableTask parentId={selectedProject}
-                    paddingLeft={0} />
-                </Box>
+                {selectedProject !== -1? (
+                    <Box>
+                        <ExpandableTask parentId={selectedProject}
+                        paddingLeft={0} />
+                    </Box>)
+                : null}
             </Box>
         </Box>
     );

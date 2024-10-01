@@ -20,7 +20,7 @@ def get_tasks():
                     "name": "Task 1",
                     "description": "Description 1",
                     "start_date": iso_date_string,
-                    "due_date": iso_date_string,
+                    "end_date": iso_date_string,
                     completed: bool,
                 },
                 ...
@@ -41,8 +41,8 @@ def add_task():
         "parent_id": int,
         "title": str,
         "description": str,
-        "start_date": iso_date_string,
-        "due_date": iso_date_string,
+        "startDate": iso_date_string,
+        "endDate": iso_date_string,
         "completed": bool
     Returns:
         {"id": int}
@@ -50,8 +50,8 @@ def add_task():
     parent_id = request.json.get("parent_id")
     title = request.json.get("title")
     description = request.json.get("description")
-    start_date = request.json.get("start_date")
-    due_date = request.json.get("due_date")
+    start_date = request.json.get("startDate")
+    end_date = request.json.get("endDate")
     completed = request.json.get("completed")
-    id = add_task(parent_id, title, description, start_date, due_date, completed)
+    id = service_add_task(parent_id, title, description, start_date, end_date, completed)
     return jsonify({"id": id}) 

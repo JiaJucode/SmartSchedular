@@ -42,7 +42,25 @@ class TaskDB:
         )
         self.conn.commit()
 
-    def get_task(self, id: int) -> Dict:
+        # if root task does not exist, create it
+        # all projects are children of the root task
+        self.cursor.execute(
+            """
+            SELECT * FROM tasks
+            WHERE id = 0
+            """
+        )
+        if not self.cursor.fetchone():
+            self.cursor.execute(
+                """
+                INSERT INTO tasks (id, title, description, start_datetime, end_datetime, completed)
+                VALUES (0, 'root', '', NULL, NULL, TRUE)
+                """
+            )
+            self.conn.commit()
+
+
+    def __get_task(self, id: int) -> Dict:
         query = sql.SQL(
             """
             SELECT * FROM tasks
@@ -54,22 +72,27 @@ class TaskDB:
         self.cursor.execute(query)
         return dict(zip(tasks_columns, self.cursor.fetchone()))
 
-    def get_child_tasks(self, id: int) -> List[Dict]:
+    def get_child_tasks(self, parent_id: int) -> List[Dict]:
         query = sql.SQL(
             """
             SELECT * FROM task_links
-            WHERE parent_id = {id}
+            WHERE parent_id = {parent_id}
             """
         ).format(
-            id=sql.Literal(id)
+            parent_id=sql.Literal(parent_id)
         )
         self.cursor.execute(query)
-        child_ids = [row[1] for row in self.cursor.fetchall()]
-        return [self.get_task(child_id) for child_id in child_ids]
+        result = self.cursor.fetchall()
+        if len(result) == 0:
+            return []
+        child_ids = [row[1] for row in result]
+        return [self.__get_task(child_id) for child_id in child_ids]
     
     def update_task(self, id: int, title: Optional[str] = None, description: Optional[str] = None,
                     start_datetime: Optional[datetime] = None, end_datetime: Optional[datetime] = None,
                     completed: Optional[bool] = None) -> None:
+        if (id == 0):
+            raise ValueError("id cannot be root task")
         set_clause = {}
         input = [id, title, description, start_datetime, end_datetime, completed]
         for i, column in enumerate(tasks_columns):
@@ -118,6 +141,8 @@ class TaskDB:
             return task_id
     
     def delete_task(self, id: int) -> None:
+        if (id == 0):
+            raise ValueError("id cannot be root task")
         self.cursor.execute(
             """
             DELETE FROM task_links
