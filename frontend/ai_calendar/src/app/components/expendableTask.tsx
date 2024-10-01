@@ -3,7 +3,7 @@ import { Task } from '../tasks/page';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import ArrowRightIcon from '@mui/icons-material/ArrowRight';
 import AddIcon from '@mui/icons-material/Add';
-import { Box, Button, Collapse, Divider, Typography, IconButton } from '@mui/material';
+import { Box, Button, Collapse, Divider, Typography, IconButton, TextField } from '@mui/material';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -104,12 +104,23 @@ const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft}) 
                                 ? <ArrowDropDownIcon /> 
                                 : <ArrowRightIcon />}
                             </IconButton>
-                            <Typography sx={{ marginLeft: 1, display: 'flex',
-                                justifyContent: 'flex-start', alignItems: 'center',
-                                flexGrow: 1, textOverflow: 'ellipsis', overflowX: 'hidden',
-                            }}>
-                                {task.name}
-                            </Typography>
+                            <TextField value={task.name} fullWidth variant='standard'
+                            slotProps={{ 
+                                input: {disableUnderline: true} }}
+                            onChange={(e) => {
+                                    task.name = e.target.value;
+                                    updateTask(task);}} 
+                            sx={{
+                                marginLeft: 1, display: 'flex',
+                                justifyContent: 'center', alignItems: 'center',
+                                flexGrow: 1, textOverflow: 'ellipsis',
+                                input: {
+                                    color: 'primary.contrastText',
+                                },
+                                '&.MuiTextField-root' : {
+                                    margin: 0,
+                                },
+                            }}/>
                             <Divider orientation='vertical' 
                             sx={{ backgroundColor: 'primary.contrastText', 
                                 width: '1px',
