@@ -142,6 +142,7 @@ const ExpandableTask: React.FC<ExpandableTaskProps> = ({task, editTask, paddingL
                             }
                         }}>
                         <AddIcon sx={{ marginLeft: `${paddingLeft}px`, }} />
+                        {/* TODO: make this a button and insert row */}
                         <Typography 
                         sx={{ marginLeft: '5px', textTransform: 'none'}}>
                             Add Task
