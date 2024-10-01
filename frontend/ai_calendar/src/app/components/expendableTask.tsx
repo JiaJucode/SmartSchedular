@@ -34,12 +34,27 @@ const tasks1 = [
     },
 ]
 
+const server_base_url = process.env.NEXT_PUBLIC_SERVER_BASE_URL;
+
 const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft}) => {
     const [expandedTasks, setExpandedTasks] = useState(new Set<number>());
-    const [tasks, setTasks] = useState<Task[]>((parentId <= 2) ? tasks1 : []);
+    const [tasks, setTasks] = useState<Task[]>([]);
 
     useEffect(() => {
-        // use parent ID to fetch sub tasks
+        fetch(`${server_base_url}/task/get_tasks?parent_id=${parentId}`)
+            .then((response) => response.json())
+            .then((data: {tasks: {id: number, name: string, description: string,
+                start_datetime: Date | null, end_datetime: Date | null,
+                completed: boolean}[]}) => {
+                setTasks(data.tasks.map((task) => ({
+                    id: task.id,
+                    name: task.name,
+                    description: task.description,
+                    startDateTime: task.start_datetime,
+                    endDateTime: task.end_datetime,
+                    completed: task.completed,
+                })));
+            });
     }, []);
 
     const handleToggle = (id: number) => {

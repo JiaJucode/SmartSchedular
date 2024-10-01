@@ -41,6 +41,8 @@ const tableSettings = {
     completed: {headerName: 'Completed', width: '10%'},
 }
 
+const server_base_url = process.env.NEXT_PUBLIC_SERVER_BASE_URL;
+
 const TasksPage = () => {
     const [hideSideBar, setHideSideBar] = useState(false);
     const [delayedHide, setDelayedHide] = useState(false);
@@ -50,7 +52,22 @@ const TasksPage = () => {
 
     useEffect(() => {
         // TODO: check if account is linked to google drive
-        // TODO: fetch projects from backend
+        // fetch projects from backend
+        console.log(server_base_url);
+        fetch(`${server_base_url}/task/get_tasks?parent_id=0`)
+            .then((response) => response.json())
+            .then((data: {tasks: {id: number, name: string, description: string,
+                start_datetime: Date | null, end_datetime: Date | null,
+                completed: boolean}[]}) => {
+                setProjects(data.tasks.map((task) => ({
+                    id: task.id,
+                    name: task.name,
+                    description: task.description,
+                    startDateTime: task.start_datetime,
+                    endDateTime: task.end_datetime,
+                    completed: task.completed,
+                })));
+            });
     }, []);
 
     return (

@@ -21,8 +21,8 @@ def get_events():
                     "id": 1,
                     "name": "Event 1",
                     "Tags": ["tag1", "tag2"],
-                    "start_datetime": "2021-01-01 12:00:00",
-                    "end_datetime": "2021-01-01 13:00:00",
+                    "start_datetime": iso_datetime_string,
+                    "end_datetime": iso_datetime_string,
                     "description": "Description 1"
                 },
                 ...
