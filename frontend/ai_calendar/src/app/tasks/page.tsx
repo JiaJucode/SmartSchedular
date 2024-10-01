@@ -13,72 +13,21 @@ export interface Task {
     startDateTime: Date | null;
     endDateTime: Date | null;
     completed: boolean;
-    subtasks: Task[];
 }
 
 interface Project {
     id: number;
     name: string;
-    tasks: Task[];
 }
 
 const exampleProjects: Project[] = [
     {
         id: 1,
         name: 'Project 1',
-        tasks: [
-            {
-                id: 1,
-                name: 'Task 1',
-                description: 'Description 1',
-                startDateTime: new Date(2021, 10, 1),
-                endDateTime: new Date(2021, 10, 2),
-                completed: false,
-                subtasks: [
-                    {
-                        id: 5,
-                        name: 'Subtask 1',
-                        description: 'Description 1',
-                        startDateTime: new Date(2021, 10, 1),
-                        endDateTime: new Date(2021, 10, 2),
-                        completed: false,
-                        subtasks: [],
-                    }],
-            },
-            {
-                id: 2,
-                name: 'Task 2',
-                description: 'Description 2',
-                startDateTime: new Date(2021, 10, 3),
-                endDateTime: new Date(2021, 10, 4),
-                completed: false,
-                subtasks: [],
-            },
-        ],
     },
     {
         id: 2,
         name: 'Project 2',
-        tasks: [
-            {
-                id: 3,
-                name: 'Task 3',
-                description: 'Description 3',
-                startDateTime: new Date(2021, 10, 5),
-                endDateTime: new Date(2021, 10, 6),
-                completed: false,
-                subtasks: [],
-            },
-            {
-                id: 4,
-                name: 'Task 4',
-                description: 'Description 4',
-                startDateTime: new Date(2021, 10, 7),
-                endDateTime: new Date(2021, 10, 8),
-                completed: false,
-                subtasks: [],
-            },
-        ],
     },
 ];
 
@@ -100,16 +49,6 @@ const TasksPage = () => {
         // TODO: check if account is linked to google drive
         // TODO: fetch projects from backend
     }, []);
-
-    const editTask = (task: Task) => {
-        setProjects((prevProjects) => {
-            const newProjects = [...prevProjects];
-            const projectIndex = newProjects.findIndex((project) => project.id === selectedProject);
-            const taskIndex = newProjects[projectIndex].tasks.findIndex((t) => t.id === task.id);
-            newProjects[projectIndex].tasks[taskIndex] = task;
-            return newProjects;
-        });
-    }
 
     return (
         <Box sx={{ width: '100vw', display: 'flex', flexDirection: 'row', 
@@ -203,8 +142,8 @@ const TasksPage = () => {
                     <Divider sx={{ backgroundColor: 'primary.contrastText', width: '100%' }} />
                 </Toolbar>
                 <Box>
-                    <ExpandableTask task={projects[selectedProject - 1].tasks} 
-                    paddingLeft={0} editTask={editTask}/>
+                    <ExpandableTask parentId={-selectedProject}
+                    paddingLeft={0} />
                 </Box>
             </Box>
         </Box>

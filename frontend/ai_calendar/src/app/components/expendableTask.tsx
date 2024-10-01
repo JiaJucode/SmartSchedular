@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Task } from '../tasks/page';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import ArrowRightIcon from '@mui/icons-material/ArrowRight';
@@ -11,13 +11,36 @@ import dayjs from 'dayjs';
 import Checkbox from '@mui/material/Checkbox';
 
 interface ExpandableTaskProps {
-    task: Task[];
-    editTask: (task: Task) => void;
+    parentId: number;
     paddingLeft: number;
 }
 
-const ExpandableTask: React.FC<ExpandableTaskProps> = ({task, editTask, paddingLeft}) => {
+const tasks1 = [
+    {
+        id: 1,
+        name: 'Task 1',
+        description: 'Description 1',
+        startDateTime: new Date(2021, 10, 1),
+        endDateTime: new Date(2021, 10, 2),
+        completed: false,
+    },
+    {
+        id: 2,
+        name: 'Task 2',
+        description: 'Description 2',
+        startDateTime: new Date(2021, 10, 3),
+        endDateTime: new Date(2021, 10, 4),
+        completed: false,
+    },
+]
+
+const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft}) => {
     const [expandedTasks, setExpandedTasks] = useState(new Set<number>());
+    const [tasks, setTasks] = useState<Task[]>((parentId <= 0) ? tasks1 : []);
+
+    useEffect(() => {
+        // use parent ID to fetch sub tasks
+    }, []);
 
     const handleToggle = (id: number) => {
         const newExpandedTasks = new Set(expandedTasks);
@@ -29,10 +52,41 @@ const ExpandableTask: React.FC<ExpandableTaskProps> = ({task, editTask, paddingL
         setExpandedTasks(newExpandedTasks);
     }
 
+    const addTask = () => {
+        // TODO: send request to backend to add task and get new task id
+        let id = tasks.length + 1;
+        setTasks((prevTasks) => {
+            return [...prevTasks, {
+                id: id,
+                name: 'new task',
+                description: '',
+                startDateTime: null,
+                endDateTime: null,
+                completed: false,
+            }];
+        });
+    }
+
+    const updateTask = (task: Task) => {
+        if (parentId <= 0) {
+            // TODO: send request to backend to update project
+            const projectId = -parentId;
+        }
+        else {
+            // TODO: send request to backend to update subtask
+        }
+        setTasks((prevTasks) => {
+            const newTasks = [...prevTasks];
+            const index = newTasks.findIndex((t) => t.id === task.id);
+            newTasks[index] = task;
+            return newTasks;
+        });
+    }
     return (
         <div>
-            {task.map((task) => (
-                <Box sx={{ backgroundColor: `${expandedTasks.has(task.id)
+            {tasks.map((task) => (
+                <Box key={task.id}
+                sx={{ backgroundColor: `${expandedTasks.has(task.id)
                         ? 'primary.main' : 'primary.dark'}`,
                     color: 'primary.contrastText'}}>
                     <Box sx={{ display: 'flex', flexDirection: 'row', width: '100%', height: '40px' }}>
@@ -70,6 +124,7 @@ const ExpandableTask: React.FC<ExpandableTaskProps> = ({task, editTask, paddingL
                                     = newValue.toDate() : null}
                                 disableOpenPicker
                                 sx={{
+                                    width: '100%',
                                     input: {
                                         height: '100%',
                                         color: 'primary.contrastText',
@@ -96,6 +151,7 @@ const ExpandableTask: React.FC<ExpandableTaskProps> = ({task, editTask, paddingL
                                     = newValue.toDate() : null}
                                 disableOpenPicker
                                 sx={{
+                                    width: '100%',
                                     input: {
                                         height: '100%',
                                         color: 'primary.contrastText',
@@ -118,7 +174,7 @@ const ExpandableTask: React.FC<ExpandableTaskProps> = ({task, editTask, paddingL
                         justifyContent: 'center', padding: 0 }}>
                             <Checkbox checked={task.completed} onChange={() => {
                                 task.completed = !task.completed;
-                                editTask(task);
+                                updateTask(task);
                             }} 
                             sx={{ color: 'primary.contrastText',
                                 '&.Mui-checked': {
@@ -132,28 +188,28 @@ const ExpandableTask: React.FC<ExpandableTaskProps> = ({task, editTask, paddingL
                         backgroundColor: 'primary.contrastText' }} />
                     <Collapse in={expandedTasks.has(task.id)}
                     sx={{ width: '100%' }}>
-                        <ExpandableTask task={task.subtasks} paddingLeft={paddingLeft + 20} 
-                        editTask={editTask} />
-                        <Button sx={{ 
-                            width: '100%', justifyContent: 'flex-start',
-                            backgroundColor: 'primary.dark', color: 'primary.contrastText',
-                            '&.MuiButton-root': {
-                                padding: 0,
-                            }
-                        }}>
-                        <AddIcon sx={{ marginLeft: `${paddingLeft}px`, }} />
-                        {/* TODO: make this a button and insert row */}
-                        <Typography 
-                        sx={{ marginLeft: '5px', textTransform: 'none'}}>
-                            Add Task
-                        </Typography>
-                    </Button>
-                    <Divider orientation='horizontal' 
+                        <ExpandableTask parentId={task.id} paddingLeft={paddingLeft + 20}/>
+                    {/* <Divider orientation='horizontal' 
                     sx={{ width: '100%', height: '1px', 
-                    backgroundColor: 'primary.contrastText' }} />
+                    backgroundColor: 'primary.contrastText' }} /> */}
                     </Collapse>
                 </Box>
             ))}
+            <Button onClick={addTask}
+            sx={{ 
+                width: '100%', justifyContent: 'flex-start',
+                backgroundColor: 'primary.dark', color: 'primary.contrastText',
+                '&.MuiButton-root': {
+                    padding: 0,
+                    paddingTop: '3px', paddingBottom: '3px',
+                }
+            }}>
+                <AddIcon sx={{ marginLeft: `${paddingLeft}px`, }} />
+                <Typography 
+                sx={{ marginLeft: '5px', textTransform: 'none'}}>
+                    Add Task
+                </Typography>
+            </Button>
         </div>
     );
 }
