@@ -26,6 +26,9 @@ interface Event {
 }
 
 const server_base_url = process.env.NEXT_PUBLIC_SERVER_BASE_URL;
+
+const topPadding = 10;
+
 const WeekComponent: React.FC<WeekProps> = ({date, sizeChange}) => {
     const [events, setEvents] = useState<Event[]>([]);
     const [isEditingEvent, setIsEditingEvent] = useState(false);
@@ -181,6 +184,7 @@ const WeekComponent: React.FC<WeekProps> = ({date, sizeChange}) => {
         setIsEditingEvent(true);
         setEventCreationAnchor(mouseEvent.currentTarget);
     }
+
 	return (
 		<Stack 
         ref={componentRef}
@@ -191,27 +195,28 @@ const WeekComponent: React.FC<WeekProps> = ({date, sizeChange}) => {
             width: '100%',
             position: 'relative',
         }}>
+            <Box>
             <Toolbar variant="dense"
-            sx={{ position: 'sticky', zIndex: 10,
-                backgroundColor: 'primary.dark', minHeight: '30px'}}>
-            {Array.from({length: daysInWeek}, (_, j) => (
-                <Typography key={j} align="center" fontWeight={"bold"}
-                sx={{ 
-                    width: '12.57%',
-                    position: 'absolute',
-                    top: '-5px',
-                    marginLeft: `${(j + 1) * length/daysInWeek - widthOffset - 30}px`,
-                    color: 'primary.contrastText',
-                    fontSize: '20px',
-                    zIndex: 2,
-                }}>
-                    {weekDays[j]}
-                </Typography>
-            ))}
-            <Divider sx={{
-                backgroundColor: 'primary.contrastText', width: '100%', 
-                height: '2px', position: 'absolute', bottom: '0px'}} />
+            sx={{ zIndex: 4, backgroundColor: 'primary.dark', minHeight: '30px'}}>
+                {Array.from({length: daysInWeek}, (_, j) => (
+                    <Typography key={j} align="center" fontWeight={"bold"}
+                    sx={{ 
+                        width: '12.57%',
+                        position: 'absolute',
+                        top: '-5px',
+                        marginLeft: `${(j + 1) * length/daysInWeek - widthOffset - 30}px`,
+                        color: 'primary.contrastText',
+                        fontSize: '20px',
+                        zIndex: 2,
+                    }}>
+                        {weekDays[j]}
+                    </Typography>
+                ))}
+                <Divider sx={{
+                    backgroundColor: 'primary.contrastText', width: '100%', 
+                    height: '2px', position: 'absolute', bottom: '0px'}} />
             </Toolbar>
+            </Box>
             
 
             {/* TODO: Implement smarter event placement */}
@@ -223,8 +228,9 @@ const WeekComponent: React.FC<WeekProps> = ({date, sizeChange}) => {
                     handleTimeBlockClick(event, click_event)}}
                 sx={{
                     marginTop: `${event.startDateTime.getHours() * 70 + 
-                        event.startDateTime.getMinutes() * 1.2 + 37}px`,
-                    marginLeft: `${widthOffset + length/daysInWeek * event.startDateTime.getDay()+1}px`,
+                        event.startDateTime.getMinutes() * 1.2 + 1 + topPadding}px`,
+                    marginLeft: `${widthOffset + length/daysInWeek * 
+                        event.startDateTime.getDay() + 1}px`,
                     width: 'calc(12.57% - 1px)',
                     height: `${(event.endDateTime.getTime() - 
                         event.startDateTime.getTime()) / 60000 * 1.2 - 4}px`,
@@ -250,7 +256,7 @@ const WeekComponent: React.FC<WeekProps> = ({date, sizeChange}) => {
                     sx={{
                         width: '1px',
                         height: `${(hourLineCount - 1) * 70}px`,
-                        marginTop: '35px',
+                        marginTop: `${topPadding}px`,
                         backgroundColor: 'primary.contrastText',
                         marginLeft: `${(j + 1) * length/daysInWeek + widthOffset}px`,
                         position: 'absolute',
@@ -259,6 +265,7 @@ const WeekComponent: React.FC<WeekProps> = ({date, sizeChange}) => {
                 </div>
             ))}
 
+            <Box sx={{marginTop: `${topPadding-35}px`,}}>
 			{Array.from({length: hourLineCount}, (_, i) => (
                 <Box key={i}
                 sx={{ 
@@ -268,7 +275,7 @@ const WeekComponent: React.FC<WeekProps> = ({date, sizeChange}) => {
                     alignItems: 'center', 
                     justifyContent:'center' }}>
                     <Typography align="right"
-                        sx={{ width: '50px', paddingRight: '15px'}}>
+                    sx={{ width: '50px', paddingRight: '15px'}}>
                             {i}:00
                     </Typography>
                     <Divider
@@ -277,7 +284,6 @@ const WeekComponent: React.FC<WeekProps> = ({date, sizeChange}) => {
                             backgroundColor: 'primary.contrastText', 
                             height: '1px',
                             width: '88%',
-                            marginTop: '0px',
                             position: 'absolute',
                             zIndex: 2,
                         }} />
@@ -311,6 +317,7 @@ const WeekComponent: React.FC<WeekProps> = ({date, sizeChange}) => {
                     </Box>
                 </Box>
             ))}
+            </Box>
             <Menu
                 anchorEl={eventEditAnchor}
                 open={isEditingEvent}

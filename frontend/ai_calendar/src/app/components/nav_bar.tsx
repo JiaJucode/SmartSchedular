@@ -22,7 +22,7 @@ const NavBar = () => {
     const [userMenuOpen, setUserMenuOpen] = useState(false);
 
     return (
-        <Box>
+        <Box sx={{ zIndex: 100 }}>
         <Toolbar sx={{ backgroundColor: 'primary.main' }}>
             <Box sx={{
                 height: '100%',

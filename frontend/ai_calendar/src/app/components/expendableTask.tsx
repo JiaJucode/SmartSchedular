@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import { Task } from '../tasks/page';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import ArrowRightIcon from '@mui/icons-material/ArrowRight';
 import AddIcon from '@mui/icons-material/Add';
 import InfoIcon from '@mui/icons-material/Info';
-import { Box, Button, Collapse, Divider, Typography, IconButton, TextField } from '@mui/material';
+import { Box, Button, Collapse, Divider, Typography, IconButton, TextField, InputAdornment } from '@mui/material';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -14,11 +14,12 @@ import Checkbox from '@mui/material/Checkbox';
 interface ExpandableTaskProps {
     parentId: number;
     paddingLeft: number;
+    openInfo: (task: Task) => void;
 }
 
 const server_base_url = process.env.NEXT_PUBLIC_SERVER_BASE_URL;
 
-const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft}) => {
+const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft, openInfo}) => {
     const [expandedTasks, setExpandedTasks] = useState(new Set<number>());
     const [edited, setEdited] = useState(false);
     const [tasks, setTasks] = useState<Task[]>([]);
@@ -38,7 +39,7 @@ const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft}) 
                     completed: task.completed,
                 })));
             });
-    }, []);
+    }, [parentId]);
 
     const handleToggle = (id: number) => {
         const newExpandedTasks = new Set(expandedTasks);
@@ -51,8 +52,6 @@ const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft}) 
     }
 
     const addTask = () => {
-        // TODO: send request to backend to add task and get new task id
-
         fetch(`${server_base_url}/task/add_task`, {
             method: 'POST',
             headers: {
@@ -105,7 +104,7 @@ const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft}) 
     }
 
     return (
-        <div>
+        <Box sx={{ overflowY: 'auto', width: '100%', height: '100%' }}>
             {tasks.map((task) => (
                 <Box key={task.id}
                 sx={{ backgroundColor: `${expandedTasks.has(task.id)
@@ -154,10 +153,9 @@ const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft}) 
                                     margin: 0,
                                 },
                             }}/>
-                            <IconButton onClick={() => {console.log('info')}}
+                            <IconButton onClick={() => {openInfo(task)}}
                             sx={{ color: 'primary.contrastText' }}>
                                 <InfoIcon />
-                                {/* TODO: make info right side bar*/}
                             </IconButton>
                             <Divider orientation='vertical' 
                             sx={{ backgroundColor: 'primary.contrastText', 
@@ -166,7 +164,19 @@ const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft}) 
                         </Box>
 
                         <Box sx={{ width: '15%', display: 'flex', flexDirection: 'row',
-                            justifyContent: 'space-between', padding: 0 }}>
+                            justifyContent: 'flex-end', position: 'relative' }}>
+                            { !task.startDate ? (
+                                <Box
+                                sx={{
+                                    position: 'absolute', zIndex: 1,
+                                    width: '100%', height: '100%', display: 'flex',
+                                    justifyContent: 'center', alignItems: 'center',
+                                    textOverflow: 'ellipsis', backgroundColor: 'primary.dark',
+                                    pointerEvents: 'none'
+                                }}>
+                                    No Date Selected
+                                </Box>
+                            ) : null}
                             <LocalizationProvider dateAdapter={AdapterDayjs}>
                                 <DatePicker value={dayjs(task.startDate?.getDate())}
                                 onChange={(newValue) => {
@@ -174,7 +184,11 @@ const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft}) 
                                     updateTask(task);
                                 }}
                                 slotProps={{ 
-                                    textField: {onBlur: () => {saveUpdatedTask(task)},}
+                                    textField: {
+                                        placeholder: task.startDate === null ? '' : 'No Date Selected',
+                                        onBlur: () => {saveUpdatedTask(task)},
+                                        onFocus: () => {task.startDate = new Date(); updateTask(task);}
+                                    },
                                 }}
                                 disableOpenPicker
                                 sx={{
@@ -185,27 +199,41 @@ const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft}) 
                                         padding: 0,
                                         textAlign: 'center',
                                     },
-                                    "& .MuiInputBase-root": {
+                                    '& .MuiInputBase-root': {
                                         padding: 0,
                                         height: '100%',
-                                    }
+                                    },
                                 }}/>
                             </LocalizationProvider>
-                            <Divider orientation='vertical' 
-                            sx={{ backgroundColor: 'primary.contrastText', 
-                                width: '1px',
-                            }}/>
                         </Box>
+                        <Divider orientation='vertical'
+                        sx={{ backgroundColor: 'primary.contrastText', width: '1px' }} />
                         <Box sx={{ width: '15%', display: 'flex', flexDirection: 'row',
-                        justifyContent: 'flex-end', padding: 0 }}>
+                            justifyContent: 'flex-end', position: 'relative' }}>
+                            { !task.endDate ? (
+                                <Box
+                                sx={{
+                                    position: 'absolute', zIndex: 1,
+                                    width: '100%', height: '100%', display: 'flex',
+                                    justifyContent: 'center', alignItems: 'center',
+                                    textOverflow: 'ellipsis', backgroundColor: 'primary.dark',
+                                    pointerEvents: 'none'
+                                }}>
+                                    No Date Selected
+                                </Box>
+                            ) : null}
                             <LocalizationProvider dateAdapter={AdapterDayjs}>
                                 <DatePicker value={dayjs(task.endDate?.getDate())}
                                 onChange={(newValue) => {
-                                    newValue ? task.startDate = newValue.toDate() : null;
+                                    newValue ? task.endDate = newValue.toDate() : null;
                                     updateTask(task);
                                 }}
                                 slotProps={{ 
-                                    textField: {onBlur: () => {saveUpdatedTask(task)},}
+                                    textField: {
+                                        placeholder: task.endDate === null ? '' : 'No Date Selected',
+                                        onBlur: () => {saveUpdatedTask(task)},
+                                        onFocus: () => {task.endDate = new Date(); updateTask(task);}
+                                    },
                                 }}
                                 disableOpenPicker
                                 sx={{
@@ -216,10 +244,10 @@ const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft}) 
                                         padding: 0,
                                         textAlign: 'center',
                                     },
-                                    "& .MuiInputBase-root": {
+                                    '& .MuiInputBase-root': {
                                         padding: 0,
                                         height: '100%',
-                                    }
+                                    },
                                 }}/>
                             </LocalizationProvider>
                         </Box>
@@ -229,10 +257,12 @@ const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft}) 
                         backgroundColor: 'primary.contrastText' }} />
                     <Collapse in={expandedTasks.has(task.id)}
                     sx={{ width: '100%' }}>
-                        <ExpandableTask parentId={task.id} paddingLeft={paddingLeft + 20}/>
-                    {/* <Divider orientation='horizontal' 
-                    sx={{ width: '100%', height: '1px', 
-                    backgroundColor: 'primary.contrastText' }} /> */}
+                        {expandedTasks.has(task.id) ? (
+                            <Suspense fallback={<div>Loading...</div>}>
+                                <ExpandableTask parentId={task.id} paddingLeft={paddingLeft + 20}
+                                openInfo={openInfo} />
+                            </Suspense>
+                        ) : null}
                     </Collapse>
                 </Box>
             ))}
@@ -251,7 +281,7 @@ const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft}) 
                     Add Task
                 </Typography>
             </Button>
-        </div>
+        </Box>
     );
 }
 

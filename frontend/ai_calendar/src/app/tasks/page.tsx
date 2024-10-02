@@ -1,11 +1,14 @@
 "use client";
 
+// TODO implement file upload
 import React, { useEffect, useState } from 'react';
 import SideBar from '../components/side_bar';
-import { Box, Button, Divider, Stack, Toolbar, Typography } from '@mui/material';
+import { Box, Button, Divider, IconButton, Stack, Toolbar, Typography } from '@mui/material';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 import ExpandableTask from '../components/expendableTask';
 import AddIcon from '@mui/icons-material/Add';
+import TaskInfoSideBar from '../components/task_info_side_bar';
+import KeyboardDoubleArrowRightIcon from '@mui/icons-material/KeyboardDoubleArrowRight';
 
 export interface Task {
     id: number;
@@ -25,11 +28,12 @@ const tableSettings = {
 const server_base_url = process.env.NEXT_PUBLIC_SERVER_BASE_URL;
 
 const TasksPage = () => {
-    const [hideSideBar, setHideSideBar] = useState(false);
-    const [delayedHide, setDelayedHide] = useState(false);
+    const [openSideBar, setOpenSideBar] = useState(true);
     const [googleDriveLinked, setGoogleDriveLinked] = useState(false);
     const [projects, setProjects] = useState<Task[]>([]);
-    const [selectedProject, setSelectedProject] = useState<number>(-1);
+    const [selectedProject, setSelectedProject] = useState<number>(1);
+    const [infoSiderOpen, setInfoSiderOpen] = useState(false);
+    const [infoTask, setInfoTask] = useState<Task | null>(null);
 
     useEffect(() => {
         // TODO: check if account is linked to google drive
@@ -79,11 +83,102 @@ const TasksPage = () => {
             });
     }
 
+    const openInfo = (task: Task) => {
+        setInfoTask(task);
+        setInfoSiderOpen(true);
+    }
+
     return (
         <Box sx={{ width: '100vw', display: 'flex', flexDirection: 'row', 
             justifyContent: 'space-between', overflow: 'visible', overflowY: 'hidden'}}>
-            <SideBar hide={hideSideBar} setHide={setHideSideBar} currentHide={delayedHide}
-            setCurrentHide={setDelayedHide}>
+            <Box sx={{ 
+                width: '100vw',
+                position: 'relative',
+                overflowY: 'hidden',
+                height: '93vh',
+                paddingLeft: openSideBar ? '301px' : '0px',
+            }}>
+                <Toolbar variant='dense' disableGutters
+                sx={{ flexDirection: "column", width: '100%', padding: '0px'}}>
+                    <Box sx={{ justifyContent: 'space-between', height: '40px', 
+                        alignItems: 'center', display: 'flex', backgroundColor: 'primary.main',
+                        width: '100%'
+                    }}>
+                        {/* TODO: add filter */}
+                        { !openSideBar ? (
+                            <Button onClick={() => setOpenSideBar(!openSideBar)}
+                            sx={{ 
+                                position: 'absolute',
+                                color: 'primary.contrastText', 
+                                backgroundColor: 'primary.light',
+                                borderRadius: '20px',
+                                height: '40px',
+                                left: '-25px',
+                                top: '0px',
+                                '&:hover': {
+                                    backgroundColor: 'primary.light',
+                                },
+                                '&.MuiButtonBase-root': {
+                                    paddingRight: '0px',
+                                    paddingLeft: '0px',
+                                }
+                            }}>
+                                <KeyboardDoubleArrowRightIcon sx={{ 
+                                paddingLeft: '0px', right: '5px', fontSize: '1.5em',
+                                position: 'absolute'}} />
+                            </Button>
+                        )
+                        : null}
+                        
+                    </Box>
+                    
+                    <Divider sx={{ backgroundColor: 'primary.contrastText', width: '100%' }} />
+                    <Box sx={{ justifyContent: 'space-between', height: '20px',
+                        width: '100%', alignItems: 'center', display: 'flex'
+                    }}>
+
+                        {Object.values(tableSettings).map((info, index) => (
+                            <Box key={index} sx={{ 
+                                width: info.width,
+                                height: '100%',
+                                flexDirection: 'row',
+                                display: 'flex',
+                            }}>
+                                <Typography align='center'
+                                sx={{ 
+                                    textOverflow: 'ellipsis',
+                                    overflowX: 'hidden',
+                                    color: 'primary.contrastText',
+                                    width: '100%' }}>
+                                    {info.headerName}
+                                </Typography>
+                                {index !== Object.entries(tableSettings).length - 1 ?
+                                <Divider orientation='vertical'
+                                sx={{ 
+                                    backgroundColor: 'primary.contrastText', 
+                                    width: '1px',
+                                    height: '20px',
+                                    left: '0px',
+                                }} />
+                                : null}
+                            </Box>
+                        ))}
+                    </Box>
+                    <Divider sx={{ backgroundColor: 'primary.contrastText', width: '100%' }} />
+                </Toolbar>
+                {selectedProject !== -1? (
+                    <Box sx={{ width: '100%', height: 'calc(100% - 60px)', overflowY: 'auto', 
+                        paddingBottom: '15px'}}>
+                        <ExpandableTask parentId={selectedProject}
+                        paddingLeft={0} openInfo={openInfo}/>
+                    </Box>)
+                : null}
+            </Box>
+            {infoTask === null ? null :
+            <TaskInfoSideBar task={infoTask} openSideBar={infoSiderOpen}
+            setOpenSideBar={setInfoSiderOpen} />}
+            
+            <SideBar open={openSideBar} setOpen={setOpenSideBar}>
                 <Stack
                 sx={{
                     width: '100%',
@@ -136,62 +231,6 @@ const TasksPage = () => {
 
                 </Stack>
             </SideBar>
-            <Box sx={{ 
-                width: delayedHide ? '100vw' : 'calc(100vw - 330px)',
-                position: 'relative',
-                overflowY: 'hidden',
-                height: '93vh',
-                paddingLeft: '1px',
-            }}>
-                <Toolbar variant='dense' disableGutters
-                sx={{ flexDirection: "column", width: '100%', padding: '0px' }}>
-                    <Box sx={{ justifyContent: 'space-between', height: '40px', 
-                        alignItems: 'center', display: 'flex', backgroundColor: 'primary.main',
-                        width: '100%'
-                    }}>
-                        page tool bar
-                    </Box>
-                    <Divider sx={{ backgroundColor: 'primary.contrastText', width: '100%' }} />
-                    <Box sx={{ justifyContent: 'space-between', height: '20px',
-                        width: '100%', alignItems: 'center', display: 'flex'
-                    }}>
-
-                        {Object.values(tableSettings).map((info, index) => (
-                            <Box key={index} sx={{ 
-                                width: info.width,
-                                height: '100%',
-                                flexDirection: 'row',
-                                display: 'flex',
-                            }}>
-                                <Typography align='center'
-                                sx={{ 
-                                    textOverflow: 'ellipsis',
-                                    overflowX: 'hidden',
-                                    color: 'primary.contrastText',
-                                    width: '100%' }}>
-                                    {info.headerName}
-                                </Typography>
-                                {index !== Object.entries(tableSettings).length - 1 ?
-                                <Divider orientation='vertical'
-                                sx={{ 
-                                    backgroundColor: 'primary.contrastText', 
-                                    width: '1px',
-                                    height: '20px',
-                                    left: '0px',
-                                }} />
-                                : null}
-                            </Box>
-                        ))}
-                    </Box>
-                    <Divider sx={{ backgroundColor: 'primary.contrastText', width: '100%' }} />
-                </Toolbar>
-                {selectedProject !== -1? (
-                    <Box>
-                        <ExpandableTask parentId={selectedProject}
-                        paddingLeft={0} />
-                    </Box>)
-                : null}
-            </Box>
         </Box>
     );
 };

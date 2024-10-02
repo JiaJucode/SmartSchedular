@@ -12,12 +12,12 @@ import Calendar from 'react-calendar';
 import './styles.css';
 import ArrowLeftIcon from '@mui/icons-material/ArrowLeft';
 import ArrowRightIcon from '@mui/icons-material/ArrowRight';
+import KeyboardDoubleArrowRightIcon from '@mui/icons-material/KeyboardDoubleArrowRight';
 
 const eventTagNames = ["Google Drive"];
 
 const CalendarPage = () => {
-    const [hideSideBar, setHideSideBar] = useState(false);
-    const [delayedHide, setDelayedHide] = useState(false);
+    const [openSideBar, setOpenSideBar] = useState(true);
     const [eventTags, setEventTags] = useState<boolean[]>(eventTagNames.map(() => false));
     const [possibleEventTags, setPossibleEventTags] = useState<boolean[]>([]);
     const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -39,7 +39,7 @@ const CalendarPage = () => {
 
             }
             else {
-                // TODO: fetch todos for files from google drive
+                // TODO: fetch tasks for files from google drive
 
                 setEventTags(newEventTags);
             }
@@ -55,8 +55,7 @@ const CalendarPage = () => {
     return (
         <Box sx={{ width: '100vw', display: 'flex', flexDirection: 'row', 
         justifyContent: 'space-between', overflow: 'visible'}}>
-            <SideBar hide={hideSideBar} setHide={setHideSideBar} currentHide={delayedHide} 
-            setCurrentHide={setDelayedHide}>
+            <SideBar open={openSideBar} setOpen={setOpenSideBar}>
                 <Stack>
                     <Calendar locale='en-GB' onChange={handleDateChange} value={selectedDate} 
                     selectRange={false} />
@@ -88,14 +87,39 @@ const CalendarPage = () => {
                 </Stack>
             </SideBar>
             <Box sx={{ 
-                width: delayedHide ? '100vw' : 'calc(100vw - 330px)',
+                width: '100vw',
                 position: 'relative',
+                paddingLeft: openSideBar ? '302px' : '0',
                 overflowY: 'hidden',
                 height: '93vh',
                 }}>
                 <Toolbar sx={{ flexDirection: 'row', justifyContent: 'space-between', 
-                    color: 'primary.contrastText', position: 'sticky', zIndex: 10, 
+                    color: 'primary.contrastText', zIndex: 5, 
                     top: 0, backgroundColor: 'primary.dark' }}>
+                    { !openSideBar ? (
+                            <Button onClick={() => setOpenSideBar(!openSideBar)}
+                            sx={{ 
+                                position: 'absolute',
+                                color: 'primary.contrastText', 
+                                backgroundColor: 'primary.light',
+                                borderRadius: '20px',
+                                height: '40px',
+                                left: '-25px',
+                                top: '0px',
+                                '&:hover': {
+                                    backgroundColor: 'primary.light',
+                                },
+                                '&.MuiButtonBase-root': {
+                                    paddingRight: '0px',
+                                    paddingLeft: '0px',
+                                }
+                            }}>
+                                <KeyboardDoubleArrowRightIcon sx={{ 
+                                paddingLeft: '0px', right: '5px', fontSize: '1.5em',
+                                position: 'absolute'}} />
+                            </Button>
+                        )
+                        : null}
                     <Typography variant="h5" paddingLeft={2.6} width={'220px'}>
                         {selectedDate.toDateString()}
                     </Typography>
@@ -152,7 +176,7 @@ const CalendarPage = () => {
                     </ButtonGroup>
                 </Toolbar>
                 {viewMode === "day" ? <DayComponent date={selectedDate}/> 
-                : <WeekComponent date={selectedDate} sizeChange={delayedHide}/>}
+                : <WeekComponent date={selectedDate} sizeChange={openSideBar}/>}
             </Box>
         </Box>
     );

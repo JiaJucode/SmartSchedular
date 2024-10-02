@@ -82,11 +82,11 @@ class TaskDB:
             parent_id=sql.Literal(parent_id)
         )
         self.cursor.execute(query)
-        result = self.cursor.fetchall()
-        if len(result) == 0:
+        try: 
+            child_ids = [row[1] for row in self.cursor.fetchall()]
+            return [self.__get_task(child_id) for child_id in child_ids]
+        except:
             return []
-        child_ids = [row[1] for row in result]
-        return [self.__get_task(child_id) for child_id in child_ids]
     
     def update_task(self, id: int, title: Optional[str] = None, description: Optional[str] = None,
                     start_datetime: Optional[datetime] = None, end_datetime: Optional[datetime] = None,

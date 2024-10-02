@@ -17,7 +17,6 @@ def get_tasks_by_parent_id(parent_id: int) -> List[Dict]:
         },
         ...]
     """
-    # TODO: fix the date to string conversion
     tasks = db.get_child_tasks(parent_id)
     return tasks
 

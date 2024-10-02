@@ -1,65 +1,34 @@
 "use client";
 
 import React from 'react';
-import { Box, Button } from '@mui/material';
-import KeyboardDoubleArrowRightIcon from '@mui/icons-material/KeyboardDoubleArrowRight';
+import { Box, Button, Drawer } from '@mui/material';
 import KeyboardDoubleArrowLeftIcon from '@mui/icons-material/KeyboardDoubleArrowLeft';
 
 interface SideBarProps {
-    hide: boolean;
-    setHide: (value: boolean) => void;
-    currentHide: boolean;
-    setCurrentHide: (value: boolean) => void;
     children: React.ReactNode;
+    open: boolean;
+    setOpen: (value: boolean) => void;
 }
 
-const SideBar: React.FC<SideBarProps> = ({ children, hide, setHide, currentHide, setCurrentHide }) => {
+const SideBar: React.FC<SideBarProps> = ({ children, open, setOpen }) => {
 
-    const handleButton = (setValue: boolean) => {
-        setHide(setValue);
-        if (setValue) {
-            setTimeout(() => {
-                setCurrentHide(setValue);
-            }, 500);
-        }
-        else {
-            setCurrentHide(setValue);
-        }
-    }
 
     return (
-        <Box sx={{ 
-            width: currentHide ? '40px' : '330px',
-            height: '100%',
-            display: 'flex', 
-            transform: hide ? 'translateX(-100%)' : 'translateX(0%)',
-            transition: 'transform 0.5s ease',
-            position: 'relative',
-            flexDirection: 'row' }}>
-            {currentHide ? 
-                <Box>
-                    <Button onClick={() => handleButton(false)}
-                        sx={{
-                            backgroundColor: 'primary.light',
-                            color: 'primary.contrastText',
-                            paddingLeft: '40px',
-                        }}>
-                            
-                        <KeyboardDoubleArrowRightIcon />
-                    </Button>
-                </Box> 
-                :
+        <Drawer open={open} onClose={() => setOpen(false)} variant='persistent' 
+        anchor='left' sx={{ marginTop: '64px', zIndex: 1 }}>
                 <Box sx={{
+                        marginTop: '64px',
                         height: '100%',
-                        width: '100%',
+                        width: '300px',
                         backgroundColor: 'primary.light',
+                        color: 'primary.contrastText',
                     }}>
                         <Box sx={{
                             width: '100%',
                             justifyContent: 'flex-end',
                             display: 'flex',
                         }}>
-                            <Button onClick={() => handleButton(true)}
+                            <Button onClick={() => {setOpen(false)}}
                                 sx={{
                                     right: '5px',
                                     color: 'primary.contrastText',
@@ -67,10 +36,10 @@ const SideBar: React.FC<SideBarProps> = ({ children, hide, setHide, currentHide,
                                 <KeyboardDoubleArrowLeftIcon />
                             </Button>
                         </Box>
+
                         {children}
                 </Box>
-            }
-        </Box>
+        </Drawer>
     );
 }
 

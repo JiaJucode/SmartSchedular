@@ -23,6 +23,8 @@ interface Event {
 
 const server_base_url = process.env.NEXT_PUBLIC_SERVER_BASE_URL;
 
+const topPadding = 10;
+
 const DayComponent: React.FC<DayProps> = ({date}) => {
     const [events, setEvents] = useState<Event[]>([]);
     const [isEditingEvent, setIsEditingEvent] = useState(false);
@@ -179,8 +181,7 @@ const DayComponent: React.FC<DayProps> = ({date}) => {
             position: 'relative',
         }}>
             <Toolbar variant="dense"
-            sx={{ position: 'sticky', zIndex: 10,
-                backgroundColor: 'primary.dark', minHeight: '30px'}}>
+            sx={{ zIndex: 4, backgroundColor: 'primary.dark', minHeight: '30px'}}>
                 <Typography fontWeight={"bold"}
                 sx={{
                     position: 'absolute',
@@ -205,7 +206,7 @@ const DayComponent: React.FC<DayProps> = ({date}) => {
                     handleTimeBlockClick(event, click_event)}}
                 sx={{
                     marginTop: `${event.startDateTime.getHours() * 70 + 
-                        event.startDateTime.getMinutes() * 1.2 + 37}px`,
+                        event.startDateTime.getMinutes() * 1.2 + 1 + topPadding}px`,
                     marginLeft: `${widthOffset}px`,
                     width: '88%',
                     height: `${(event.endDateTime.getTime() - 
@@ -225,7 +226,7 @@ const DayComponent: React.FC<DayProps> = ({date}) => {
                 </div>
             ))}
 
-
+            <Box sx={{marginTop: `${topPadding-35}px`,}}>
 			{Array.from({length: hourLineCount}, (_, i) => (
                 <Box key={i}
                 sx={{ 
@@ -244,7 +245,6 @@ const DayComponent: React.FC<DayProps> = ({date}) => {
                             backgroundColor: 'primary.contrastText', 
                             height: '1px',
                             width: '88%',
-                            marginTop: '0px',
                             position: 'absolute',
                             zIndex: 2,
                         }} />
@@ -273,6 +273,8 @@ const DayComponent: React.FC<DayProps> = ({date}) => {
                     </Box>
                 </Box>
             ))}
+            </Box>
+
             <Menu
                 anchorEl={eventEditAnchor}
                 open={isEditingEvent}

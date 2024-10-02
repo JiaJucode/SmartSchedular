@@ -83,21 +83,19 @@ const EditEvent = ({eventInfo, updateEvent, deleteEvent, closeCreateEvent}: Crea
                 sx={{
                     marginTop: '10px',
                     input: {
-                        color: 'primary.contrastText', // Text color inside the input
+                        color: 'primary.contrastText',
                     },
                     label: {
-                        color: 'primary.contrastText', // Label color
+                        color: 'primary.contrastText',
                     },
                     '& .MuiOutlinedInput-root': {
                         '&:hover fieldset': {
-                            borderColor: 'primary.main', // Border color when hovered
+                            borderColor: 'primary.main',
                         },
                         '&.Mui-focused fieldset': {
-                            borderColor: 'primary.main', // Border color when focused
+                            borderColor: 'primary.main',
                         },
                     },
-                    // TODO: color too bright
-
                 }}
                 />
             </LocalizationProvider>
