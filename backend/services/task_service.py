@@ -42,3 +42,24 @@ def service_add_task(parent_id: int, title: str,
         end_date = datetime.fromisoformat(str_end_date)
     return db.add_task(parent_id, title, description, start_date, end_date, completed)
     
+def service_update_task(id: int, title: str, description: str,
+                        str_start_date: str | None, str_end_date: str | None, 
+                        completed: bool) -> None:
+    """
+    params:
+        id: int,
+        title: str,
+        description: str,
+        start_date: iso_date_string,
+        end_date: iso_date_string,
+        completed: bool
+    Returns:
+        None
+    """
+    start_date = None
+    end_date = None
+    if str_start_date is not None:
+        start_date = datetime.fromisoformat(str_start_date)
+    if str_end_date is not None:
+        end_date = datetime.fromisoformat(str_end_date)
+    db.update_task(id, title, description, start_date, end_date, completed)

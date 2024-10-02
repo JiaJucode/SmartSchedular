@@ -55,3 +55,25 @@ def add_task():
     completed = request.json.get("completed")
     id = service_add_task(parent_id, title, description, start_date, end_date, completed)
     return jsonify({"id": id}) 
+
+@bp.route("/update_task", methods=["POST"])
+def update_task():
+    """
+    params:
+        "id": int,
+        "title": str,
+        "description": str,
+        "startDate": iso_date_string,
+        "endDate": iso_date_string,
+        "completed": bool
+    Returns:
+        None
+    """
+    id = request.json.get("id")
+    title = request.json.get("title")
+    description = request.json.get("description")
+    start_date = request.json.get("startDate")
+    end_date = request.json.get("endDate")
+    completed = request.json.get("completed")
+    service_update_task(id, title, description, start_date, end_date, completed)
+    return jsonify({})

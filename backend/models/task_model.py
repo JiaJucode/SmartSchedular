@@ -88,9 +88,9 @@ class TaskDB:
         except:
             return []
     
-    def update_task(self, id: int, title: Optional[str] = None, description: Optional[str] = None,
+    def update_task(self, id: int, title: str = "", description: str = "",
                     start_datetime: Optional[datetime] = None, end_datetime: Optional[datetime] = None,
-                    completed: Optional[bool] = None) -> None:
+                    completed: bool = False) -> None:
         if (id == 0):
             raise ValueError("id cannot be root task")
         set_clause = {}

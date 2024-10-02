@@ -21,6 +21,8 @@ const server_base_url = process.env.NEXT_PUBLIC_SERVER_BASE_URL;
 
 const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft, openInfo}) => {
     const [expandedTasks, setExpandedTasks] = useState(new Set<number>());
+    // temp buffer for server updates
+    const [localDate, setLocalDate] = useState<Date>(new Date());
     const [edited, setEdited] = useState(false);
     const [tasks, setTasks] = useState<Task[]>([]);
 
@@ -28,16 +30,19 @@ const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft, o
         fetch(`${server_base_url}/task/get_tasks?parent_id=${parentId}`)
             .then((response) => response.json())
             .then((data: {tasks: {id: number, title: string, description: string,
-                start_datetime: Date | null, end_datetime: Date | null,
+                start_datetime: string, end_datetime: string,
                 completed: boolean}[]}) => {
                 setTasks(data.tasks.map((task) => ({
                     id: task.id,
                     title: task.title,
                     description: task.description,
-                    startDate: task.start_datetime,
-                    endDate: task.end_datetime,
+                    startDate: task.start_datetime === "" || !task.start_datetime 
+                        ? null : new Date(task.start_datetime),
+                    endDate: task.end_datetime === "" || !task.end_datetime
+                        ? null : new Date(task.end_datetime),
                     completed: task.completed,
                 })));
+                console.log('tasks: ', data.tasks);
             });
     }, [parentId]);
 
@@ -81,25 +86,46 @@ const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft, o
         });
     }
 
-    const updateTask = (task: Task) => {
-        setTasks((prevTasks) => {
-            const newTasks = [...prevTasks];
-            const index = newTasks.findIndex((t) => t.id === task.id);
-            if (newTasks[index] === task) {
-                return newTasks;
-            }
-            else {
-                newTasks[index] = task;
-                setEdited(true);
-                return newTasks;
-            }
-        });
-    }
+    const updateTask = (id: number, updates: Partial<Task>) => {
+        const hasChanges = tasks.some(task => task.id === id && 
+            Object.keys(updates).some(key => 
+                task[key as keyof Task] !== updates[key as keyof Task]
+            )
+        );
 
-    const saveUpdatedTask = (task: Task) => {
-        if (edited) {
-            // TODO: send request to backend to update task
+        if (hasChanges) {
+            console.log('set edited');
+            setEdited(true);
+            setTasks(prevTasks =>
+                prevTasks.map(task => 
+                    task.id === id ? { ...task, ...updates } : task
+                )
+            );
+        }
+    };
+
+    const saveUpdatedTask = (task: Task, forceSave: boolean = false) => {
+        if (edited || forceSave) {
+            console.log('saving task');
+            console.log(task);
+            fetch(`${server_base_url}/task/update_task`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    id: task.id,
+                    title: task.title,
+                    description: task.description,
+                    startDate: task.startDate?.toISOString(),
+                    endDate: task.endDate?.toISOString(),
+                    completed: task.completed,
+                }),
+            });
             setEdited(false);
+        }
+        else {
+            console.log('no changes to save');
         }
     }
 
@@ -118,9 +144,9 @@ const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft, o
                             }
                         }}>
                             <Checkbox checked={task.completed} onChange={() => {
-                                task.completed = !task.completed;
-                                updateTask(task);
-                                saveUpdatedTask(task);
+                                const newTask = {...task, completed: !task.completed};
+                                updateTask(task.id, {completed: !task.completed});
+                                saveUpdatedTask(newTask, true);
                             }} 
                             sx={{ color: 'primary.contrastText',
                                 '&.Mui-checked': {
@@ -139,8 +165,7 @@ const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft, o
                             slotProps={{ 
                                 input: {disableUnderline: true} }}
                             onChange={(e) => {
-                                    task.title = e.target.value;
-                                    updateTask(task);}}
+                                    updateTask(task.id, {title: e.target.value});}}
                             onBlur={() => saveUpdatedTask(task)}
                             sx={{
                                 marginLeft: 1, display: 'flex',
@@ -178,16 +203,20 @@ const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft, o
                                 </Box>
                             ) : null}
                             <LocalizationProvider dateAdapter={AdapterDayjs}>
-                                <DatePicker value={dayjs(task.startDate?.getDate())}
-                                onChange={(newValue) => {
-                                    newValue ? task.startDate = newValue.toDate() : null;
-                                    updateTask(task);
+                                <DatePicker value={dayjs(task.startDate)}
+                                onChange={() => {
+                                    setLocalDate(task.startDate || new Date());
+                                    updateTask(task.id, {startDate: task.startDate});
                                 }}
                                 slotProps={{ 
                                     textField: {
                                         placeholder: task.startDate === null ? '' : 'No Date Selected',
-                                        onBlur: () => {saveUpdatedTask(task)},
-                                        onFocus: () => {task.startDate = new Date(); updateTask(task);}
+                                        onBlur: () => {
+                                            console.log('date: ', localDate);
+                                            saveUpdatedTask({ ...task, startDate: localDate })},
+                                        onFocus: () => {
+                                            updateTask(task.id, {startDate: new Date()});
+                                        }
                                     },
                                 }}
                                 disableOpenPicker
@@ -223,16 +252,18 @@ const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft, o
                                 </Box>
                             ) : null}
                             <LocalizationProvider dateAdapter={AdapterDayjs}>
-                                <DatePicker value={dayjs(task.endDate?.getDate())}
+                                <DatePicker value={dayjs(task.endDate)}
                                 onChange={(newValue) => {
-                                    newValue ? task.endDate = newValue.toDate() : null;
-                                    updateTask(task);
+                                    setLocalDate(task.startDate || new Date());
+                                    updateTask(task.id, {endDate: newValue?.toDate()});
                                 }}
                                 slotProps={{ 
                                     textField: {
                                         placeholder: task.endDate === null ? '' : 'No Date Selected',
-                                        onBlur: () => {saveUpdatedTask(task)},
-                                        onFocus: () => {task.endDate = new Date(); updateTask(task);}
+                                        onBlur: () => {saveUpdatedTask({ ...task, endDate: localDate })},
+                                        onFocus: () => {
+                                            updateTask(task.id, {endDate: new Date()});
+                                        }
                                     },
                                 }}
                                 disableOpenPicker
