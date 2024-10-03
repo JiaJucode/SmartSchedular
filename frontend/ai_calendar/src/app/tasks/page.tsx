@@ -186,7 +186,7 @@ const TasksPage = () => {
                 : null}
             </Box>
             {infoTask === null ? null :
-            <TaskInfoSideBar task={infoTask} openSideBar={infoSiderOpen}
+            <TaskInfoSideBar currentTask={infoTask} openSideBar={infoSiderOpen}
             setOpenSideBar={setInfoSiderOpen} />}
             
             <SideBar open={openSideBar} setOpen={setOpenSideBar}>

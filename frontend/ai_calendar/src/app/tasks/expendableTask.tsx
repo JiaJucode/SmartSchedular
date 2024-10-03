@@ -12,6 +12,7 @@ import dayjs from 'dayjs';
 import Checkbox from '@mui/material/Checkbox';
 import LiveSyncTextfield from './live_sync_textfield';
 import LiveSyncDatePicker from './live_sync_date_picker';
+import LiveSyncCheckbox from './live_sync_checkbox';
 
 interface ExpandableTaskProps {
     parentId: number;
@@ -35,6 +36,7 @@ const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft, o
                 start_datetime: string, end_datetime: string, priority: number,
                 estimated_time: number, completed: boolean}[]
             }) => {
+                console.log(data);
                 setTasks(data.tasks.map((task) => ({
                     id: task.id,
                     title: task.title,
@@ -94,27 +96,6 @@ const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft, o
         });
     }
 
-    const updateCheckboxes = (id: number, checked: boolean) => {
-        setTasks((prevTasks) => {
-            return prevTasks.map((task) => {
-                if (task.id === id) {
-                    return {...task, completed: checked};
-                }
-                return task;
-            });
-        });
-        fetch(`${server_base_url}/task/update_task`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                id: id,
-                completed: checked,
-            }),
-        });
-    }
-
     return (
         <Box sx={{ overflowY: 'auto', width: '100%', height: '100%' }}>
             {tasks.map((task) => (
@@ -129,13 +110,8 @@ const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft, o
                                 margin: 0,
                             }
                         }}>
-                            <Checkbox checked={task.completed} onChange={() => 
-                            updateCheckboxes(task.id, !task.completed)}
-                            sx={{ color: 'primary.contrastText',
-                                '&.Mui-checked': {
-                                    color: 'primary.contrastText'
-                                }
-                            }} />
+                            <LiveSyncCheckbox task_id={task.id} fieldKey='completed'
+                            value={task.completed} />
                             <IconButton onClick={() => handleToggle(task.id)}
                             sx={{ justifyContent: 'flex-start', padding: 0,
                                 color: 'primary.contrastText'

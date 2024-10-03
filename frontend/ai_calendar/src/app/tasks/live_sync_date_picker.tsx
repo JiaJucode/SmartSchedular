@@ -2,7 +2,7 @@ import { Typography } from "@mui/material";
 import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs from "dayjs";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 
 interface LiveSyncDatePickerProps {
@@ -16,6 +16,11 @@ const server_base_url = process.env.NEXT_PUBLIC_SERVER_BASE_URL;
 const LiveSyncDatePicker: React.FC<LiveSyncDatePickerProps> = ({ task_id, fieldKey, value }) => {
     const [dateValue, setDateValue] = useState<Date | null>(value);
     const [valueChanged, setValueChanged] = useState<boolean>(false);
+
+    useEffect(() => {
+        setDateValue(value);
+        setValueChanged(false);
+    }, [task_id]);
 
     const saveUpdatedTask = () => {
         console.log(`Updating task ${task_id} with ${fieldKey} = ${dateValue}`);
@@ -38,8 +43,9 @@ const LiveSyncDatePicker: React.FC<LiveSyncDatePickerProps> = ({ task_id, fieldK
             sx={{
                 position: 'absolute', zIndex: 1,
                 width: '100%', height: '100%', display: 'flex',
-                alignItems: 'center', textOverflow: 'ellipsis', 
-                backgroundColor: 'primary.dark', pointerEvents: 'none', 
+                alignItems: 'center', justifyContent: 'center',
+                textOverflow: 'ellipsis', backgroundColor: 'primary.dark',
+                pointerEvents: 'none', 
             }}>
                 No Date Selected
             </Typography>
@@ -71,12 +77,14 @@ const LiveSyncDatePicker: React.FC<LiveSyncDatePickerProps> = ({ task_id, fieldK
                 width: '100%',
                 height: '100%',
                 input: {
+                    border: 'none',
                     height: '100%',
                     color: 'primary.contrastText',
                     padding: 0,
                     textAlign: 'center',
                 },
                 '& .MuiInputBase-root': {
+                    border: 'none',
                     padding: 0,
                     height: '100%',
                 },

@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { TextField } from '@mui/material';
 
 interface LiveSyncTextfieldProps {
     task_id: number;
     fieldKey: string;
-    value: string;
+    value: string | null;
     numberOnly: boolean;
 }
 
@@ -14,6 +14,10 @@ const LiveSyncTextfield: React.FC<LiveSyncTextfieldProps> = ({ task_id, fieldKey
     numberOnly = false }) => {
     const [textValue, setTextValue] = useState<string | null>(value);
     const [valueChanged, setValueChanged] = useState<boolean>(false);
+
+    useEffect(() => {
+        setTextValue(value);
+    }, [task_id]);
 
     const saveUpdatedTask = (task_id: number) => {
         console.log(`Updating task ${task_id} with ${fieldKey} = ${textValue}`);
