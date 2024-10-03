@@ -5,9 +5,9 @@ import React, { useEffect, useState } from 'react';
 import SideBar from '../components/side_bar';
 import { Box, Button, Divider, IconButton, Stack, Toolbar, Typography } from '@mui/material';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
-import ExpandableTask from '../components/expendableTask';
+import ExpandableTask from './expendableTask';
 import AddIcon from '@mui/icons-material/Add';
-import TaskInfoSideBar from '../components/task_info_side_bar';
+import TaskInfoSideBar from './task_info_side_bar';
 import KeyboardDoubleArrowRightIcon from '@mui/icons-material/KeyboardDoubleArrowRight';
 
 export interface Task {

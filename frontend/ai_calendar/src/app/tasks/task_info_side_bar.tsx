@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Task } from '../tasks/page';
+import { Task } from './page';
 import { Box, Drawer, IconButton, Typography } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 
