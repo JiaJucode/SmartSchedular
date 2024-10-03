@@ -3,10 +3,12 @@ import psycopg2
 from psycopg2 import sql
 from datetime import datetime
 from typing import List, Optional, Dict
+from flask import current_app as app
 
 DATABASE_URL = os.getenv('DATABASE_URL')
 
-tasks_columns = ['id', 'title', 'description', 'start_datetime', 'end_datetime', 'completed']
+tasks_columns = ['id', 'title', 'description', 'start_datetime', 
+                 'end_datetime', 'priority', 'estimated_time', 'completed']
 
 class TaskDB:
     def __init__(self):
@@ -23,6 +25,8 @@ class TaskDB:
                 description TEXT,
                 start_datetime TIMESTAMP,
                 end_datetime TIMESTAMP,
+                priority INTEGER,
+                estimated_time INTEGER,
                 completed BOOLEAN
             )
             """
@@ -90,11 +94,13 @@ class TaskDB:
     
     def update_task(self, id: int, title: str = "", description: str = "",
                     start_datetime: Optional[datetime] = None, end_datetime: Optional[datetime] = None,
+                    priority: Optional[int] = 0, estimated_time: Optional[int] = None,
                     completed: bool = False) -> None:
         if (id == 0):
             raise ValueError("id cannot be root task")
         set_clause = {}
-        input = [id, title, description, start_datetime, end_datetime, completed]
+        input = [id, title, description, start_datetime, end_datetime, 
+                 priority, estimated_time, completed]
         for i, column in enumerate(tasks_columns):
             if input[i] is not None:
                 set_clause[column] = input[i]
@@ -118,15 +124,22 @@ class TaskDB:
 
     def add_task(self, parent_id: int, title: str, description: str = "",
                  start_datetime: Optional[datetime] = None, end_datetime: Optional[datetime] = None,
+                 priority: Optional[int] = None, estimated_time: Optional[int] = None,
                  completed: Optional[bool] = False) -> int:
-            self.cursor.execute(
+            app.logger.info(f"input: {parent_id}, {title}, {description}, {start_datetime}, {end_datetime}, {priority}, {estimated_time}, {completed}")
+            query = sql.SQL(
                 """
-                INSERT INTO tasks (title, description, start_datetime, end_datetime, completed)
-                VALUES (%s, %s, %s, %s, %s)
-                RETURNING id
-                """,
-                (title, description, start_datetime, end_datetime, completed)
+                INSERT INTO tasks ({columns})   
+                VALUES ({values})
+                RETURNING id         
+                """
+            ).format(
+                columns=sql.SQL(', ').join([sql.Identifier(column) for column in tasks_columns[1:]]),
+                values=sql.SQL(', ').join([sql.Literal(value) for value in 
+                                           [title, description, start_datetime, 
+                                            end_datetime, priority, estimated_time, completed]])
             )
+            self.cursor.execute(query)
             task_id = self.cursor.fetchone()[0]
             self.conn.commit()
 

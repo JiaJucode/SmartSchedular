@@ -20,11 +20,11 @@ const TaskInfoSideBar: React.FC<TaskInfoSideBarProps> =
 
     return (
         <Drawer open={openSideBar} onClose={() => setOpenSideBar(false)} anchor='right'
-        variant='persistent' sx={{ marginTop: '64px', zIndex: 1 }}>
+        variant='persistent' sx={{ marginTop: '64px', zIndex: 5 }}>
             <Box sx={{ 
                 marginTop: '64px', 
                 width: '300px', height: '100%', backgroundColor: 'primary.light',
-                color: 'primary.contrastText'
+                color: 'primary.contrastText',
             }}>
                 <IconButton onClick={() => setOpenSideBar(false)} 
                 sx={{ color: 'primary.contrastText' }}>

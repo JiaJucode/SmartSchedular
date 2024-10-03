@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify, request
 from flask_cors import CORS
 from services.task_service import *
+from flask import current_app as app
 
 bp = Blueprint("task_controller", __name__)
 
@@ -19,8 +20,10 @@ def get_tasks():
                     "id": 1,
                     "name": "Task 1",
                     "description": "Description 1",
-                    "start_date": iso_date_string,
-                    "end_date": iso_date_string,
+                    "start_date": iso_date_string | None,
+                    "end_date": iso_date_string | None,
+                    "priority": int,
+                    "estimated_time": int | None,
                     completed: bool,
                 },
                 ...
@@ -41,8 +44,10 @@ def add_task():
         "parent_id": int,
         "title": str,
         "description": str,
-        "startDate": iso_date_string,
-        "endDate": iso_date_string,
+        "startDate": iso_date_string | None,
+        "endDate": iso_date_string | None,
+        "priority": int,
+        "estimated_time": int | None,
         "completed": bool
     Returns:
         {"id": int}
@@ -52,8 +57,11 @@ def add_task():
     description = request.json.get("description")
     start_date = request.json.get("startDate")
     end_date = request.json.get("endDate")
+    priority = request.json.get("priority")
+    estimated_time = request.json.get("estimated_time")
     completed = request.json.get("completed")
-    id = service_add_task(parent_id, title, description, start_date, end_date, completed)
+    id = service_add_task(parent_id, title, description, start_date, end_date, 
+                          priority, estimated_time, completed)
     return jsonify({"id": id}) 
 
 @bp.route("/update_task", methods=["POST"])
@@ -63,8 +71,10 @@ def update_task():
         "id": int,
         "title": str,
         "description": str,
-        "startDate": iso_date_string,
-        "endDate": iso_date_string,
+        "startDate": iso_date_string | None,
+        "endDate": iso_date_string | None,
+        "priority": int,
+        "estimated_time": int | None,
         "completed": bool
     Returns:
         None
@@ -74,6 +84,9 @@ def update_task():
     description = request.json.get("description")
     start_date = request.json.get("startDate")
     end_date = request.json.get("endDate")
+    priority = request.json.get("priority")
+    estimated_time = request.json.get("estimated_time")
     completed = request.json.get("completed")
-    service_update_task(id, title, description, start_date, end_date, completed)
+    service_update_task(id, title, description, start_date, end_date, 
+                        priority, estimated_time, completed)
     return jsonify({})

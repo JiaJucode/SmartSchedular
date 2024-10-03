@@ -30,8 +30,9 @@ const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft, o
         fetch(`${server_base_url}/task/get_tasks?parent_id=${parentId}`)
             .then((response) => response.json())
             .then((data: {tasks: {id: number, title: string, description: string,
-                start_datetime: string, end_datetime: string,
-                completed: boolean}[]}) => {
+                start_datetime: string, end_datetime: string, priority: number,
+                estimated_time: number, completed: boolean}[]
+            }) => {
                 setTasks(data.tasks.map((task) => ({
                     id: task.id,
                     title: task.title,
@@ -40,6 +41,8 @@ const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft, o
                         ? null : new Date(task.start_datetime),
                     endDate: task.end_datetime === "" || !task.end_datetime
                         ? null : new Date(task.end_datetime),
+                    priority: task.priority,
+                    estimatedTime: task.estimated_time,
                     completed: task.completed,
                 })));
                 console.log('tasks: ', data.tasks);
@@ -68,6 +71,8 @@ const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft, o
                 description: '',
                 start_datetime: null,
                 end_datetime: null,
+                priority: 0,
+                estimated_time: 0,
                 completed: false,
             }),
         }
@@ -119,6 +124,8 @@ const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft, o
                     description: task.description,
                     startDate: task.startDate?.toISOString(),
                     endDate: task.endDate?.toISOString(),
+                    priority: task.priority,
+                    estimatedTime: task.estimatedTime,
                     completed: task.completed,
                 }),
             });
@@ -137,7 +144,7 @@ const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft, o
                         ? 'primary.light' : 'primary.dark'}`,
                     color: 'primary.contrastText'}}>
                     <Box sx={{ display: 'flex', flexDirection: 'row', width: '100%', height: '40px' }}>
-                        <Box sx={{ width: '70%',
+                        <Box sx={{ width: '60%',
                             display: 'flex', flexDirection: 'row', paddingLeft: `${paddingLeft}px`,
                             '&.MuiButton-root': {
                                 margin: 0,
@@ -188,19 +195,18 @@ const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft, o
                             }}/>
                         </Box>
 
-                        <Box sx={{ width: '15%', display: 'flex', flexDirection: 'row',
+                        <Box sx={{ width: '10%', display: 'flex', flexDirection: 'row',
                             justifyContent: 'flex-end', position: 'relative' }}>
                             { !task.startDate ? (
-                                <Box
+                                <Typography align='center'
                                 sx={{
                                     position: 'absolute', zIndex: 1,
                                     width: '100%', height: '100%', display: 'flex',
-                                    justifyContent: 'center', alignItems: 'center',
-                                    textOverflow: 'ellipsis', backgroundColor: 'primary.dark',
-                                    pointerEvents: 'none'
+                                    alignItems: 'center', textOverflow: 'ellipsis', 
+                                    backgroundColor: 'primary.dark', pointerEvents: 'none', 
                                 }}>
                                     No Date Selected
-                                </Box>
+                                </Typography>
                             ) : null}
                             <LocalizationProvider dateAdapter={AdapterDayjs}>
                                 <DatePicker value={dayjs(task.startDate)}
@@ -234,22 +240,21 @@ const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft, o
                                     },
                                 }}/>
                             </LocalizationProvider>
+                            <Divider orientation='vertical'
+                            sx={{ backgroundColor: 'primary.contrastText', width: '1px', zIndex: 2 }} />
                         </Box>
-                        <Divider orientation='vertical'
-                        sx={{ backgroundColor: 'primary.contrastText', width: '1px' }} />
-                        <Box sx={{ width: '15%', display: 'flex', flexDirection: 'row',
+                        <Box sx={{ width: '10%', display: 'flex', flexDirection: 'row',
                             justifyContent: 'flex-end', position: 'relative' }}>
                             { !task.endDate ? (
-                                <Box
+                                <Typography align='center'
                                 sx={{
                                     position: 'absolute', zIndex: 1,
                                     width: '100%', height: '100%', display: 'flex',
-                                    justifyContent: 'center', alignItems: 'center',
-                                    textOverflow: 'ellipsis', backgroundColor: 'primary.dark',
-                                    pointerEvents: 'none'
+                                    alignItems: 'center', textOverflow: 'ellipsis', 
+                                    backgroundColor: 'primary.dark', pointerEvents: 'none', 
                                 }}>
                                     No Date Selected
-                                </Box>
+                                </Typography>
                             ) : null}
                             <LocalizationProvider dateAdapter={AdapterDayjs}>
                                 <DatePicker value={dayjs(task.endDate)}
@@ -281,6 +286,52 @@ const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft, o
                                     },
                                 }}/>
                             </LocalizationProvider>
+                            <Divider orientation='vertical'
+                            sx={{ backgroundColor: 'primary.contrastText', width: '1px', zIndex: 2 }} />
+                        </Box>
+                        <Box sx={{ width: '10%', display: 'flex', flexDirection: 'row',
+                            justifyContent: 'flex-end', position: 'relative' }}>
+                            <TextField value={task.priority !== null ? task.priority : ""}
+                            fullWidth variant='standard'
+                            slotProps={{ 
+                                input: {disableUnderline: true} }}
+                            onChange={(e) => {
+                                    updateTask(task.id, {priority: parseInt(e.target.value)});}}
+                            onBlur={() => saveUpdatedTask(task)}
+                            sx={{
+                                display: 'flex', justifyContent: 'center', alignItems: 'center',
+                                flexGrow: 1, textOverflow: 'ellipsis', padding: 1,
+                                input: {
+                                    color: 'primary.contrastText',
+                                    textAlign: 'center',
+                                },
+                                '&.MuiTextField-root' : {
+                                    margin: 0,
+                                },
+                            }}/>
+                            <Divider orientation='vertical'
+                            sx={{ backgroundColor: 'primary.contrastText', width: '1px', zIndex: 2 }} />
+                        </Box>
+                        <Box sx={{ width: '10%', display: 'flex', flexDirection: 'row',
+                            justifyContent: 'flex-end', position: 'relative' }}>
+                            <TextField value={task.estimatedTime ? task.estimatedTime : ""} 
+                            fullWidth variant='standard'
+                            slotProps={{ 
+                                input: {disableUnderline: true} }}
+                            onChange={(e) => {
+                                    updateTask(task.id, {estimatedTime: parseInt(e.target.value)});}}
+                            onBlur={() => saveUpdatedTask(task)}
+                            sx={{
+                                display: 'flex', justifyContent: 'center', alignItems: 'center',
+                                flexGrow: 1, textOverflow: 'ellipsis', padding: 1,
+                                input: {
+                                    color: 'primary.contrastText',
+                                    textAlign: 'center',
+                                },
+                                '&.MuiTextField-root' : {
+                                    margin: 0,
+                                },
+                            }}/>
                         </Box>
                     </Box>
                     <Divider orientation='horizontal' 

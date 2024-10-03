@@ -22,7 +22,8 @@ def get_tasks_by_parent_id(parent_id: int) -> List[Dict]:
 
 def service_add_task(parent_id: int, title: str, 
                      description: str, str_start_date: str | None, 
-                     str_end_date: str | None, completed: bool) -> int:
+                     str_end_date: str | None, priority: int,
+                     estimated_time: int | None, completed: bool) -> int:
     """
     params:
         parent_id: int,
@@ -40,10 +41,12 @@ def service_add_task(parent_id: int, title: str,
         start_date = datetime.fromisoformat(str_start_date)
     if str_end_date is not None:
         end_date = datetime.fromisoformat(str_end_date)
-    return db.add_task(parent_id, title, description, start_date, end_date, completed)
+    return db.add_task(parent_id, title, description, start_date, end_date, 
+                       priority, estimated_time, completed)
     
 def service_update_task(id: int, title: str, description: str,
                         str_start_date: str | None, str_end_date: str | None, 
+                        priority: int, estimated_time: int | None,
                         completed: bool) -> None:
     """
     params:
@@ -52,6 +55,8 @@ def service_update_task(id: int, title: str, description: str,
         description: str,
         start_date: iso_date_string,
         end_date: iso_date_string,
+        priority: int,
+        estimated_time: int,
         completed: bool
     Returns:
         None
@@ -62,4 +67,5 @@ def service_update_task(id: int, title: str, description: str,
         start_date = datetime.fromisoformat(str_start_date)
     if str_end_date is not None:
         end_date = datetime.fromisoformat(str_end_date)
-    db.update_task(id, title, description, start_date, end_date, completed)
+    db.update_task(id, title, description, start_date, end_date, 
+                   priority, estimated_time, completed)

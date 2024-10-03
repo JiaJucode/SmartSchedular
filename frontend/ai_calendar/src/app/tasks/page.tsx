@@ -16,13 +16,17 @@ export interface Task {
     description: string;
     startDate: Date | null;
     endDate: Date | null;
+    priority: number;
+    estimatedTime: number | null;
     completed: boolean;
 }
 
 const tableSettings = {
-    title: {headerName: 'Task Name', width: '70%'},
-    startDate: {headerName: 'Start Date', width: '15%'},
-    endDate: {headerName: 'End Date', width: '15%'},
+    title: {headerName: 'Task Name', width: '60%'},
+    startDate: {headerName: 'Start Date', width: '10%'},
+    endDate: {headerName: 'End Date', width: '10%'},
+    priority: {headerName: 'Priority', width: '10%'},
+    estimatedTime: {headerName: 'Estimated Time', width: '10%'},
 }
 
 const server_base_url = process.env.NEXT_PUBLIC_SERVER_BASE_URL;
@@ -42,13 +46,16 @@ const TasksPage = () => {
             .then((response) => response.json())
             .then((data: {tasks: {id: number, title: string, description: string,
                 start_datetime: Date | null, end_datetime: Date | null,
-                completed: boolean}[]}) => {
+                priority: number, estimated_time: number | null, completed: boolean
+            }[]}) => {
                 setProjects(data.tasks.map((task) => ({
                     id: task.id,
                     title: task.title,
                     description: task.description,
                     startDate: task.start_datetime,
                     endDate: task.end_datetime,
+                    priority: task.priority,
+                    estimatedTime: task.estimated_time,
                     completed: task.completed,
                 })));
             });
@@ -67,6 +74,8 @@ const TasksPage = () => {
                 description: 'This is a new project',
                 start_datetime: null,
                 end_datetime: null,
+                priority: 0,
+                estimated_time: null,
                 completed: false,
             }),})
             .then((response) => response.json())
@@ -78,6 +87,8 @@ const TasksPage = () => {
                     description: 'This is a new project',
                     startDate: null,
                     endDate: null,
+                    priority: 0,
+                    estimatedTime: null,
                     completed: false,
                 }]);
             });
