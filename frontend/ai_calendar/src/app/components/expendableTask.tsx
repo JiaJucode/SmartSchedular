@@ -10,6 +10,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs from 'dayjs';
 import Checkbox from '@mui/material/Checkbox';
+import LiveSyncTextfield from './liveSyncTextfield';
 
 interface ExpandableTaskProps {
     parentId: number;
@@ -85,6 +86,8 @@ const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft, o
                     description: '',
                     startDate: null,
                     endDate: null,
+                    priority: 0,
+                    estimatedTime: null,
                     completed: false,
                 }];
             });
@@ -109,8 +112,9 @@ const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft, o
         }
     };
 
-    const saveUpdatedTask = (task: Task, forceSave: boolean = false) => {
-        if (edited || forceSave) {
+    const saveUpdatedTask = (task_id: number) => {
+        const task = tasks.find(task => task.id === task_id);
+        if (task !== undefined && edited) {
             console.log('saving task');
             console.log(task);
             fetch(`${server_base_url}/task/update_task`, {
@@ -122,20 +126,16 @@ const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft, o
                     id: task.id,
                     title: task.title,
                     description: task.description,
-                    startDate: task.startDate?.toISOString(),
-                    endDate: task.endDate?.toISOString(),
+                    start_datetime: task.startDate?.toISOString(),
+                    end_datetime: task.endDate?.toISOString(),
                     priority: task.priority,
-                    estimatedTime: task.estimatedTime,
+                    estimated_time: task.estimatedTime,
                     completed: task.completed,
                 }),
             });
             setEdited(false);
         }
-        else {
-            console.log('no changes to save');
-        }
     }
-
     return (
         <Box sx={{ overflowY: 'auto', width: '100%', height: '100%' }}>
             {tasks.map((task) => (
@@ -151,9 +151,8 @@ const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft, o
                             }
                         }}>
                             <Checkbox checked={task.completed} onChange={() => {
-                                const newTask = {...task, completed: !task.completed};
                                 updateTask(task.id, {completed: !task.completed});
-                                saveUpdatedTask(newTask, true);
+                                saveUpdatedTask(task.id);
                             }} 
                             sx={{ color: 'primary.contrastText',
                                 '&.Mui-checked': {
@@ -168,23 +167,10 @@ const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft, o
                                 ? <ArrowDropDownIcon /> 
                                 : <ArrowRightIcon />}
                             </IconButton>
-                            <TextField value={task.title} fullWidth variant='standard'
-                            slotProps={{ 
-                                input: {disableUnderline: true} }}
-                            onChange={(e) => {
-                                    updateTask(task.id, {title: e.target.value});}}
-                            onBlur={() => saveUpdatedTask(task)}
-                            sx={{
-                                marginLeft: 1, display: 'flex',
-                                justifyContent: 'center', alignItems: 'center',
-                                flexGrow: 1, textOverflow: 'ellipsis',
-                                input: {
-                                    color: 'primary.contrastText',
-                                },
-                                '&.MuiTextField-root' : {
-                                    margin: 0,
-                                },
-                            }}/>
+                            <LiveSyncTextfield task_id={task.id} fieldKey='title'
+                            value={task.title}
+                            updateTask={updateTask} saveUpdatedTask={saveUpdatedTask}
+                            numberOnly={false} />
                             <IconButton onClick={() => {openInfo(task)}}
                             sx={{ color: 'primary.contrastText' }}>
                                 <InfoIcon />
@@ -219,7 +205,7 @@ const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft, o
                                         placeholder: task.startDate === null ? '' : 'No Date Selected',
                                         onBlur: () => {
                                             console.log('date: ', localDate);
-                                            saveUpdatedTask({ ...task, startDate: localDate })},
+                                            saveUpdatedTask(task.id)},
                                         onFocus: () => {
                                             updateTask(task.id, {startDate: new Date()});
                                         }
@@ -265,7 +251,7 @@ const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft, o
                                 slotProps={{ 
                                     textField: {
                                         placeholder: task.endDate === null ? '' : 'No Date Selected',
-                                        onBlur: () => {saveUpdatedTask({ ...task, endDate: localDate })},
+                                        onBlur: () => {saveUpdatedTask(task.id)},
                                         onFocus: () => {
                                             updateTask(task.id, {endDate: new Date()});
                                         }
@@ -291,47 +277,19 @@ const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft, o
                         </Box>
                         <Box sx={{ width: '10%', display: 'flex', flexDirection: 'row',
                             justifyContent: 'flex-end', position: 'relative' }}>
-                            <TextField value={task.priority !== null ? task.priority : ""}
-                            fullWidth variant='standard'
-                            slotProps={{ 
-                                input: {disableUnderline: true} }}
-                            onChange={(e) => {
-                                    updateTask(task.id, {priority: parseInt(e.target.value)});}}
-                            onBlur={() => saveUpdatedTask(task)}
-                            sx={{
-                                display: 'flex', justifyContent: 'center', alignItems: 'center',
-                                flexGrow: 1, textOverflow: 'ellipsis', padding: 1,
-                                input: {
-                                    color: 'primary.contrastText',
-                                    textAlign: 'center',
-                                },
-                                '&.MuiTextField-root' : {
-                                    margin: 0,
-                                },
-                            }}/>
+                            <LiveSyncTextfield task_id={task.id} fieldKey='priority'
+                            value={task.priority !== null ? task.priority.toString() : ""}
+                            updateTask={updateTask} saveUpdatedTask={saveUpdatedTask}
+                            numberOnly />
                             <Divider orientation='vertical'
                             sx={{ backgroundColor: 'primary.contrastText', width: '1px', zIndex: 2 }} />
                         </Box>
                         <Box sx={{ width: '10%', display: 'flex', flexDirection: 'row',
                             justifyContent: 'flex-end', position: 'relative' }}>
-                            <TextField value={task.estimatedTime ? task.estimatedTime : ""} 
-                            fullWidth variant='standard'
-                            slotProps={{ 
-                                input: {disableUnderline: true} }}
-                            onChange={(e) => {
-                                    updateTask(task.id, {estimatedTime: parseInt(e.target.value)});}}
-                            onBlur={() => saveUpdatedTask(task)}
-                            sx={{
-                                display: 'flex', justifyContent: 'center', alignItems: 'center',
-                                flexGrow: 1, textOverflow: 'ellipsis', padding: 1,
-                                input: {
-                                    color: 'primary.contrastText',
-                                    textAlign: 'center',
-                                },
-                                '&.MuiTextField-root' : {
-                                    margin: 0,
-                                },
-                            }}/>
+                            <LiveSyncTextfield task_id={task.id} fieldKey='estimatedTime'
+                            value={task.estimatedTime !== null ? task.estimatedTime.toString() : ""}
+                            updateTask={updateTask} saveUpdatedTask={saveUpdatedTask}
+                            numberOnly />
                         </Box>
                     </Box>
                     <Divider orientation='horizontal' 
@@ -360,7 +318,7 @@ const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft, o
                 <AddIcon sx={{ marginLeft: `${paddingLeft}px`, }} />
                 <Typography 
                 sx={{ marginLeft: '5px', textTransform: 'none'}}>
-                    Add Task
+                    {paddingLeft === 0 ? "Add Task" : "Add Subtask"}
                 </Typography>
             </Button>
         </Box>

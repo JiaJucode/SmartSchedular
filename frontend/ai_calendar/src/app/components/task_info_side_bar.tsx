@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Task } from '../tasks/page';
-import { Box, Drawer, IconButton } from '@mui/material';
+import { Box, Drawer, IconButton, Typography } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 
 interface TaskInfoSideBarProps {
@@ -31,10 +31,12 @@ const TaskInfoSideBar: React.FC<TaskInfoSideBarProps> =
                     <CloseIcon />
                 </IconButton>
                 <Box sx={{ paddingLeft: 2 }}>
-                    <h1>{task.title}</h1>
-                    <p>{task.description}</p>
-                    <p>{task.startDate?.toISOString()}</p>
-                    <p>{task.endDate?.toISOString()}</p>
+                    <Box>
+                        <Typography variant='h6'>
+                            Title:
+                        </Typography>
+                        
+                    </Box>
                 </Box>
             </Box>
         </Drawer>
