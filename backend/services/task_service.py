@@ -44,10 +44,10 @@ def service_add_task(parent_id: int, title: str,
     return db.add_task(parent_id, title, description, start_date, end_date, 
                        priority, estimated_time, completed)
     
-def service_update_task(id: int, title: str, description: str,
-                        str_start_date: str | None, str_end_date: str | None, 
-                        priority: int, estimated_time: int | None,
-                        completed: bool) -> None:
+def service_update_task(id: int, title: str | None,
+                        description: str | None, str_start_date: str | None, 
+                        str_end_date: str | None, priority: int | None,
+                        estimated_time: int | None, completed: bool | None) -> None:
     """
     params:
         id: int,

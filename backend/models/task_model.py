@@ -92,12 +92,13 @@ class TaskDB:
         except:
             return []
     
-    def update_task(self, id: int, title: str = "", description: str = "",
-                    start_datetime: Optional[datetime] = None, end_datetime: Optional[datetime] = None,
-                    priority: Optional[int] = 0, estimated_time: Optional[int] = None,
-                    completed: bool = False) -> None:
+    def update_task(self, id: int | None, title: str | None,
+                    description: str | None, start_datetime: datetime | None,
+                    end_datetime: datetime | None, priority: int | None,
+                    estimated_time: int | None, completed: bool | None) -> None:
         if (id == 0):
             raise ValueError("id cannot be root task")
+
         set_clause = {}
         input = [id, title, description, start_datetime, end_datetime, 
                  priority, estimated_time, completed]
@@ -105,6 +106,8 @@ class TaskDB:
             if input[i] is not None:
                 set_clause[column] = input[i]
 
+        app.logger.info(f'id: {id}')
+        app.logger.info(f"set_clause: {set_clause}")
         query = sql.SQL(
             """
             UPDATE tasks

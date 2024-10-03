@@ -10,7 +10,8 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs from 'dayjs';
 import Checkbox from '@mui/material/Checkbox';
-import LiveSyncTextfield from './liveSyncTextfield';
+import LiveSyncTextfield from './live_sync_textfield';
+import LiveSyncDatePicker from './live_sync_date_picker';
 
 interface ExpandableTaskProps {
     parentId: number;
@@ -46,7 +47,6 @@ const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft, o
                     estimatedTime: task.estimated_time,
                     completed: task.completed,
                 })));
-                console.log('tasks: ', data.tasks);
             });
     }, [parentId]);
 
@@ -94,48 +94,27 @@ const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft, o
         });
     }
 
-    const updateTask = (id: number, updates: Partial<Task>) => {
-        const hasChanges = tasks.some(task => task.id === id && 
-            Object.keys(updates).some(key => 
-                task[key as keyof Task] !== updates[key as keyof Task]
-            )
-        );
-
-        if (hasChanges) {
-            console.log('set edited');
-            setEdited(true);
-            setTasks(prevTasks =>
-                prevTasks.map(task => 
-                    task.id === id ? { ...task, ...updates } : task
-                )
-            );
-        }
-    };
-
-    const saveUpdatedTask = (task_id: number) => {
-        const task = tasks.find(task => task.id === task_id);
-        if (task !== undefined && edited) {
-            console.log('saving task');
-            console.log(task);
-            fetch(`${server_base_url}/task/update_task`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    id: task.id,
-                    title: task.title,
-                    description: task.description,
-                    start_datetime: task.startDate?.toISOString(),
-                    end_datetime: task.endDate?.toISOString(),
-                    priority: task.priority,
-                    estimated_time: task.estimatedTime,
-                    completed: task.completed,
-                }),
+    const updateCheckboxes = (id: number, checked: boolean) => {
+        setTasks((prevTasks) => {
+            return prevTasks.map((task) => {
+                if (task.id === id) {
+                    return {...task, completed: checked};
+                }
+                return task;
             });
-            setEdited(false);
-        }
+        });
+        fetch(`${server_base_url}/task/update_task`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                id: id,
+                completed: checked,
+            }),
+        });
     }
+
     return (
         <Box sx={{ overflowY: 'auto', width: '100%', height: '100%' }}>
             {tasks.map((task) => (
@@ -150,10 +129,8 @@ const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft, o
                                 margin: 0,
                             }
                         }}>
-                            <Checkbox checked={task.completed} onChange={() => {
-                                updateTask(task.id, {completed: !task.completed});
-                                saveUpdatedTask(task.id);
-                            }} 
+                            <Checkbox checked={task.completed} onChange={() => 
+                            updateCheckboxes(task.id, !task.completed)}
                             sx={{ color: 'primary.contrastText',
                                 '&.Mui-checked': {
                                     color: 'primary.contrastText'
@@ -167,10 +144,8 @@ const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft, o
                                 ? <ArrowDropDownIcon /> 
                                 : <ArrowRightIcon />}
                             </IconButton>
-                            <LiveSyncTextfield task_id={task.id} fieldKey='title'
-                            value={task.title}
-                            updateTask={updateTask} saveUpdatedTask={saveUpdatedTask}
-                            numberOnly={false} />
+                            <LiveSyncTextfield task_id={task.id} value={task.title}
+                            fieldKey='title' numberOnly={false} />
                             <IconButton onClick={() => {openInfo(task)}}
                             sx={{ color: 'primary.contrastText' }}>
                                 <InfoIcon />
@@ -183,95 +158,15 @@ const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft, o
 
                         <Box sx={{ width: '10%', display: 'flex', flexDirection: 'row',
                             justifyContent: 'flex-end', position: 'relative' }}>
-                            { !task.startDate ? (
-                                <Typography align='center'
-                                sx={{
-                                    position: 'absolute', zIndex: 1,
-                                    width: '100%', height: '100%', display: 'flex',
-                                    alignItems: 'center', textOverflow: 'ellipsis', 
-                                    backgroundColor: 'primary.dark', pointerEvents: 'none', 
-                                }}>
-                                    No Date Selected
-                                </Typography>
-                            ) : null}
-                            <LocalizationProvider dateAdapter={AdapterDayjs}>
-                                <DatePicker value={dayjs(task.startDate)}
-                                onChange={() => {
-                                    setLocalDate(task.startDate || new Date());
-                                    updateTask(task.id, {startDate: task.startDate});
-                                }}
-                                slotProps={{ 
-                                    textField: {
-                                        placeholder: task.startDate === null ? '' : 'No Date Selected',
-                                        onBlur: () => {
-                                            console.log('date: ', localDate);
-                                            saveUpdatedTask(task.id)},
-                                        onFocus: () => {
-                                            updateTask(task.id, {startDate: new Date()});
-                                        }
-                                    },
-                                }}
-                                disableOpenPicker
-                                sx={{
-                                    width: '100%',
-                                    input: {
-                                        height: '100%',
-                                        color: 'primary.contrastText',
-                                        padding: 0,
-                                        textAlign: 'center',
-                                    },
-                                    '& .MuiInputBase-root': {
-                                        padding: 0,
-                                        height: '100%',
-                                    },
-                                }}/>
-                            </LocalizationProvider>
+                            <LiveSyncDatePicker task_id={task.id} fieldKey='startDate'
+                            value={task.startDate} />
                             <Divider orientation='vertical'
                             sx={{ backgroundColor: 'primary.contrastText', width: '1px', zIndex: 2 }} />
                         </Box>
                         <Box sx={{ width: '10%', display: 'flex', flexDirection: 'row',
                             justifyContent: 'flex-end', position: 'relative' }}>
-                            { !task.endDate ? (
-                                <Typography align='center'
-                                sx={{
-                                    position: 'absolute', zIndex: 1,
-                                    width: '100%', height: '100%', display: 'flex',
-                                    alignItems: 'center', textOverflow: 'ellipsis', 
-                                    backgroundColor: 'primary.dark', pointerEvents: 'none', 
-                                }}>
-                                    No Date Selected
-                                </Typography>
-                            ) : null}
-                            <LocalizationProvider dateAdapter={AdapterDayjs}>
-                                <DatePicker value={dayjs(task.endDate)}
-                                onChange={(newValue) => {
-                                    setLocalDate(task.startDate || new Date());
-                                    updateTask(task.id, {endDate: newValue?.toDate()});
-                                }}
-                                slotProps={{ 
-                                    textField: {
-                                        placeholder: task.endDate === null ? '' : 'No Date Selected',
-                                        onBlur: () => {saveUpdatedTask(task.id)},
-                                        onFocus: () => {
-                                            updateTask(task.id, {endDate: new Date()});
-                                        }
-                                    },
-                                }}
-                                disableOpenPicker
-                                sx={{
-                                    width: '100%',
-                                    input: {
-                                        height: '100%',
-                                        color: 'primary.contrastText',
-                                        padding: 0,
-                                        textAlign: 'center',
-                                    },
-                                    '& .MuiInputBase-root': {
-                                        padding: 0,
-                                        height: '100%',
-                                    },
-                                }}/>
-                            </LocalizationProvider>
+                            <LiveSyncDatePicker task_id={task.id} fieldKey='endDate'
+                            value={task.endDate} />
                             <Divider orientation='vertical'
                             sx={{ backgroundColor: 'primary.contrastText', width: '1px', zIndex: 2 }} />
                         </Box>
@@ -279,7 +174,6 @@ const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft, o
                             justifyContent: 'flex-end', position: 'relative' }}>
                             <LiveSyncTextfield task_id={task.id} fieldKey='priority'
                             value={task.priority !== null ? task.priority.toString() : ""}
-                            updateTask={updateTask} saveUpdatedTask={saveUpdatedTask}
                             numberOnly />
                             <Divider orientation='vertical'
                             sx={{ backgroundColor: 'primary.contrastText', width: '1px', zIndex: 2 }} />
@@ -288,7 +182,6 @@ const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft, o
                             justifyContent: 'flex-end', position: 'relative' }}>
                             <LiveSyncTextfield task_id={task.id} fieldKey='estimatedTime'
                             value={task.estimatedTime !== null ? task.estimatedTime.toString() : ""}
-                            updateTask={updateTask} saveUpdatedTask={saveUpdatedTask}
                             numberOnly />
                         </Box>
                     </Box>

@@ -69,13 +69,13 @@ def update_task():
     """
     params:
         "id": int,
-        "title": str,
-        "description": str,
+        "title": str | None,
+        "description": str | None,
         "startDate": iso_date_string | None,
         "endDate": iso_date_string | None,
-        "priority": int,
+        "priority": int | None,
         "estimated_time": int | None,
-        "completed": bool
+        "completed": bool | None
     Returns:
         None
     """
