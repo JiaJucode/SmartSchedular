@@ -112,7 +112,9 @@ const DayComponent: React.FC<DayProps> = ({date}) => {
             position: 'relative',
         }}>
             <Toolbar variant="dense"
-            sx={{ zIndex: 4, backgroundColor: 'primary.dark', minHeight: '30px'}}>
+            sx={{ zIndex: 4, backgroundColor: 'primary.dark', minHeight: '30px',
+                position: 'sticky', width: '100%', top: '0px'
+            }}>
                 <Typography fontWeight={"bold"}
                 sx={{
                     position: 'absolute',

@@ -112,9 +112,10 @@ const WeekComponent: React.FC<WeekProps> = ({date, sizeChange}) => {
             width: '100%',
             position: 'relative',
         }}>
-            <Box>
             <Toolbar variant="dense"
-            sx={{ zIndex: 4, backgroundColor: 'primary.dark', minHeight: '30px'}}>
+            sx={{ zIndex: 4, backgroundColor: 'primary.dark', minHeight: '30px',
+                position: 'sticky', width: '100%', top: '0px'
+            }}>
                 {Array.from({length: daysInWeek}, (_, j) => (
                     <Typography key={j} align="center" fontWeight={"bold"}
                     sx={{ 
@@ -133,8 +134,6 @@ const WeekComponent: React.FC<WeekProps> = ({date, sizeChange}) => {
                     backgroundColor: 'primary.contrastText', width: '100%', 
                     height: '2px', position: 'absolute', bottom: '0px'}} />
             </Toolbar>
-            </Box>
-            
 
             {/* TODO: Implement smarter event placement */}
             {events.map((event, index) => (
