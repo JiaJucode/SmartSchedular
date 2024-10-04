@@ -1,6 +1,5 @@
 import { Task } from '../tasks/page';
 
-
 const server_base_url = process.env.NEXT_PUBLIC_SERVER_BASE_URL;
 
 export const addTask = 

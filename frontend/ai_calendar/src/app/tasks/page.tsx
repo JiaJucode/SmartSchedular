@@ -41,10 +41,13 @@ const TasksPage = () => {
 
     useEffect(() => {
         fetchTasks(0, setProjects);
-        if (projects.length > 0) {
+    }, []);
+
+    useEffect(() => {
+        if (selectedProject === -1 && projects.length > 0) {
             setSelectedProject(projects[0].id);
         }
-    }, []);
+    }, [projects]);
 
     const openInfo = (task: Task) => {
         setInfoTask(task);
