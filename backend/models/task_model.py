@@ -159,12 +159,29 @@ class TaskDB:
     def delete_task(self, id: int) -> None:
         if (id == 0):
             raise ValueError("id cannot be root task")
+        
+        # get all children of task
+        self.cursor.execute(
+            """
+            SELECT * FROM task_links
+            WHERE parent_id = %s
+            """,
+            (id,)
+        )
+        child_ids = [row[1] for row in self.cursor.fetchall()]
+
+        # delete all children
+        for child_id in child_ids:
+            self.delete_task(child_id)
+
+        # delete all links to children and to parent
+
         self.cursor.execute(
             """
             DELETE FROM task_links
-            WHERE child_id = %s
+            WHERE parent_id = %s OR child_id = %s
             """,
-            (id,)
+            (id, id)
         )
         self.conn.commit()
 

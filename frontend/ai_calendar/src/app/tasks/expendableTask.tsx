@@ -4,12 +4,7 @@ import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import ArrowRightIcon from '@mui/icons-material/ArrowRight';
 import AddIcon from '@mui/icons-material/Add';
 import InfoIcon from '@mui/icons-material/Info';
-import { Box, Button, Collapse, Divider, Typography, IconButton, TextField, InputAdornment } from '@mui/material';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import dayjs from 'dayjs';
-import Checkbox from '@mui/material/Checkbox';
+import { Box, Button, Collapse, Divider, Typography, IconButton } from '@mui/material';
 import LiveSyncTextfield from './live_sync_textfield';
 import LiveSyncDatePicker from './live_sync_date_picker';
 import LiveSyncCheckbox from './live_sync_checkbox';
@@ -17,17 +12,17 @@ import LiveSyncCheckbox from './live_sync_checkbox';
 interface ExpandableTaskProps {
     parentId: number;
     paddingLeft: number;
+    setSetRefresh: React.Dispatch<React.SetStateAction<() => void>>;
     openInfo: (task: Task) => void;
 }
 
 const server_base_url = process.env.NEXT_PUBLIC_SERVER_BASE_URL;
 
-const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft, openInfo}) => {
+const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft, setSetRefresh, openInfo}) => {
     const [expandedTasks, setExpandedTasks] = useState(new Set<number>());
     // temp buffer for server updates
-    const [localDate, setLocalDate] = useState<Date>(new Date());
-    const [edited, setEdited] = useState(false);
     const [tasks, setTasks] = useState<Task[]>([]);
+    const [refresh, setRefresh] = useState(false);
 
     useEffect(() => {
         fetch(`${server_base_url}/task/get_tasks?parent_id=${parentId}`)
@@ -50,7 +45,7 @@ const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft, o
                     completed: task.completed,
                 })));
             });
-    }, [parentId]);
+    }, [parentId, refresh]);
 
     const handleToggle = (id: number) => {
         const newExpandedTasks = new Set(expandedTasks);
@@ -122,7 +117,10 @@ const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft, o
                             </IconButton>
                             <LiveSyncTextfield task_id={task.id} value={task.title}
                             fieldKey='title' numberOnly={false} />
-                            <IconButton onClick={() => {openInfo(task)}}
+                            <IconButton onClick={() => {openInfo(task); 
+                            setSetRefresh(() => () => {
+                                setRefresh(!refresh)
+                            });}}
                             sx={{ color: 'primary.contrastText' }}>
                                 <InfoIcon />
                             </IconButton>
@@ -169,7 +167,7 @@ const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft, o
                         {expandedTasks.has(task.id) ? (
                             <Suspense fallback={<div>Loading...</div>}>
                                 <ExpandableTask parentId={task.id} paddingLeft={paddingLeft + 20}
-                                openInfo={openInfo} />
+                                setSetRefresh={setSetRefresh} openInfo={openInfo}/>
                             </Suspense>
                         ) : null}
                     </Collapse>

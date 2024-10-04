@@ -313,7 +313,6 @@ const WeekComponent: React.FC<WeekProps> = ({date, sizeChange}) => {
                                 ))}
                             </div>
                         ): null}
-
                     </Box>
                 </Box>
             ))}

@@ -3,7 +3,7 @@
 // TODO implement file upload
 import React, { useEffect, useState } from 'react';
 import SideBar from '../components/side_bar';
-import { Box, Button, Divider, IconButton, Stack, Toolbar, Typography } from '@mui/material';
+import { Box, Button, Divider, Stack, Toolbar, Typography } from '@mui/material';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 import ExpandableTask from './expendableTask';
 import AddIcon from '@mui/icons-material/Add';
@@ -35,9 +35,10 @@ const TasksPage = () => {
     const [openSideBar, setOpenSideBar] = useState(true);
     const [googleDriveLinked, setGoogleDriveLinked] = useState(false);
     const [projects, setProjects] = useState<Task[]>([]);
-    const [selectedProject, setSelectedProject] = useState<number>(1);
+    const [selectedProject, setSelectedProject] = useState<number>(-1);
     const [infoSiderOpen, setInfoSiderOpen] = useState(false);
     const [infoTask, setInfoTask] = useState<Task | null>(null);
+    const [setRefresh, setSetRefresh] = useState<() => void>(() => () => {console.log('old')});
 
     useEffect(() => {
         // TODO: check if account is linked to google drive
@@ -58,6 +59,10 @@ const TasksPage = () => {
                     estimatedTime: task.estimated_time,
                     completed: task.completed,
                 })));
+                if (selectedProject === -1 ||
+                    data.tasks.find((task) => task.id === selectedProject) === undefined) {
+                    setSelectedProject(data.tasks[0].id);
+                }
             });
     }, []);
 
@@ -180,14 +185,14 @@ const TasksPage = () => {
                 {selectedProject !== -1? (
                     <Box sx={{ width: '100%', height: 'calc(100% - 60px)', overflowY: 'auto', 
                         paddingBottom: '15px'}}>
-                        <ExpandableTask parentId={selectedProject}
+                        <ExpandableTask parentId={selectedProject} setSetRefresh={setSetRefresh}
                         paddingLeft={0} openInfo={openInfo}/>
                     </Box>)
                 : null}
             </Box>
             {infoTask === null ? null :
             <TaskInfoSideBar currentTask={infoTask} openSideBar={infoSiderOpen}
-            setOpenSideBar={setInfoSiderOpen} />}
+            setOpenSideBar={setInfoSiderOpen} setRefresh={() => setRefresh()} />}
             
             <SideBar open={openSideBar} setOpen={setOpenSideBar}>
                 <Stack

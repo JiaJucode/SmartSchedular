@@ -90,3 +90,15 @@ def update_task():
     service_update_task(id, title, description, start_date, end_date, 
                         priority, estimated_time, completed)
     return jsonify({})
+
+@bp.route("/delete_task", methods=["POST"])
+def delete_task():
+    """
+    params:
+        "id": int
+    Returns:
+        None
+    """
+    id = request.json.get("id")
+    service_delete_task(id)
+    return jsonify({})

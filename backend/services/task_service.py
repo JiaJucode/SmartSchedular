@@ -13,6 +13,8 @@ def get_tasks_by_parent_id(parent_id: int) -> List[Dict]:
             "description": str,
             "start_date": "YYYY-MM-DD",
             "end_date": "YYYY-MM-DD",
+            "priority": int,
+            "estimated_time": int,
             "completed": bool
         },
         ...]
@@ -31,6 +33,8 @@ def service_add_task(parent_id: int, title: str,
         description: str,
         start_date: iso_date_string,
         str_end_date: iso_date_string,
+        priority: int,
+        estimated_time: int,
         completed: bool
     Returns:
         int
@@ -69,3 +73,12 @@ def service_update_task(id: int, title: str | None,
         end_date = datetime.fromisoformat(str_end_date)
     db.update_task(id, title, description, start_date, end_date, 
                    priority, estimated_time, completed)
+    
+def service_delete_task(id: int) -> None:
+    """
+    params:
+        id: int
+    Returns:
+        None
+    """
+    db.delete_task(id)

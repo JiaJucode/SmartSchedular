@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Task } from './page';
-import { Box, Button, Checkbox, Drawer, IconButton, Stack, TextField, Typography } from '@mui/material';
+import { Box, Button, Drawer, IconButton, Stack, TextField, Typography } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import LiveSyncTextfield from './live_sync_textfield';
 import LiveSyncDatePicker from './live_sync_date_picker';
@@ -12,12 +12,13 @@ interface TaskInfoSideBarProps {
     currentTask: Task;
     openSideBar: boolean;
     setOpenSideBar: (value: boolean) => void;
+    setRefresh: () => void;
 }
 
 const server_base_url = process.env.NEXT_PUBLIC_SERVER_BASE_URL;
 
 const TaskInfoSideBar: React.FC<TaskInfoSideBarProps> = 
-({ currentTask, openSideBar: openSideBar, setOpenSideBar }) => {
+({ currentTask, openSideBar, setOpenSideBar, setRefresh }) => {
     const [task, setTask] = useState<Task>(currentTask);
     const [subtasks, setSubtasks] = useState<Task[]>([]);
     const [description, setDescription] = useState<string>('');
@@ -107,6 +108,8 @@ const TaskInfoSideBar: React.FC<TaskInfoSideBarProps> =
         .then(() => {
             setSubtasks(subtasks.filter((task) => task.id !== task_id));
         });
+        setRefresh();
+        setOpenSideBar(false);
     }
 
     return (
@@ -120,14 +123,14 @@ const TaskInfoSideBar: React.FC<TaskInfoSideBarProps> =
                 <Box sx={{ flexDirection: 'row', display: 'flex', alignItems: 'center',
                     justifyContent: 'space-between' }}>
                     <IconButton onClick={() => setOpenSideBar(false)} 
-                    sx={{ color: 'primary.contrastText' }}>
+                    sx={{ color: 'inherit' }}>
                         <CloseIcon />
                     </IconButton>
                     <Box>
                         <LiveSyncCheckbox task_id={task.id} fieldKey='completed'
                         value={task.completed} />
                         <Button onClick={() => deleteTask(task.id)}
-                        sx={{ color: 'primary.contrastText' }}>
+                        sx={{ color: 'inherit' }}>
                             <DeleteIcon />
                         </Button>
                     </Box>
@@ -201,7 +204,7 @@ const TaskInfoSideBar: React.FC<TaskInfoSideBarProps> =
                         sx={{
                             display: 'flex', justifyContent: 'center', alignItems: 'center',
                             flexGrow: 1, textOverflow: 'ellipsis', padding: 1,
-                            color: 'primary.contrastText',
+                            color: 'inherit',
                             '& .MuiInputBase-input': {
                                 color: 'primary.contrastText',
                             },
@@ -216,7 +219,7 @@ const TaskInfoSideBar: React.FC<TaskInfoSideBarProps> =
                                 value={subtask.completed} />
                                 <Button 
                                 onClick={() => setTask(subtask)}
-                                sx={{ color: 'primary.contrastText', width: '100%' }}>
+                                sx={{ color: 'inherit', width: '100%' }}>
                                     {subtask.title}
                                 </Button>
                             </Box>
@@ -227,7 +230,7 @@ const TaskInfoSideBar: React.FC<TaskInfoSideBarProps> =
                     <Button onClick={addTask}
                     sx={{ 
                         width: '100%', justifyContent: 'flex-start',
-                        backgroundColor: 'primary.dark', color: 'primary.contrastText',
+                        backgroundColor: 'inherit', color: 'inherit',
                         '&.MuiButton-root': {
                             padding: 0,
                             paddingTop: '3px', paddingBottom: '3px',
