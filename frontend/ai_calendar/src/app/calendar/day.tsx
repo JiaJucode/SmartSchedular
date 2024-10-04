@@ -16,8 +16,9 @@ const weekDays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Frida
 export interface Event {
     id: number;
     title: string;
-    startDateTime: Date;
+    source: number | null;
     tags: string[];
+    startDateTime: Date;
     endDateTime: Date;
     description: string;
 }
@@ -31,6 +32,7 @@ const DayComponent: React.FC<DayProps> = ({date}) => {
         id: -1,
         title: "",
         startDateTime: new Date(),
+        source: null,
         tags: [],
         endDateTime: new Date(),
         description: "",
@@ -68,12 +70,12 @@ const DayComponent: React.FC<DayProps> = ({date}) => {
             // let id: number;
             console.log("posting event: ", title, startDateTime, endDateTime, description);
             calendarApi.addEvent(title, startDateTime, endDateTime, description, 
-                ["Google Drive"], setEvents);
+                [], setEvents);
 
         }
         else {
             calendarApi.updateEvent(title, startDateTime, endDateTime, description, 
-                ["Google Drive"], id, setEvents);
+                [], id, setEvents);
         }
     }
 
@@ -86,6 +88,7 @@ const DayComponent: React.FC<DayProps> = ({date}) => {
             id: -1,
             title: "new event",
             startDateTime: startDateTime,
+            source: null,
             tags: [],
             endDateTime: new Date(startDateTime.getTime() + 60 * 60 * 1000),
             description: "",

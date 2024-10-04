@@ -26,6 +26,7 @@ def get_calendar_events(start_datetime_str: str, end_datetime_str: str) -> List[
         [{
             "id": int,
             "name": str,
+            "source": int | None,
             "Tags": [str],
             "start_datetime": "YYYY-MM-DDTHH:mm:ss.sssZ",
             "end_datetime": "YYYY-MM-DDTHH:mm:ss.sssZ",
@@ -56,19 +57,19 @@ def get_calendar_events(start_datetime_str: str, end_datetime_str: str) -> List[
     return trimmed_events
 
 
-def add_calendar_event(title: str, tags: List[str], str_start_datetime: str,
+def add_calendar_event(title: str, source: int, tags: List[str], str_start_datetime: str,
                        str_end_datetime: str, description: str):
     start_datetime = datetime.fromisoformat(str_start_datetime)
     end_datetime = datetime.fromisoformat(str_end_datetime)
     if start_datetime > end_datetime:
         raise ValueError("start_datetime must be before end_datetime")
-    return db.add_event(title, tags, start_datetime, end_datetime, description)
+    return db.add_event(title, tags, source, start_datetime, end_datetime, description)
 
-def edit_calendar_event(id: int, title: str, tags: List[str], str_start_datetime: str,
+def edit_calendar_event(id: int, title: str, source: int, tags: List[str], str_start_datetime: str,
                         str_end_datetime: str, description: str):
     start_datetime = datetime.fromisoformat(str_start_datetime)
     end_datetime = datetime.fromisoformat(str_end_datetime)
-    return db.update_event(id, title, tags, start_datetime, end_datetime, description)
+    return db.update_event(id, title, source, tags, start_datetime, end_datetime, description)
 
 def delete_calendar_event(id: int):
     db.delete_event(id)

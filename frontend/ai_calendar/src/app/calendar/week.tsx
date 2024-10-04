@@ -28,8 +28,9 @@ const WeekComponent: React.FC<WeekProps> = ({date, sizeChange}) => {
     const [selectedEvent, setSelectedEvent] = useState<Event>({
         id: -1,
         title: "",
-        startDateTime: new Date(),
+        source: null,
         tags: [],
+        startDateTime: new Date(),
         endDateTime: new Date(),
         description: "",
     });
@@ -70,11 +71,11 @@ const WeekComponent: React.FC<WeekProps> = ({date, sizeChange}) => {
         endDateTime: Date, description: string, id: number) => {
         if (id === -1) {
             calendarApi.addEvent(title, startDateTime, endDateTime, description,
-                ["Google Drive"], setEvents);
+                [], setEvents);
         }
         else {
             calendarApi.updateEvent(title, startDateTime, endDateTime, description,
-                ["Google Drive"], id, setEvents);
+                [], id, setEvents);
         }
     }
 
@@ -86,8 +87,9 @@ const WeekComponent: React.FC<WeekProps> = ({date, sizeChange}) => {
         return {
             id: -1,
             title: "new event",
-            startDateTime: startDateTime,
+            source: null,
             tags: [],
+            startDateTime: startDateTime,
             endDateTime: new Date(startDateTime.getTime() + 60 * 60 * 1000),
             description: "",
         };

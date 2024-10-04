@@ -6,7 +6,7 @@ from typing import List, Optional, Dict
 
 DATABASE_URL = os.getenv('DATABASE_URL')
 
-calendar_events_columns = ['id', 'title', 'tags', 'start_datetime', 'end_datetime', 'description']
+calendar_events_columns = ['id', 'title', 'source', 'tags', 'start_datetime', 'end_datetime', 'description']
 
 class CalendarEventDB:
     def __init__(self):
@@ -20,10 +20,12 @@ class CalendarEventDB:
             CREATE TABLE IF NOT EXISTS calendar_events (
                 id SERIAL PRIMARY KEY,
                 title TEXT NOT NULL,
+                source INTEGER,
                 tags TEXT[],
                 start_datetime TIMESTAMP NOT NULL,
                 end_datetime TIMESTAMP NOT NULL,
-                description TEXT
+                description TEXT,
+                FOREIGN KEY (source) REFERENCES tasks(id)
             )
             """
         )
@@ -44,16 +46,21 @@ class CalendarEventDB:
         self.cursor.execute(query)
         return [dict(zip(calendar_events_columns, row)) for row in self.cursor.fetchall()]
     
-    def add_event(self, title: str, tags: List[str], start_datetime: datetime, 
+    def add_event(self, title: str | None, tags: List[str], source: int, start_datetime: datetime, 
                   end_datetime: datetime, description: str) -> int:
-        self.cursor.execute(
+
+        query = sql.SQL(
             """
-            INSERT INTO calendar_events (title, tags, start_datetime, end_datetime, description)
-            VALUES (%s, %s, %s, %s, %s)
+            INSERT INTO calendar_events ({columns})
+            VALUES ({values})
             RETURNING id
-            """,
-            (title, ",".join(tags) if tags else None, start_datetime, end_datetime, description)
+            """
+        ).format(
+            columns=sql.SQL(', ').join(map(sql.Identifier, calendar_events_columns[1:])),
+            values=sql.SQL(', ').join(map(sql.Literal, [title, source, tags, start_datetime, 
+                                                        end_datetime, description]))
         )
+        self.cursor.execute(query)
         event_id = self.cursor.fetchone()[0]
         self.conn.commit()
         return event_id
@@ -69,12 +76,13 @@ class CalendarEventDB:
         self.conn.commit()
 
     def update_event(self, event_id: int, title: Optional[str] = None,
-                     tags: Optional[List[str]] = None, start_datetime: Optional[datetime] = None,
+                     tags: Optional[List[str]] = None, source: Optional[int] = None,
+                     start_datetime: Optional[datetime] = None,
                      end_datetime: Optional[datetime] = None, 
                      description: Optional[str] = None) -> None:
 
         set_clause = {}
-        input = [event_id, title, tags, start_datetime, end_datetime, description]
+        input = [event_id, title, tags, source, start_datetime, end_datetime, description]
         for i in range(1, len(calendar_events_columns)):
             if input[i]:
                 set_clause[calendar_events_columns[i]] = input[i]

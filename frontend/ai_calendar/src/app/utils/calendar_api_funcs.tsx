@@ -9,15 +9,16 @@ export const fetchEvents = (startDateTime: Date, endDateTime: Date,
         `start_datetime=${startDateTime.toISOString()}` + 
         `&end_datetime=${endDateTime.toISOString()}`)
     .then((response) => response.json())
-    .then((data: {events: {id: number, title: string, start_datetime: string,
-        end_datetime: string, description: string, tags: string[]}[]}) => {
+    .then((data: {events: {id: number, title: string, source: number | null, tags: string[],
+        start_datetime: string, end_datetime: string, description: string}[]}) => {
         setEvents(data.events.map((event) => ({
             id: event.id,
             title: event.title,
+            source: event.source,
+            tags: event.tags ? event.tags : [],
             startDateTime: new Date(event.start_datetime),
             endDateTime: new Date(event.end_datetime),
             description: event.description,
-            tags: event.tags ? event.tags : [],
         })));
     });
 }
@@ -44,10 +45,11 @@ export const addEvent = (title: string, startDateTime: Date, endDateTime: Date,
             return [...prevEvents, {
                 id: data.id,
                 title: title,
+                source: null,
+                tags: tags,
                 startDateTime: startDateTime,
                 endDateTime: endDateTime,
                 description: description,
-                tags: tags,
             }];
         });
     });
@@ -77,10 +79,11 @@ export const updateEvent = (title: string, startDateTime: Date, endDateTime: Dat
                     return {
                         id: id,
                         title: title,
+                        source: null,
+                        tags: tags,
                         startDateTime: startDateTime,
                         endDateTime: endDateTime,
                         description: description,
-                        tags: tags,
                     };
                 } else {
                     return event;

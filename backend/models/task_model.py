@@ -193,3 +193,7 @@ class TaskDB:
             (id,)
         )
         self.conn.commit()
+
+    def close(self):
+        self.cursor.close()
+        self.conn.close()
