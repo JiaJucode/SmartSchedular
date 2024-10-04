@@ -4,6 +4,8 @@
 import React, { useRef, useEffect, useState, useCallback } from "react";
 import { Box, Button, Stack, Divider, Typography, Menu, Toolbar } from '@mui/material';
 import EditEvent from "./edit_event";
+import { Event } from "./day";
+import * as calendarApi from '../utils/calendar_api_funcs';
 
 interface WeekProps {
     date: Date;
@@ -15,15 +17,6 @@ const hourLineCount = 25;
 const daysInWeek = 7;
 
 const weekDays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-
-interface Event {
-    id: number;
-    title: string;
-    startDateTime: Date;
-    tags: string[];
-    endDateTime: Date;
-    description: string;
-}
 
 const server_base_url = process.env.NEXT_PUBLIC_SERVER_BASE_URL;
 
@@ -55,8 +48,6 @@ const WeekComponent: React.FC<WeekProps> = ({date, sizeChange}) => {
             const componentRect = componentRef.current.getBoundingClientRect();
             setWidthOffset(rect.left - componentRect.left);
             setLength(rect.width);
-            console.log("width offset: ", widthOffset);
-            console.log("length: ", length);
         }
     };
 
@@ -72,99 +63,23 @@ const WeekComponent: React.FC<WeekProps> = ({date, sizeChange}) => {
         // calculate week start and end
         const start = new Date(date.getFullYear(), date.getMonth(), date.getDate() - date.getDay());
         const end = new Date(date.getFullYear(), date.getMonth(), date.getDate() + (6 - date.getDay()));
-
-        fetch(`${server_base_url}/calendar/get_events?` +
-            `start_datetime=${start.toISOString()}` +
-            `&end_datetime=${end.toISOString()}`)
-            .then(response => response.json())
-            .then((data: {events: {id: number, title: string, start_datetime: string, 
-                end_datetime: string, description: string}[]}) => {
-                setEvents(data.events.map((event) => {
-                    return {
-                        id: event.id,
-                        title: event.title,
-                        startDateTime: new Date(event.start_datetime),
-                        endDateTime: new Date(event.end_datetime),
-                        tags: ["Google Drive"],
-                        description: event.description,
-                    };
-                }));
-            });
+        calendarApi.fetchEvents(start, end, setEvents);
     }, [date]);
     
     const updateEvents = (title: string, startDateTime: Date, 
         endDateTime: Date, description: string, id: number) => {
         if (id === -1) {
-            let id: number;
-            console.log("posting event: ", title, startDateTime, endDateTime, description);
-            fetch(`${server_base_url}/calendar/add_event`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    title: title,
-                    start_datetime: startDateTime.toISOString(),
-                    end_datetime: endDateTime.toISOString(),
-                    description: description,
-                })
-            }).then(response => response.json())
-                .then((data: {id: number}) => {
-                    id = data.id;
-                }
-            ).then(() => {
-                setEvents([...events, {
-                    id: id,
-                    title: title,
-                    startDateTime: startDateTime,
-                    endDateTime: endDateTime,
-                    tags: ["Google Drive"],
-                    description: description,
-                }]);
-            });
+            calendarApi.addEvent(title, startDateTime, endDateTime, description,
+                ["Google Drive"], setEvents);
         }
         else {
-            setEvents(events.map((event) => {
-                if (event.id === id) {
-                    console.log("found event to update");
-                    return {
-                        id: id,
-                        title: title,
-                        startDateTime: startDateTime,
-                        endDateTime: endDateTime,
-                        tags: ["Google Drive"],
-                        description: description,
-                    };
-                }
-                return event;
-            }));
-            fetch(`${server_base_url}/calendar/edit_event`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    id: id,
-                    title: title,
-                    start_datetime: startDateTime.toISOString(),
-                    end_datetime: endDateTime.toISOString(),
-                    description: description,
-                })
-            });
+            calendarApi.updateEvent(title, startDateTime, endDateTime, description,
+                ["Google Drive"], id, setEvents);
         }
     }
 
     const deleteEvent = (id: number) => {
-        setEvents(events.filter((event) => event.id !== id));
-        fetch(`${server_base_url}/calendar/delete_event`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                id: id,
-            })
-        });
+        calendarApi.deleteEvent(id, setEvents);
     }
 
     const constructNewEvent = (startDateTime: Date) => {

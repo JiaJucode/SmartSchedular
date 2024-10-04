@@ -31,14 +31,9 @@ const TaskInfoSideBar: React.FC<TaskInfoSideBarProps> =
         taskApi.fetchTasks(task.id, setSubtasks);
     }, [task]);
 
-    const updateDesciption = (task_id: number) => {
-        taskApi.updateTask(task_id, 'description', description);
-        setRefresh();
-    }
-
     const addTask = () => {
         taskApi.addTask(task.id, setSubtasks);
-        setRefresh();
+        // TODO: refresh task in page
     }
 
     const deleteTask = (task_id: number) => {
@@ -134,7 +129,7 @@ const TaskInfoSideBar: React.FC<TaskInfoSideBarProps> =
                             setDescription(e.target.value);
                         }
                         } onBlur={() => {
-                            updateDesciption(task.id);
+                            taskApi.updateTask(task_id, 'description', description);
                         }}
                         sx={{
                             display: 'flex', justifyContent: 'center', alignItems: 'center',
