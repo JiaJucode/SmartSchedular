@@ -7,6 +7,7 @@ import LiveSyncDatePicker from './live_sync_date_picker';
 import AddIcon from '@mui/icons-material/Add';
 import LiveSyncCheckbox from './live_sync_checkbox';
 import DeleteIcon from '@mui/icons-material/Delete';
+import * as taskApi from '../utils/task_api_funcs';
 
 interface TaskInfoSideBarProps {
     currentTask: Task;
@@ -14,8 +15,6 @@ interface TaskInfoSideBarProps {
     setOpenSideBar: (value: boolean) => void;
     setRefresh: () => void;
 }
-
-const server_base_url = process.env.NEXT_PUBLIC_SERVER_BASE_URL;
 
 const TaskInfoSideBar: React.FC<TaskInfoSideBarProps> = 
 ({ currentTask, openSideBar, setOpenSideBar, setRefresh }) => {
@@ -29,85 +28,21 @@ const TaskInfoSideBar: React.FC<TaskInfoSideBarProps> =
 
     useEffect(() => {
         setDescription(task.description);
-        fetch(`${server_base_url}/task/get_tasks?parent_id=${task.id}`)
-        .then((response) => response.json())
-        .then((data: {tasks: {id: number, title: string, description: string,
-            start_datetime: string, end_datetime: string, priority: number,
-            estimated_time: number, completed: boolean}[]
-        }) => {
-            setSubtasks(data.tasks.map((task) => ({
-                id: task.id,
-                title: task.title,
-                description: task.description,
-                startDate: task.start_datetime === "" || !task.start_datetime 
-                    ? null : new Date(task.start_datetime),
-                endDate: task.end_datetime === "" || !task.end_datetime
-                    ? null : new Date(task.end_datetime),
-                priority: task.priority,
-                estimatedTime: task.estimated_time,
-                completed: task.completed,
-            })));
-        });
+        taskApi.fetchTasks(task.id, setSubtasks);
     }, [task]);
 
     const updateDesciption = (task_id: number) => {
-        fetch(`${server_base_url}/task/update_task`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                id: task_id,
-                description: description,
-            }),
-        })
+        taskApi.updateTask(task_id, 'description', description);
+        setRefresh();
     }
 
     const addTask = () => {
-        fetch(`${server_base_url}/task/add_task`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                parent_id: task.id,
-                title: 'New Task',
-                description: '',
-                start_datetime: '',
-                end_datetime: '',
-                priority: 0,
-                estimated_time: 0,
-                completed: false,
-            }),
-        })
-        .then((response) => response.json())
-        .then((data: {id: number}) => {
-            setSubtasks([...subtasks, {
-                id: data.id,
-                title: 'New Task',
-                description: '',
-                startDate: null,
-                endDate: null,
-                priority: 0,
-                estimatedTime: 0,
-                completed: false,
-            }]);
-        });
+        taskApi.addTask(task.id, setSubtasks);
+        setRefresh();
     }
 
     const deleteTask = (task_id: number) => {
-        fetch(`${server_base_url}/task/delete_task`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                id: task_id,
-            }),
-        })
-        .then(() => {
-            setSubtasks(subtasks.filter((task) => task.id !== task_id));
-        });
+        taskApi.deleteTask(task_id, setSubtasks);
         setRefresh();
         setOpenSideBar(false);
     }

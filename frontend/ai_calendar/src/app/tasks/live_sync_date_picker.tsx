@@ -3,6 +3,7 @@ import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs from "dayjs";
 import { useEffect, useState } from "react";
+import { updateTask } from "../utils/task_api_funcs";
 
 
 interface LiveSyncDatePickerProps {
@@ -10,8 +11,6 @@ interface LiveSyncDatePickerProps {
     fieldKey: string;
     value: Date | null;
 }
-
-const server_base_url = process.env.NEXT_PUBLIC_SERVER_BASE_URL;
 
 const LiveSyncDatePicker: React.FC<LiveSyncDatePickerProps> = ({ task_id, fieldKey, value }) => {
     const [dateValue, setDateValue] = useState<Date | null>(value);
@@ -23,17 +22,7 @@ const LiveSyncDatePicker: React.FC<LiveSyncDatePickerProps> = ({ task_id, fieldK
     }, [task_id]);
 
     const saveUpdatedTask = () => {
-        console.log(`Updating task ${task_id} with ${fieldKey} = ${dateValue}`);
-        fetch(`${server_base_url}/task/update_task`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                id: task_id,
-                [fieldKey]: dateValue,
-            }),
-        })
+        updateTask(task_id, fieldKey, dateValue);
     }                
 
     return (

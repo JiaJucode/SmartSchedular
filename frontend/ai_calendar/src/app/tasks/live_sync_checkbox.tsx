@@ -1,5 +1,6 @@
 import { Checkbox } from "@mui/material";
 import { useEffect, useState } from "react";
+import { updateTask } from "../utils/task_api_funcs";
 
 
 interface LiveSyncCheckboxProps {
@@ -7,8 +8,6 @@ interface LiveSyncCheckboxProps {
     fieldKey: string;
     value: boolean;
 }
-
-const server_base_url = process.env.NEXT_PUBLIC_SERVER_BASE_URL;
 
 const LiveSyncCheckbox: React.FC<LiveSyncCheckboxProps> = ({ task_id, fieldKey, value }) => {
     const [checked, setChecked] = useState<boolean>(value);
@@ -18,16 +17,7 @@ const LiveSyncCheckbox: React.FC<LiveSyncCheckboxProps> = ({ task_id, fieldKey, 
     }, [task_id]);
 
     const onCheckboxChange = () => {
-        fetch(`${server_base_url}/task/update_task`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                id: task_id,
-                [fieldKey]: !checked,
-            }),
-        })
+        updateTask(task_id, fieldKey, !checked);
         setChecked(!checked);
     }
 

@@ -8,6 +8,7 @@ import { Box, Button, Collapse, Divider, Typography, IconButton } from '@mui/mat
 import LiveSyncTextfield from './live_sync_textfield';
 import LiveSyncDatePicker from './live_sync_date_picker';
 import LiveSyncCheckbox from './live_sync_checkbox';
+import { fetchTasks, addTask } from '../utils/task_api_funcs';
 
 interface ExpandableTaskProps {
     parentId: number;
@@ -16,8 +17,6 @@ interface ExpandableTaskProps {
     openInfo: (task: Task) => void;
 }
 
-const server_base_url = process.env.NEXT_PUBLIC_SERVER_BASE_URL;
-
 const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft, setSetRefresh, openInfo}) => {
     const [expandedTasks, setExpandedTasks] = useState(new Set<number>());
     // temp buffer for server updates
@@ -25,26 +24,7 @@ const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft, s
     const [refresh, setRefresh] = useState(false);
 
     useEffect(() => {
-        fetch(`${server_base_url}/task/get_tasks?parent_id=${parentId}`)
-            .then((response) => response.json())
-            .then((data: {tasks: {id: number, title: string, description: string,
-                start_datetime: string, end_datetime: string, priority: number,
-                estimated_time: number, completed: boolean}[]
-            }) => {
-                console.log(data);
-                setTasks(data.tasks.map((task) => ({
-                    id: task.id,
-                    title: task.title,
-                    description: task.description,
-                    startDate: task.start_datetime === "" || !task.start_datetime 
-                        ? null : new Date(task.start_datetime),
-                    endDate: task.end_datetime === "" || !task.end_datetime
-                        ? null : new Date(task.end_datetime),
-                    priority: task.priority,
-                    estimatedTime: task.estimated_time,
-                    completed: task.completed,
-                })));
-            });
+        fetchTasks(parentId, setTasks);
     }, [parentId, refresh]);
 
     const handleToggle = (id: number) => {
@@ -55,40 +35,6 @@ const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft, s
             newExpandedTasks.add(id);
         }
         setExpandedTasks(newExpandedTasks);
-    }
-
-    const addTask = () => {
-        fetch(`${server_base_url}/task/add_task`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                parent_id: parentId,
-                title: 'new task',
-                description: '',
-                start_datetime: null,
-                end_datetime: null,
-                priority: 0,
-                estimated_time: 0,
-                completed: false,
-            }),
-        }
-        ).then((response) => response.json())
-        .then((data: {id: number}) => {
-            setTasks((prevTasks) => {
-                return [...prevTasks, {
-                    id: data.id,
-                    title: 'new task',
-                    description: '',
-                    startDate: null,
-                    endDate: null,
-                    priority: 0,
-                    estimatedTime: null,
-                    completed: false,
-                }];
-            });
-        });
     }
 
     return (
@@ -173,7 +119,7 @@ const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft, s
                     </Collapse>
                 </Box>
             ))}
-            <Button onClick={addTask}
+            <Button onClick={() => addTask(parentId, setTasks)}
             sx={{ 
                 width: '100%', justifyContent: 'flex-start',
                 backgroundColor: 'primary.dark', color: 'primary.contrastText',

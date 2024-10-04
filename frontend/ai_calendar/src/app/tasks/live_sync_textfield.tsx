@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { TextField } from '@mui/material';
+import { updateTask } from '../utils/task_api_funcs';
 
 interface LiveSyncTextfieldProps {
     task_id: number;
@@ -7,8 +8,6 @@ interface LiveSyncTextfieldProps {
     value: string | null;
     numberOnly: boolean;
 }
-
-const server_base_url = process.env.NEXT_PUBLIC_SERVER_BASE_URL;
 
 const LiveSyncTextfield: React.FC<LiveSyncTextfieldProps> = ({ task_id, fieldKey, value, 
     numberOnly = false }) => {
@@ -20,17 +19,7 @@ const LiveSyncTextfield: React.FC<LiveSyncTextfieldProps> = ({ task_id, fieldKey
     }, [task_id]);
 
     const saveUpdatedTask = (task_id: number) => {
-        console.log(`Updating task ${task_id} with ${fieldKey} = ${textValue}`);
-        fetch(`${server_base_url}/task/update_task`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                id: task_id,
-                [fieldKey]: textValue,
-            }),
-        })
+        updateTask(task_id, fieldKey, textValue);
     }                
 
     return (

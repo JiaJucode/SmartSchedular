@@ -9,6 +9,7 @@ import ExpandableTask from './expendableTask';
 import AddIcon from '@mui/icons-material/Add';
 import TaskInfoSideBar from './task_info_side_bar';
 import KeyboardDoubleArrowRightIcon from '@mui/icons-material/KeyboardDoubleArrowRight';
+import { fetchTasks, addTask } from '../utils/task_api_funcs';
 
 export interface Task {
     id: number;
@@ -29,8 +30,6 @@ const tableSettings = {
     estimatedTime: {headerName: 'Estimated Time', width: '10%'},
 }
 
-const server_base_url = process.env.NEXT_PUBLIC_SERVER_BASE_URL;
-
 const TasksPage = () => {
     const [openSideBar, setOpenSideBar] = useState(true);
     const [googleDriveLinked, setGoogleDriveLinked] = useState(false);
@@ -41,63 +40,11 @@ const TasksPage = () => {
     const [setRefresh, setSetRefresh] = useState<() => void>(() => () => {console.log('old')});
 
     useEffect(() => {
-        // TODO: check if account is linked to google drive
-        // fetch projects from backend
-        fetch(`${server_base_url}/task/get_tasks?parent_id=0`)
-            .then((response) => response.json())
-            .then((data: {tasks: {id: number, title: string, description: string,
-                start_datetime: Date | null, end_datetime: Date | null,
-                priority: number, estimated_time: number | null, completed: boolean
-            }[]}) => {
-                setProjects(data.tasks.map((task) => ({
-                    id: task.id,
-                    title: task.title,
-                    description: task.description,
-                    startDate: task.start_datetime,
-                    endDate: task.end_datetime,
-                    priority: task.priority,
-                    estimatedTime: task.estimated_time,
-                    completed: task.completed,
-                })));
-                if (selectedProject === -1 ||
-                    data.tasks.find((task) => task.id === selectedProject) === undefined) {
-                    setSelectedProject(data.tasks[0].id);
-                }
-            });
+        fetchTasks(0, setProjects);
+        if (projects.length > 0) {
+            setSelectedProject(projects[0].id);
+        }
     }, []);
-
-    const addProject = () => {
-        let project_id = 0;
-        fetch(`${server_base_url}/task/add_task`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                parent_id: 0,
-                title: 'New Project',
-                description: 'This is a new project',
-                start_datetime: null,
-                end_datetime: null,
-                priority: 0,
-                estimated_time: null,
-                completed: false,
-            }),})
-            .then((response) => response.json())
-            .then((data: {id: number}) => {
-                project_id = data.id;
-                setProjects([...projects, {
-                    id: project_id,
-                    title: 'New Project',
-                    description: 'This is a new project',
-                    startDate: null,
-                    endDate: null,
-                    priority: 0,
-                    estimatedTime: null,
-                    completed: false,
-                }]);
-            });
-    }
 
     const openInfo = (task: Task) => {
         setInfoTask(task);
@@ -229,7 +176,7 @@ const TasksPage = () => {
                             </Typography>
                         </Button>
                     ))}
-                    <Button onClick={addProject}
+                    <Button onClick={() => addTask(0, setProjects)}
                     sx={{ 
                         width: '100%', justifyContent: 'flex-start',
                         color: 'primary.contrastText',
