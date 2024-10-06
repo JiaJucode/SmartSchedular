@@ -16,7 +16,7 @@ const hourLineCount = 25;
 
 const daysInWeek = 7;
 
-const weekDays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const weekDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
 const topPadding = 10;
 
@@ -59,8 +59,10 @@ const WeekComponent: React.FC<WeekProps> = ({date, sizeChange}) => {
 
     useEffect(() => {
         // calculate week start and end
-        const start = new Date(date.getFullYear(), date.getMonth(), date.getDate() - date.getDay());
-        const end = new Date(date.getFullYear(), date.getMonth(), date.getDate() + (7 - date.getDay()));
+        const start = new Date(date.getFullYear(), date.getMonth(), date.getDate() - (date.getDay() + 6) % 7);
+        console.log("start", start);
+        const end = new Date(date.getFullYear(), date.getMonth(), date.getDate() + (7 - (date.getDay() + 6) % 7));
+        console.log("end", end);
         calendarApi.fetchEvents(start, end, setEvents);
     }, [date]);
     
@@ -103,7 +105,7 @@ const WeekComponent: React.FC<WeekProps> = ({date, sizeChange}) => {
         ref={componentRef}
         sx={{
             flexDirection: 'column',
-            height: '90%',
+            height: 'calc(100vh - 130px)',
             overflowY: 'auto',
             width: '100%',
             position: 'relative',
@@ -142,7 +144,7 @@ const WeekComponent: React.FC<WeekProps> = ({date, sizeChange}) => {
                     marginTop: `${event.startDateTime.getHours() * 70 + 
                         event.startDateTime.getMinutes() / 60 * 70 + 1 + topPadding}px`,
                     marginLeft: `${widthOffset + length/daysInWeek * 
-                        event.startDateTime.getDay() + 1}px`,
+                        ((event.startDateTime.getDay() + 6) % 7) + 1}px`,
                     width: 'calc(12.57% - 1px)',
                     height: `${(event.endDateTime.getTime() - 
                         event.startDateTime.getTime()) / 3600000 * 70 - 2}px`,
@@ -214,7 +216,7 @@ const WeekComponent: React.FC<WeekProps> = ({date, sizeChange}) => {
                                 onClick={(mouseEvent) => {handleTimeBlockClick(
                                     constructNewEvent(new Date(date.getFullYear(), 
                                         date.getMonth(), date.getDate() 
-                                        - date.getDay() + j, i)),
+                                        - ((date.getDay() + 6) % 7) + j, i)),
                                     mouseEvent)}}
                                 sx={{
                                     width: '14.28%',

@@ -103,7 +103,7 @@ const DayComponent: React.FC<DayProps> = ({date}) => {
         ref={componentRef}
         sx={{
             flexDirection: 'column',
-            height: '90%',
+            height: 'calc(100vh - 130px)',
             overflowY: 'auto',
             width: '100%',
             position: 'relative',
