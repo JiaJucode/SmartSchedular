@@ -14,6 +14,7 @@ import ArrowLeftIcon from '@mui/icons-material/ArrowLeft';
 import ArrowRightIcon from '@mui/icons-material/ArrowRight';
 import KeyboardDoubleArrowRightIcon from '@mui/icons-material/KeyboardDoubleArrowRight';
 
+// TODO: add line for current time and auto scroll to current time
 const CalendarPage = () => {
     const [openSideBar, setOpenSideBar] = useState(true);
     const [selectedDate, setSelectedDate] = useState<Date>(new Date());

@@ -134,7 +134,7 @@ const TaskInfoSideBar: React.FC<TaskInfoSideBarProps> =
                         <Typography sx={{ fontSize: '1.1rem' }}>
                             Hours To Schedule:
                         </Typography>
-                        <Typography sx={{ width: '50%' }}>
+                        <Typography sx={{ width: '50%', justifyContent: 'center', display: 'flex' }}>
                             {task.hoursToSchedule}
                         </Typography>
                     </Box>
