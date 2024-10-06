@@ -16,7 +16,7 @@ const LiveSyncTextfield: React.FC<LiveSyncTextfieldProps> = ({ task_id, fieldKey
 
     useEffect(() => {
         setTextValue(value);
-    }, [task_id]);
+    }, [task_id, value]);
 
     const saveUpdatedTask = (task_id: number) => {
         updateTask(task_id, fieldKey, textValue);
@@ -29,12 +29,17 @@ const LiveSyncTextfield: React.FC<LiveSyncTextfieldProps> = ({ task_id, fieldKey
             input: {disableUnderline: true} }}
         onChange={(e) => {
                 if (e.target.value !== textValue) {
-                    numberOnly ? setTextValue(parseInt(e.target.value).toString()) 
-                    : setTextValue(e.target.value);
+                    if (numberOnly) {
+                        setTextValue(e.target.value === "" ? "" :
+                            parseInt(e.target.value).toString());
+                    }
+                    else {
+                        setTextValue(e.target.value);
+                    }
                     setValueChanged(true);
                 }}}
         onBlur={() => {
-            if (valueChanged) {
+            if (valueChanged && textValue !== "") {
                 saveUpdatedTask(task_id);
                 setValueChanged(false);
             }}}

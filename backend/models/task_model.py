@@ -1,23 +1,19 @@
-import os
-import psycopg2
 from psycopg2 import sql
 from datetime import datetime
 from typing import List, Optional, Dict
 from flask import current_app as app
-
-DATABASE_URL = os.getenv('DATABASE_URL')
+from models.db_pool import get_connection, return_connection
 
 tasks_columns = ['id', 'title', 'description', 'start_datetime', 
                  'end_datetime', 'priority', 'estimated_time', 'completed']
 
 class TaskDB:
     def __init__(self):
-        self.conn = psycopg2.connect(DATABASE_URL)
-        self.cursor = self.conn.cursor()
-        self.create_table()
+        pass
 
-    def create_table(self):
-        self.cursor.execute(
+    def create_table():
+        conn, cursor = get_connection()
+        cursor.execute(
             """
             CREATE TABLE IF NOT EXISTS tasks (
                 id SERIAL PRIMARY KEY,
@@ -31,10 +27,10 @@ class TaskDB:
             )
             """
         )
-        self.conn.commit()
+        conn.commit()
 
         # task hierarchy table
-        self.cursor.execute(
+        cursor.execute(
             """
             CREATE TABLE IF NOT EXISTS task_links (
                 parent_id INTEGER NOT NULL,
@@ -45,26 +41,29 @@ class TaskDB:
             )
             """
         )
-        self.conn.commit()
+        conn.commit()
 
         # if root task does not exist, create it
         # all projects are children of the root task
-        self.cursor.execute(
+        cursor.execute(
             """
             SELECT * FROM tasks
             WHERE id = 0
             """
         )
-        if not self.cursor.fetchone():
-            self.cursor.execute(
+        if not cursor.fetchone():
+            cursor.execute(
                 """
                 INSERT INTO tasks (id, title, description, start_datetime, end_datetime, completed)
                 VALUES (0, 'root', '', NULL, NULL, TRUE)
                 """
             )
-            self.conn.commit()
+            conn.commit()
+        
+        return_connection(conn, cursor)
 
-    def __get_task(self, id: int) -> Dict:
+    def get_task(id: int) -> Dict:
+        conn, cursor = get_connection()
         query = sql.SQL(
             """
             SELECT * FROM tasks
@@ -73,10 +72,13 @@ class TaskDB:
         ).format(
             id=sql.Literal(id)
         )
-        self.cursor.execute(query)
-        return dict(zip(tasks_columns, self.cursor.fetchone()))
+        cursor.execute(query)
+        task = dict(zip(tasks_columns, cursor.fetchone()))
+        return_connection(conn, cursor)
+        return task
 
-    def get_child_tasks(self, parent_id: int) -> List[Dict]:
+    def get_child_tasks(parent_id: int) -> List[Dict]:
+        conn, cursor = get_connection()
         query = sql.SQL(
             """
             SELECT * FROM task_links
@@ -85,17 +87,20 @@ class TaskDB:
         ).format(
             parent_id=sql.Literal(parent_id)
         )
-        self.cursor.execute(query)
+        cursor.execute(query)
         try: 
-            child_ids = [row[1] for row in self.cursor.fetchall()]
-            return [self.__get_task(child_id) for child_id in child_ids]
+            child_ids = [row[1] for row in cursor.fetchall()]
+            return_connection(conn, cursor)
+            return [TaskDB.get_task(child_id) for child_id in child_ids]
         except:
+            return_connection(conn, cursor)
             return []
     
-    def update_task(self, id: int | None, title: str | None,
+    def update_task(id: int | None, title: str | None,
                     description: str | None, start_datetime: datetime | None,
                     end_datetime: datetime | None, priority: int | None,
                     estimated_time: int | None, completed: bool | None) -> None:
+        conn, cursor = get_connection()
         if (id == 0):
             raise ValueError("id cannot be root task")
 
@@ -105,9 +110,6 @@ class TaskDB:
         for i, column in enumerate(tasks_columns):
             if input[i] is not None:
                 set_clause[column] = input[i]
-
-        app.logger.info(f'id: {id}')
-        app.logger.info(f"set_clause: {set_clause}")
         query = sql.SQL(
             """
             UPDATE tasks
@@ -122,78 +124,80 @@ class TaskDB:
             id=sql.Literal(id)
         )
 
-        self.cursor.execute(query)
-        self.conn.commit()
+        cursor.execute(query)
+        conn.commit()
 
-    def add_task(self, parent_id: int, title: str, description: str = "",
+        return_connection(conn, cursor)
+
+    def add_task(parent_id: int, title: str, description: str = "",
                  start_datetime: Optional[datetime] = None, end_datetime: Optional[datetime] = None,
                  priority: Optional[int] = None, estimated_time: Optional[int] = None,
                  completed: Optional[bool] = False) -> int:
-            app.logger.info(f"input: {parent_id}, {title}, {description}, {start_datetime}, {end_datetime}, {priority}, {estimated_time}, {completed}")
-            query = sql.SQL(
-                """
-                INSERT INTO tasks ({columns})   
-                VALUES ({values})
-                RETURNING id         
-                """
-            ).format(
-                columns=sql.SQL(', ').join([sql.Identifier(column) for column in tasks_columns[1:]]),
-                values=sql.SQL(', ').join([sql.Literal(value) for value in 
-                                           [title, description, start_datetime, 
-                                            end_datetime, priority, estimated_time, completed]])
-            )
-            self.cursor.execute(query)
-            task_id = self.cursor.fetchone()[0]
-            self.conn.commit()
+        conn, cursor = get_connection()
+        query = sql.SQL(
+            """
+            INSERT INTO tasks ({columns})   
+            VALUES ({values})
+            RETURNING id         
+            """
+        ).format(
+            columns=sql.SQL(', ').join([sql.Identifier(column) for column in tasks_columns[1:]]),
+            values=sql.SQL(', ').join([sql.Literal(value) for value in 
+                                        [title, description, start_datetime, 
+                                        end_datetime, priority, estimated_time, completed]])
+        )
+        cursor.execute(query)
+        task_id = cursor.fetchone()[0]
+        conn.commit()
 
-            self.cursor.execute(
-                """
-                INSERT INTO task_links (parent_id, child_id)
-                VALUES (%s, %s)
-                """,
-                (parent_id, task_id)
-            )
-            self.conn.commit()
-            return task_id
+        cursor.execute(
+            """
+            INSERT INTO task_links (parent_id, child_id)
+            VALUES (%s, %s)
+            """,
+            (parent_id, task_id)
+        )
+        conn.commit()
+        return_connection(conn, cursor)
+        return task_id
     
-    def delete_task(self, id: int) -> None:
+    def delete_task(id: int) -> None:
+        conn, cursor = get_connection()
         if (id == 0):
             raise ValueError("id cannot be root task")
         
         # get all children of task
-        self.cursor.execute(
+        cursor.execute(
             """
             SELECT * FROM task_links
             WHERE parent_id = %s
             """,
             (id,)
         )
-        child_ids = [row[1] for row in self.cursor.fetchall()]
+        child_ids = [row[1] for row in cursor.fetchall()]
 
         # delete all children
         for child_id in child_ids:
-            self.delete_task(child_id)
+            TaskDB.delete_task(child_id)
 
         # delete all links to children and to parent
 
-        self.cursor.execute(
+        cursor.execute(
             """
             DELETE FROM task_links
             WHERE parent_id = %s OR child_id = %s
             """,
             (id, id)
         )
-        self.conn.commit()
+        conn.commit()
 
-        self.cursor.execute(
+        cursor.execute(
             """
             DELETE FROM tasks
             WHERE id = %s
             """,
             (id,)
         )
-        self.conn.commit()
+        conn.commit()
 
-    def close(self):
-        self.cursor.close()
-        self.conn.close()
+        return_connection(conn, cursor)

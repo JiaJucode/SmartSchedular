@@ -47,10 +47,10 @@ def add_task():
         "startDate": iso_date_string | None,
         "endDate": iso_date_string | None,
         "priority": int,
-        "estimated_time": int | None,
+        "estimatedTime": int | None,
         "completed": bool
     Returns:
-        {"id": int}
+        {"id": int,` "time_left": int}
     """
     parent_id = request.json.get("parent_id")
     title = request.json.get("title")
@@ -58,11 +58,11 @@ def add_task():
     start_date = request.json.get("startDate")
     end_date = request.json.get("endDate")
     priority = request.json.get("priority")
-    estimated_time = request.json.get("estimated_time")
+    estimated_time = request.json.get("estimatedTime")
     completed = request.json.get("completed")
-    id = service_add_task(parent_id, title, description, start_date, end_date, 
+    id, time_left = service_add_task(parent_id, title, description, start_date, end_date, 
                           priority, estimated_time, completed)
-    return jsonify({"id": id}) 
+    return jsonify({"id": id, "time_left": time_left})
 
 @bp.route("/update_task", methods=["POST"])
 def update_task():
@@ -74,10 +74,10 @@ def update_task():
         "startDate": iso_date_string | None,
         "endDate": iso_date_string | None,
         "priority": int | None,
-        "estimated_time": int | None,
+        "estimatedTime": int | None,
         "completed": bool | None
     Returns:
-        None
+        {"time_left": int}
     """
     id = request.json.get("id")
     title = request.json.get("title")
@@ -85,11 +85,11 @@ def update_task():
     start_date = request.json.get("startDate")
     end_date = request.json.get("endDate")
     priority = request.json.get("priority")
-    estimated_time = request.json.get("estimated_time")
+    estimated_time = request.json.get("estimatedTime")
     completed = request.json.get("completed")
-    service_update_task(id, title, description, start_date, end_date, 
+    time_left = service_update_task(id, title, description, start_date, end_date, 
                         priority, estimated_time, completed)
-    return jsonify({})
+    return jsonify({"time_left": time_left})
 
 @bp.route("/delete_task", methods=["POST"])
 def delete_task():

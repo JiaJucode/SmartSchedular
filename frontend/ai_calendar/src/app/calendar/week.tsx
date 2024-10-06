@@ -60,7 +60,7 @@ const WeekComponent: React.FC<WeekProps> = ({date, sizeChange}) => {
     useEffect(() => {
         // calculate week start and end
         const start = new Date(date.getFullYear(), date.getMonth(), date.getDate() - date.getDay());
-        const end = new Date(date.getFullYear(), date.getMonth(), date.getDate() + (6 - date.getDay()));
+        const end = new Date(date.getFullYear(), date.getMonth(), date.getDate() + (7 - date.getDay()));
         calendarApi.fetchEvents(start, end, setEvents);
     }, [date]);
     
@@ -140,7 +140,7 @@ const WeekComponent: React.FC<WeekProps> = ({date, sizeChange}) => {
                     handleTimeBlockClick(event, click_event)}}
                 sx={{
                     marginTop: `${event.startDateTime.getHours() * 70 + 
-                        event.startDateTime.getMinutes() * 1.2 + 1 + topPadding}px`,
+                        event.startDateTime.getMinutes() / 60 * 70 + 1 + topPadding}px`,
                     marginLeft: `${widthOffset + length/daysInWeek * 
                         event.startDateTime.getDay() + 1}px`,
                     width: 'calc(12.57% - 1px)',

@@ -2,8 +2,6 @@ from models.calendar_model import CalendarEventDB
 from typing import Dict, List
 from datetime import datetime, timedelta
 
-db = CalendarEventDB()
-
 def _split_event(event: Dict) -> List[Dict]:
     """
     Split an event that spans multiple days into multiple events
@@ -39,7 +37,7 @@ def get_calendar_events(start_datetime_str: str, end_datetime_str: str) -> List[
         raise ValueError("start_datetime must be before end_datetime,\
                          got {} and {}".format(start_datetime, end_datetime))
     # query database for events between start_datetime and end_datetime
-    events = db.get_events(start_datetime, end_datetime)
+    events = CalendarEventDB.get_events(start_datetime, end_datetime)
 
     # trim the events to the requested time range 
     # and split events that span multiple days
@@ -53,6 +51,11 @@ def get_calendar_events(start_datetime_str: str, end_datetime_str: str) -> List[
             trimmed_events.extend(_split_event(event))
         else:
             trimmed_events.append(event)
+
+    # convert datetime objects to isoformat strings
+    for event in trimmed_events:
+        event['start_datetime'] = event['start_datetime'].isoformat()
+        event['end_datetime'] = event['end_datetime'].isoformat()
     return trimmed_events
 
 
@@ -62,13 +65,18 @@ def add_calendar_event(title: str, tags: List[str], str_start_datetime: str,
     end_datetime = datetime.fromisoformat(str_end_datetime)
     if start_datetime > end_datetime:
         raise ValueError("start_datetime must be before end_datetime")
-    return db.add_event(title, tags, start_datetime, end_datetime, description)
+    return CalendarEventDB.add_event(title, tags, start_datetime, end_datetime, description)
 
 def edit_calendar_event(id: int, title: str, tags: List[str], str_start_datetime: str,
                         str_end_datetime: str, description: str):
     start_datetime = datetime.fromisoformat(str_start_datetime)
     end_datetime = datetime.fromisoformat(str_end_datetime)
-    return db.update_event(id, title, tags, start_datetime, end_datetime, description)
+    CalendarEventDB.update_event(id, title, tags, start_datetime, end_datetime, description)
+    # TODO: update task calendar links
 
 def delete_calendar_event(id: int):
-    db.delete_event(id)
+    CalendarEventDB.delete_event(id)
+    # TODO: delete task calendar links
+
+def get_calendar_event(event_id: int) -> Dict:
+    return CalendarEventDB.get_event(event_id)

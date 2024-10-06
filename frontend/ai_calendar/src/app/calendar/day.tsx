@@ -136,7 +136,7 @@ const DayComponent: React.FC<DayProps> = ({date}) => {
                     handleTimeBlockClick(event, click_event)}}
                 sx={{
                     marginTop: `${event.startDateTime.getHours() * 70 + 
-                        event.startDateTime.getMinutes() * 1.2 + 1 + topPadding}px`,
+                        event.startDateTime.getMinutes() / 60 * 70 + 1 + topPadding}px`,
                     marginLeft: `${widthOffset}px`,
                     width: '88%',
                     height: `${(event.endDateTime.getTime() - 

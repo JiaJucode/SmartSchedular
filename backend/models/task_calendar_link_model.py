@@ -1,20 +1,14 @@
-import os
-import psycopg2
-from psycopg2 import sql
-from datetime import datetime
-from typing import List, Optional, Dict
-from flask import current_app as app
+from typing import List
+from models.db_pool import get_connection, return_connection
 
-DATABASE_URL = os.getenv('DATABASE_URL')
 
 class TaskCalendarLinkDB:
     def __init__(self):
-        self.conn = psycopg2.connect(DATABASE_URL)
-        self.cursor = self.conn.cursor()
-        self.create_table()
+        pass
 
-    def create_table(self):
-        self.cursor.execute(
+    def create_table():
+        conn, cursor = get_connection()
+        cursor.execute(
             """
             CREATE TABLE IF NOT EXISTS task_calendar_links (
                 task_id INTEGER NOT NULL,
@@ -25,40 +19,52 @@ class TaskCalendarLinkDB:
             )
             """
         )
-        self.conn.commit()
+        conn.commit()
+        return_connection(conn, cursor)
 
-    def link_task_to_event(self, task_id, calendar_id):
-        self.cursor.execute(
+    def link_task_to_event(task_id, calendar_id):
+        conn, cursor = get_connection()
+        cursor.execute(
             """
             INSERT INTO task_calendar_links (task_id, calendar_id)
             VALUES (%s, %s)
             """, (task_id, calendar_id)
         )
-        self.conn.commit()
+        conn.commit()
+        return_connection(conn, cursor)
 
-    def unlink_task_from_event(self, task_id, calendar_id):
-        self.cursor.execute(
+    def unlink_task_from_event(task_id: int, calendar_id: int):
+        conn, cursor = get_connection()
+        cursor.execute(
             """
             DELETE FROM task_calendar_links
             WHERE task_id = %s AND calendar_id = %s
             """, (task_id, calendar_id)
         )
-        self.conn.commit()
+        conn.commit()
+        return_connection(conn, cursor)
 
-    def get_calendar_events_for_task(self, task_id):
-        self.cursor.execute(
+    def get_calendar_id_for_task(task_id: int) -> List[int]:
+        conn, cursor = get_connection()
+        cursor.execute(
             """
-            SELECT * FROM calendar_events
-            WHERE id IN (SELECT calendar_id FROM task_calendar_links WHERE task_id = %s)
+            SELECT * FROM task_calendar_links
+            WHERE task_id = %s
             """, (task_id,)
         )
-        return self.cursor.fetchall()
+        calendar_ids = [row[1] for row in cursor.fetchall()]
+        return_connection(conn, cursor)
+        return calendar_ids
     
-    def get_task_for_calendar_event(self, calendar_id):
-        self.cursor.execute(
+    def get_task_for_calendar_event(calendar_id: int) -> int:
+        conn, cursor = get_connection()
+        cursor.execute(
             """
             SELECT task_id FROM task_calendar_links
             WHERE calendar_id = %s
-            """, (calendar_id)
+            """, (calendar_id,)
         )
-        return self.cursor.fetchone()
+        result = cursor.fetchone()[0]
+        return_connection(conn, cursor)
+        return result
+

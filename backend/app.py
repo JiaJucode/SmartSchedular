@@ -1,8 +1,10 @@
-from flask import Flask, jsonify, request, redirect
+from flask import Flask, jsonify
 from flask_cors import CORS
-# need to be in this order for import
 from controllers.task_controller import bp as task_bp
 from controllers.calendar_event_controller import bp as calendar_bp
+from models.task_calendar_link_model import TaskCalendarLinkDB
+from models.task_model import TaskDB
+from models.calendar_model import CalendarEventDB
 
 app = Flask(__name__)
 
@@ -15,4 +17,8 @@ def ping_test():
     return jsonify({'message': 'pong'})
 
 if __name__ == '__main__':
+    # create all tables
+    TaskDB.create_table()
+    CalendarEventDB.create_table()
+    TaskCalendarLinkDB.create_table()
     app.run(host='0.0.0.0', port=5148, debug=True)

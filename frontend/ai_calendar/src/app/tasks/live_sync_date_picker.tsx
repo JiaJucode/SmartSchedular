@@ -13,13 +13,16 @@ interface LiveSyncDatePickerProps {
 }
 
 const LiveSyncDatePicker: React.FC<LiveSyncDatePickerProps> = ({ task_id, fieldKey, value }) => {
-    const [dateValue, setDateValue] = useState<Date | null>(value);
-    const [valueChanged, setValueChanged] = useState<boolean>(false);
+    const [dateValue, setDateValue] = useState<Date | null>(null);
+    const [valueChanged, setValueChanged] = useState<boolean>();
 
     useEffect(() => {
-        setDateValue(value);
+        if (value !== null) {
+            value.setHours(0, 0, 0, 0);
+            setDateValue(value);
+        }
         setValueChanged(false);
-    }, [task_id]);
+    }, [task_id, value]);
 
     const saveUpdatedTask = () => {
         updateTask(task_id, fieldKey, dateValue);
@@ -41,9 +44,12 @@ const LiveSyncDatePicker: React.FC<LiveSyncDatePickerProps> = ({ task_id, fieldK
         ) : null}
         <LocalizationProvider dateAdapter={AdapterDayjs}>
             <DatePicker value={dayjs(dateValue)}
+            format="DD/MM/YYYY"
             onChange={(newValue) => {
-                if (newValue?.toDate() !== dateValue) {
+                if (newValue !== null && newValue.toDate() !== dateValue) {
+                    console.log(newValue.toDate());
                     setValueChanged(true);
+                    setDateValue(newValue.toDate());
                 }
             }}
             slotProps={{ 
