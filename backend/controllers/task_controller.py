@@ -60,9 +60,9 @@ def add_task():
     priority = request.json.get("priority")
     estimated_time = request.json.get("estimatedTime")
     completed = request.json.get("completed")
-    id, time_left = service_add_task(parent_id, title, description, start_date, end_date, 
+    id = service_add_task(parent_id, title, description, start_date, end_date, 
                           priority, estimated_time, completed)
-    return jsonify({"id": id, "time_left": time_left})
+    return jsonify({"id": id})
 
 @bp.route("/update_task", methods=["POST"])
 def update_task():
@@ -76,8 +76,6 @@ def update_task():
         "priority": int | None,
         "estimatedTime": int | None,
         "completed": bool | None
-    Returns:
-        {"time_left": int}
     """
     id = request.json.get("id")
     title = request.json.get("title")
@@ -87,9 +85,8 @@ def update_task():
     priority = request.json.get("priority")
     estimated_time = request.json.get("estimatedTime")
     completed = request.json.get("completed")
-    time_left = service_update_task(id, title, description, start_date, end_date, 
+    service_update_task(id, title, description, start_date, end_date, 
                         priority, estimated_time, completed)
-    return jsonify({"time_left": time_left})
 
 @bp.route("/delete_task", methods=["POST"])
 def delete_task():
