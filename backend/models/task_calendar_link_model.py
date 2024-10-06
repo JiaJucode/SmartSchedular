@@ -54,11 +54,11 @@ class TaskCalendarLinkDB:
         )
         return self.cursor.fetchall()
     
-    def check_if_event_linked_to_task(self, calendar_id):
+    def get_task_for_calendar_event(self, calendar_id):
         self.cursor.execute(
             """
-            SELECT * FROM task_calendar_links
+            SELECT task_id FROM task_calendar_links
             WHERE calendar_id = %s
             """, (calendar_id)
         )
-        return self.cursor.fetchone() is not None
+        return self.cursor.fetchone()
