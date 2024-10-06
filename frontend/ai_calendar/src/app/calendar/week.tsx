@@ -18,8 +18,6 @@ const daysInWeek = 7;
 
 const weekDays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
-const server_base_url = process.env.NEXT_PUBLIC_SERVER_BASE_URL;
-
 const topPadding = 10;
 
 const WeekComponent: React.FC<WeekProps> = ({date, sizeChange}) => {
@@ -28,7 +26,6 @@ const WeekComponent: React.FC<WeekProps> = ({date, sizeChange}) => {
     const [selectedEvent, setSelectedEvent] = useState<Event>({
         id: -1,
         title: "",
-        source: null,
         tags: [],
         startDateTime: new Date(),
         endDateTime: new Date(),
@@ -87,7 +84,6 @@ const WeekComponent: React.FC<WeekProps> = ({date, sizeChange}) => {
         return {
             id: -1,
             title: "new event",
-            source: null,
             tags: [],
             startDateTime: startDateTime,
             endDateTime: new Date(startDateTime.getTime() + 60 * 60 * 1000),
@@ -149,7 +145,7 @@ const WeekComponent: React.FC<WeekProps> = ({date, sizeChange}) => {
                         event.startDateTime.getDay() + 1}px`,
                     width: 'calc(12.57% - 1px)',
                     height: `${(event.endDateTime.getTime() - 
-                        event.startDateTime.getTime()) / 60000 * 1.2 - 4}px`,
+                        event.startDateTime.getTime()) / 3600000 * 70 - 2}px`,
                     backgroundColor: 'primary.main',
                     zIndex: 3,
                     position: 'absolute',

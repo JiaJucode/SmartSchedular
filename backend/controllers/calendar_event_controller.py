@@ -42,7 +42,6 @@ def add_event():
     """
     params:
         "title": str,
-        "source": int | None,
         "tags": [str],
         "start_datetime": ISO datetime string,
         "end_datetime": ISO datetime string,
@@ -52,12 +51,11 @@ def add_event():
         {"id": int}
     """
     title = request.json.get("title")
-    source = request.json.get("source")
     tags = request.json.get("tags")
     str_start_datetime = request.json.get("start_datetime")
     str_end_datetime = request.json.get("end_datetime")
     description = request.json.get("description")
-    id = add_calendar_event(title, source, tags, str_start_datetime, 
+    id = add_calendar_event(title, tags, str_start_datetime, 
                             str_end_datetime, description)
     return jsonify({"id": id})
 
@@ -67,7 +65,6 @@ def edit_event():
     params:
         "id": int,
         "title": str,
-        "source": int | None,
         "tags": [str],
         "start_datetime": ISO datetime string,
         "end_datetime": ISO datetime string,
@@ -78,12 +75,11 @@ def edit_event():
     """
     id = request.json.get("id")
     title = request.json.get("title")
-    source = request.json.get("source")
     tags = request.json.get("tags")
     str_start_datetime = request.json.get("start_datetime")
     str_end_datetime = request.json.get("end_datetime")
     description = request.json.get("description")
-    edit_calendar_event(id, title, source, tags, str_start_datetime, 
+    edit_calendar_event(id, title, tags, str_start_datetime, 
                         str_end_datetime, description)
     return jsonify({})
 

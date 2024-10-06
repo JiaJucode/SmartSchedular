@@ -33,6 +33,7 @@ class TaskDB:
         )
         self.conn.commit()
 
+        # task hierarchy table
         self.cursor.execute(
             """
             CREATE TABLE IF NOT EXISTS task_links (
@@ -62,7 +63,6 @@ class TaskDB:
                 """
             )
             self.conn.commit()
-
 
     def __get_task(self, id: int) -> Dict:
         query = sql.SQL(

@@ -45,8 +45,11 @@ def service_add_task(parent_id: int, title: str,
         start_date = datetime.fromisoformat(str_start_date)
     if str_end_date is not None:
         end_date = datetime.fromisoformat(str_end_date)
-    return db.add_task(parent_id, title, description, start_date, end_date, 
-                       priority, estimated_time, completed)
+
+    event_id = db.add_task(parent_id, title, description, start_date, end_date,
+                            priority, estimated_time, completed)
+    
+    return event_id
     
 def service_update_task(id: int, title: str | None,
                         description: str | None, str_start_date: str | None, 

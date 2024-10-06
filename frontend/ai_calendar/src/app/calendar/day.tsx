@@ -16,7 +16,6 @@ const weekDays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Frida
 export interface Event {
     id: number;
     title: string;
-    source: number | null;
     tags: string[];
     startDateTime: Date;
     endDateTime: Date;
@@ -32,7 +31,6 @@ const DayComponent: React.FC<DayProps> = ({date}) => {
         id: -1,
         title: "",
         startDateTime: new Date(),
-        source: null,
         tags: [],
         endDateTime: new Date(),
         description: "",
@@ -88,7 +86,6 @@ const DayComponent: React.FC<DayProps> = ({date}) => {
             id: -1,
             title: "new event",
             startDateTime: startDateTime,
-            source: null,
             tags: [],
             endDateTime: new Date(startDateTime.getTime() + 60 * 60 * 1000),
             description: "",
@@ -143,7 +140,7 @@ const DayComponent: React.FC<DayProps> = ({date}) => {
                     marginLeft: `${widthOffset}px`,
                     width: '88%',
                     height: `${(event.endDateTime.getTime() - 
-                        event.startDateTime.getTime()) / 60000 * 1.2 - 4}px`,
+                        event.startDateTime.getTime()) / 3600000 * 70 - 2}px`,
                     backgroundColor: 'primary.main',
                     zIndex: 3,
                     position: 'absolute',
