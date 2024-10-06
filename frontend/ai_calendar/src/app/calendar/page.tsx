@@ -154,7 +154,7 @@ const CalendarPage = () => {
                         >Week</Button>
                     </ButtonGroup>
                 </Toolbar>
-                {viewMode === 'day' ? <DayComponent date={selectedDate}/> 
+                {viewMode === 'day' ? <DayComponent date={selectedDate} sizeChange={openSideBar}/> 
                 : <WeekComponent date={selectedDate} sizeChange={openSideBar}/>}
             </Box>
         </Box>

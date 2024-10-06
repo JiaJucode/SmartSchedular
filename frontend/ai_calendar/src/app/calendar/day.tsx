@@ -7,6 +7,7 @@ import * as calendarApi from '../utils/calendar_api_funcs';
 
 interface DayProps {
     date: Date;
+    sizeChange: boolean;
 }
 
 const hourLineCount = 25;
@@ -24,7 +25,7 @@ export interface Event {
 
 const topPadding = 10;
 
-const DayComponent: React.FC<DayProps> = ({date}) => {
+const DayComponent: React.FC<DayProps> = ({date, sizeChange}) => {
     const [events, setEvents] = useState<Event[]>([]);
     const [isEditingEvent, setIsEditingEvent] = useState(false);
     const [selectedEvent, setSelectedEvent] = useState<Event>({
@@ -54,7 +55,7 @@ const DayComponent: React.FC<DayProps> = ({date}) => {
         return () => {
             window.removeEventListener('resize', calculateWidthOffset);
         };
-    }, []);
+    }, [sizeChange]);
 
     useEffect(() => {
         calendarApi.fetchEvents(new Date(date.getFullYear(), date.getMonth(),
