@@ -1,7 +1,7 @@
 from models.task_model import TaskDB
 from typing import List, Dict
 from datetime import datetime
-from services.task_calendar_link_service import schedule_task, \
+from services.task_calendar_link_service import schedule_task, deschedule_task,\
     update_scheduled_task, get_calendar_id_for_task
 
 def get_tasks_by_parent_id(parent_id: int) -> List[Dict]:
@@ -50,6 +50,7 @@ def service_add_task(parent_id: int, title: str,
                             priority, estimated_time, completed)
     
     task = TaskDB.get_task(event_id)
+    # TODO: this should be a user setting, to automatically schedule tasks
     if start_date is not None and end_date is not None and estimated_time is not None:
         schedule_task(task)
     return event_id
@@ -57,7 +58,7 @@ def service_add_task(parent_id: int, title: str,
 def service_update_task(id: int, title: str | None,
                         description: str | None, str_start_date: str | None, 
                         str_end_date: str | None, priority: int | None,
-                        estimated_time: int | None, completed: bool | None) -> int:
+                        estimated_time: int | None, completed: bool | None) -> None:
     """
     if param is None, then the value is not updated
     """
@@ -74,9 +75,6 @@ def service_update_task(id: int, title: str | None,
     # if task is scheduled, update the scheduled task event
     if len(get_calendar_id_for_task(id)) > 0:
         update_scheduled_task(task)
-    else:
-        schedule_task(task)
-    
     
 def service_delete_task(id: int) -> None:
     """
@@ -87,3 +85,20 @@ def service_delete_task(id: int) -> None:
     """
     TaskDB.delete_task(id)
     # TODO: delete task calendar links
+
+def schedule_task_from_id(task_id: int) -> int:
+    """
+    return:
+        time_left: int
+    schedule task from task_id
+    """
+    task = TaskDB.get_task(task_id)
+    return schedule_task(task)
+
+def deschedule_task_from_id(task_id: int) -> int:
+    """
+    deschedule task from task_id
+    """
+    task = TaskDB.get_task(task_id)
+    deschedule_task(task)
+    

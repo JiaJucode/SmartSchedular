@@ -19,6 +19,7 @@ export interface Task {
     endDate: Date | null;
     priority: number;
     estimatedTime: number | null;
+    hoursToSchedule: number | null;
     completed: boolean;
 }
 

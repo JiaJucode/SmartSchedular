@@ -13,7 +13,6 @@ class TaskCalendarLinkDB:
             CREATE TABLE IF NOT EXISTS task_calendar_links (
                 task_id INTEGER NOT NULL,
                 calendar_id INTEGER NOT NULL,
-                unscheduled_time INTEGER,
                 PRIMARY KEY (task_id, calendar_id),
                 FOREIGN KEY (task_id) REFERENCES tasks(id),
                 FOREIGN KEY (calendar_id) REFERENCES calendar_events(id)
@@ -68,15 +67,3 @@ class TaskCalendarLinkDB:
         result = cursor.fetchone()[0]
         return_connection(conn, cursor)
         return result
-
-    def update_unscheduled_time(task_id: int, calendar_id: int, time: int):
-        conn, cursor = get_connection()
-        cursor.execute(
-            """
-            UPDATE task_calendar_links
-            SET unscheduled_time = %s
-            WHERE task_id = %s AND calendar_id = %s
-            """, (time, task_id, calendar_id)
-        )
-        conn.commit()
-        return_connection(conn, cursor)

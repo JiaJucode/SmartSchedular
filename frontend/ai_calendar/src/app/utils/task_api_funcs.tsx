@@ -16,7 +16,7 @@ export const addTask =
             start_datetime: null,
             end_datetime: null,
             priority: 0,
-            estimated_time: 0,
+            estimated_time: null,
             completed: false,
         }),
     }
@@ -31,6 +31,7 @@ export const addTask =
                 endDate: null,
                 priority: 0,
                 estimatedTime: null,
+                hoursToSchedule: null,
                 completed: false,
             }];
         });
@@ -43,7 +44,7 @@ export const fetchTasks =
     .then((response) => response.json())
     .then((data: {tasks: {id: number, title: string, description: string,
         start_datetime: string, end_datetime: string, priority: number,
-        estimated_time: number, completed: boolean}[]}) => {
+        estimated_time: number, hours_to_schedule: number, completed: boolean}[]}) => {
         setTasks(data.tasks.map((task) => ({
             id: task.id,
             title: task.title,
@@ -54,6 +55,7 @@ export const fetchTasks =
                 ? null : new Date(task.end_datetime),
             priority: task.priority,
             estimatedTime: task.estimated_time,
+            hoursToSchedule: task.hours_to_schedule,
             completed: task.completed,
         })));
     });
@@ -86,5 +88,34 @@ export const deleteTask = (task_id: number,
         setTasks((prevTasks) => {
             return prevTasks.filter((task) => task.id !== task_id);
         });
+    });
+}
+
+export const scheduleTask = (task_id: number) => {
+    let timeLeft = 0;
+    fetch(`${server_base_url}/task/schedule_task`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            id: task_id,
+        }),
+    }).then((response) => response.json())
+    .then((data: {time_left: number}) => {
+        timeLeft = data.time_left;
+    });
+    return timeLeft;
+}
+
+export const descheduleTask = (task_id: number) => {
+    fetch(`${server_base_url}/task/deschedule_task`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            id: task_id,
+        }),
     });
 }

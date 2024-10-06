@@ -42,6 +42,16 @@ const TaskInfoSideBar: React.FC<TaskInfoSideBarProps> =
         setOpenSideBar(false);
     }
 
+    const scheduleTask = () => {
+        const time_left = taskApi.scheduleTask(task.id);
+        setTask({...task, hoursToSchedule: time_left});
+    }
+
+    const deScheduleTask = () => {
+        taskApi.descheduleTask(task.id);
+        setTask({...task, hoursToSchedule: task.estimatedTime});
+    }
+
     return (
         <Drawer open={openSideBar} onClose={() => setOpenSideBar(false)} anchor='right'
         variant='persistent' sx={{ marginTop: '64px', zIndex: 5 }}>
@@ -51,12 +61,14 @@ const TaskInfoSideBar: React.FC<TaskInfoSideBarProps> =
                 color: 'primary.contrastText',
             }}>
                 <Box sx={{ flexDirection: 'row', display: 'flex', alignItems: 'center',
+                    paddingTop: '2px',
                     justifyContent: 'space-between' }}>
                     <IconButton onClick={() => setOpenSideBar(false)} 
                     sx={{ color: 'inherit' }}>
                         <CloseIcon />
                     </IconButton>
-                    <Box>
+                    <Box sx={{ flexDirection: 'row', display: 'flex', alignItems: 'center', 
+                        width: '30%' }}>
                         <LiveSyncCheckbox task_id={task.id} fieldKey='completed'
                         value={task.completed} />
                         <Button onClick={() => deleteTask(task.id)}
@@ -67,59 +79,80 @@ const TaskInfoSideBar: React.FC<TaskInfoSideBarProps> =
                             
                 </Box>
                 <Stack spacing={1} sx={{ paddingLeft: 2, paddingRight: 2 }}>
-                    <Box sx={{ flexDirection: 'row', display: 'flex', alignItems: 'center', 
-                        justifyContent: 'space-between'}}>
-                        <Typography sx={{ fontSize: '1.2rem' }}>
-                            Title:
-                        </Typography>
-                        <Box sx={{ border: '1px solid', width: '60%' }}>
+                    <Box sx={{ width: '100%', height: '50px',
+                        justifyContent: 'center', display: 'flex',
+                        '& .MuiInputBase-input': {
+                            fontSize: '1.5rem',
+                        },
+                    }}>
                         <LiveSyncTextfield task_id={task.id} fieldKey='title'
                         value={task.title} numberOnly={false} />
-                        </Box>
                     </Box>
                     <Box sx={{ flexDirection: 'row', display: 'flex', alignItems: 'center', 
                         justifyContent: 'space-between' }}>
-                        <Typography sx={{ fontSize: '1.2rem' }}>
+                        <Typography sx={{ fontSize: '1.1rem' }}>
                             start Date:
                         </Typography>
-                        <Box sx={{ border: '1px solid', width: '60%', position: 'relative' }}>
+                        <Box sx={{ width: '50%', position: 'relative' }}>
                         <LiveSyncDatePicker task_id={task.id} fieldKey='start_datetime'
                         value={task.startDate} />
                         </Box>
                     </Box>
                     <Box sx={{ flexDirection: 'row', display: 'flex', alignItems: 'center', 
                         justifyContent: 'space-between' }}>
-                        <Typography sx={{ fontSize: '1.2rem' }}>
+                        <Typography sx={{ fontSize: '1.1rem' }}>
                             End Date:
                         </Typography>
-                        <Box sx={{ border: '1px solid', width: '60%', position: 'relative' }}>
+                        <Box sx={{ width: '50%', position: 'relative' }}>
                         <LiveSyncDatePicker task_id={task.id} fieldKey='end_datetime'
                         value={task.endDate} />
                         </Box>
                     </Box>
                     <Box sx={{ flexDirection: 'row', display: 'flex', alignItems: 'center', 
-                        justifyContent: 'space-between' }}>
-                        <Typography sx={{ fontSize: '1.2rem' }}>
+                        justifyContent: 'space-between', height: '30px' }}>
+                        <Typography sx={{ fontSize: '1.1rem' }}>
                             Priority:
                         </Typography>
-                        <Box sx={{ border: '1px solid', width: '60%' }}>
+                        <Box sx={{ width: '50%' }}>
                         <LiveSyncTextfield task_id={task.id} fieldKey='priority'
                         value={task.priority.toString()} numberOnly={true} />
                         </Box>
                     </Box>
                     <Box sx={{ flexDirection: 'row', display: 'flex', alignItems: 'center', 
-                        justifyContent: 'space-between' }}>
-                        <Typography sx={{ fontSize: '1.2rem' }}>
+                        justifyContent: 'space-between', height: '30px' }}>
+                        <Typography sx={{ fontSize: '1.1rem' }}>
                             Estimated Time:
                         </Typography>
-                        <Box sx={{ border: '1px solid', width: '60%' }}>
+                        <Box sx={{ width: '50%' }}>
                         <LiveSyncTextfield task_id={task.id} fieldKey='estimated_time'
                         value={task.estimatedTime ? task.estimatedTime.toString() : ''}
                         numberOnly={true} />
                         </Box>
                     </Box>
-                    <Typography sx={{ fontSize: '1.2rem' }}>
-                        description:
+                    <Box sx={{ flexDirection: 'row', display: 'flex', alignItems: 'center', 
+                        justifyContent: 'space-between', height: '30px' }}>
+                        <Typography sx={{ fontSize: '1.1rem' }}>
+                            Hours To Schedule:
+                        </Typography>
+                        <Typography sx={{ width: '50%' }}>
+                            {task.hoursToSchedule}
+                        </Typography>
+                    </Box>
+                    <Box sx={{ flexDirection: 'row', display: 'flex', alignItems: 'center', 
+                        justifyContent: 'space-between' }}>
+                        <Button onClick={() => scheduleTask()} variant='contained'
+                        sx={{ color: 'inherit', alignContent: 'center', display: 'flex', 
+                            textTransform: 'none' }}>
+                                Schedule
+                        </Button>
+                        <Button onClick={() => deScheduleTask()} variant='contained'
+                        sx={{ color: 'inherit', alignContent: 'center', display: 'flex',
+                            textTransform: 'none' }}>
+                                De-Schedule
+                        </Button>
+                    </Box>
+                    <Typography sx={{ fontSize: '1.1rem' }}>
+                        Description:
                     </Typography>
                     <Box sx={{ border: '1px solid', width: '100%', height: '200px'}}>
                         <TextField value={description} fullWidth multiline
@@ -129,7 +162,7 @@ const TaskInfoSideBar: React.FC<TaskInfoSideBarProps> =
                             setDescription(e.target.value);
                         }
                         } onBlur={() => {
-                            taskApi.updateTask(task_id, 'description', description);
+                            taskApi.updateTask(task.id, 'description', description);
                         }}
                         sx={{
                             display: 'flex', justifyContent: 'center', alignItems: 'center',

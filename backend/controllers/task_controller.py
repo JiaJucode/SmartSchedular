@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, request
 from flask_cors import CORS
 from services.task_service import *
-from flask import current_app as app
+from services.task_calendar_link_service import get_time_left_to_schedule
 
 bp = Blueprint("task_controller", __name__)
 
@@ -24,7 +24,8 @@ def get_tasks():
                     "end_date": iso_date_string | None,
                     "priority": int,
                     "estimated_time": int | None,
-                    completed: bool,
+                    "hours_to_schedule": int | None,
+                    "completed": bool,
                 },
                 ...
             ]
@@ -32,8 +33,10 @@ def get_tasks():
     parent_id = request.args.get("parent_id")
     if not parent_id:
         return jsonify({"error": "parent_id is required"}), 400
-
+    
     tasks = get_tasks_by_parent_id(parent_id)
+    for task in tasks:
+        task["hours_to_schedule"] = get_time_left_to_schedule(task)
 
     return jsonify({"tasks": tasks})
 
@@ -87,6 +90,7 @@ def update_task():
     completed = request.json.get("completed")
     service_update_task(id, title, description, start_date, end_date, 
                         priority, estimated_time, completed)
+    return jsonify({})
 
 @bp.route("/delete_task", methods=["POST"])
 def delete_task():
@@ -98,4 +102,28 @@ def delete_task():
     """
     id = request.json.get("id")
     service_delete_task(id)
+    return jsonify({})
+
+@bp.route("/schedule_task", methods=["POST"])
+def schedule_task():
+    """
+    params:
+        "id": int
+    Returns:
+        {"time_left": int}
+    """
+    task_id = request.json.get("id")
+    time_left = schedule_task_from_id(task_id)
+    return jsonify({"time_left": time_left})
+
+@bp.route("/deschedule_task", methods=["POST"])
+def deschedule_task():
+    """
+    params:
+        "id": int
+    Returns:
+        None
+    """
+    task_id = request.json.get("id")
+    deschedule_task_from_id(task_id)
     return jsonify({})
