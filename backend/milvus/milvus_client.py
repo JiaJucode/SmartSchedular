@@ -1,5 +1,6 @@
 from pymilvus import MilvusClient, DataType, Collection, connections
 from flask import current_app as app
+from typing import Dict, List
 
 # client = MilvusClient(uri="tcp://standalone:19530")
 
@@ -17,7 +18,6 @@ class MyMilvusClient:
         schema.add_field(field_name="id", field_type=DataType.INT64, is_primary=True)
         schema.add_field(field_name="user_id", field_type=DataType.INT32)
         schema.add_field(field_name="embedding", field_type=DataType.FLOAT_VECTOR, dim=1024)
-        schema.add_field(field_name="content_type", field_type=DataType.INT32)
         schema.add_field(field_name="content_id", field_type=DataType.INT32)
 
         index_params = self.client.prepare_index_params()
@@ -71,8 +71,12 @@ class MyMilvusClient:
         # milvus have auto save
         self.client.insert(collection_name="task", data=data)
 
-    def get(self, user_id, embedding):
+    def get(self, user_id, embedding) -> List[Dict]:
         """
+        return the fetched content in json format
+        """
+        """
+        results in format:
         [[
             {
                 "id": 1,
@@ -82,13 +86,18 @@ class MyMilvusClient:
             },
             ...
         ]]
+        return the fetched content in json format
         """
-        return self.client.search(
+        results = self.client.search(
             collection_name="task",
             data=[embedding],
             limit=4,
             search_params={"metric_type": "COSINE"},
             filter='user_id == {}'.format(user_id)
         )
+
+        fetched_result = []
+        for result in results[0]:
+            
 
      

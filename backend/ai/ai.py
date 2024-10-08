@@ -11,7 +11,9 @@ llm = NVIDIA(
     # model="nvidia/nemotron-4-340b-instruct",
     model="nvidia/llama-3.1-nemotron-51b-instruct",
     nvidia_api_key=api_key,
-    base_url="https://integrate.api.nvidia.com/v1"
+    base_url="https://integrate.api.nvidia.com/v1",
+    temperature=0.7,
+    max_tokens=3000,
 )
 embeddings = NVIDIAEmbedding(
     model="nvidia/nv-embedqa-e5-v5",
@@ -106,7 +108,7 @@ system_content = \
     },
 }
 
-return an output in the following format:
+your reponse should not have anything other than the following format(no extra text):
 {
     "action_type": "string" in ["question", "chat", "task", "calendar"],
     "content": json
@@ -154,7 +156,8 @@ If the action_type is "calendar", the content is in the following format:
 """
 
 def generate_response(message, current_date, user_id = 0):
-    # TODO: embed the message and get relevant text from vector search
+    # TODO: NLP to get relevant text from vector search for task and calendars
+    # TODO: embed the message and get relevant text from vector search for documents
     relevant_text = ""
     user_content = json.dumps({
         "user_query": message,
@@ -178,5 +181,5 @@ def generate_response(message, current_date, user_id = 0):
 # for testing
 if __name__ == "__main__":
     # while True:
-    message = """"""
+    message = """do you have memory of chat history"""
     print(generate_response(message, "2024-10-10"))

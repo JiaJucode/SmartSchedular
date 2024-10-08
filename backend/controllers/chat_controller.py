@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify, request
 from flask_cors import CORS
-from services.task_service import *
+from services.task_service import handle_chat_message
 
 bp = Blueprint("chat_controller", __name__)
 
