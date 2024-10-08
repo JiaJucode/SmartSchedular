@@ -2,3 +2,15 @@ Flask
 flask-cors
 llama-index-embeddings-nvidia
 psycopg2
+jsonschema
+
+# vector database
+protobuf
+grpcio-tools
+pymilvus==2.4.7
+
+# AI
+llama-index
+llama-index-embeddings-nvidia
+llama-index-llms-nvidia
+llama-index-readers-file

@@ -5,6 +5,7 @@ from controllers.calendar_event_controller import bp as calendar_bp
 from models.task_calendar_link_model import TaskCalendarLinkDB
 from models.task_model import TaskDB
 from models.calendar_model import CalendarEventDB
+from flask import current_app as current_app
 
 app = Flask(__name__)
 
