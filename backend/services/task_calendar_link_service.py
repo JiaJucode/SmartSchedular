@@ -2,8 +2,7 @@ from datetime import datetime, timedelta
 from models.task_calendar_link_model import TaskCalendarLinkDB
 from services.calendar_event_service import get_calendar_events, add_calendar_event, \
     delete_calendar_event, edit_calendar_event, get_calendar_event
-from utils.calendar_utils import get_empty_timeslots_util
-from flask import current_app as app
+from utils.calendar_utils import get_empty_timeslots_util, add_event
 from typing import List, Dict
 
 # TODO: prevent 2 reschedule tasks from running at the same time for the same user
@@ -122,39 +121,14 @@ def batch_schedule_tasks(tasks: List[Dict]) -> Dict:
     ]
     """
     # TODO: sort tasks by priority instead of start_datetime
+    # TODO: use a priority queue to schedule tasks, at each event point test with all tasks that can be scheduled and find the one with lowest value
+    # value is related to priority of task and the finished time
     sorted_tasks = sorted(tasks, key=lambda x: x['start_datetime'])
     start_datetime = sorted_tasks[0]['start_datetime']
-    unfilled_tasks = {}
     free_timeslots = get_free_timeslots(start_datetime, datetime.max, timedelta(hours=0))
-    for task in sorted_tasks:
-        # remove all timeslots before the task start date
-        while len(free_timeslots) > 0 and free_timeslots[0]['end_datetime'] < task['start_datetime']:
-            free_timeslots.pop(0)
-        time_left = task['estimated_time']
-        while time_left > 0 and len(free_timeslots) > 0:
-            free_slot = free_timeslots.pop(0)
-
-            if free_slot['end_datetime'] > free_slot['start_datetime'] + time_left:
-                # break the slot into 2
-                next_free_slot = {
-                    "start_datetime": free_slot['start_datetime'] + time_left,
-                    "end_datetime": free_slot['end_datetime']
-                }
-                free_timeslots.insert(0, next_free_slot)
-            event_end_datetime = min(free_slot['start_datetime'] + time_left, free_slot['end_datetime'])
-            slot_size = event_end_datetime - free_slot['start_datetime']
-            event_id = add_calendar_event(task['title'], task['id'], int(task['id']), [],
-                            free_slot['start_datetime'].isoformat(), event_end_datetime.isoformat(),
-                            task['description'])
-            TaskCalendarLinkDB.link_task_to_event(task['id'], event_id)
-            time_left -= slot_size
-
-            if task['end_datetime'] > free_slot['end_datetime'] and time_left > 0:
-                break
-        
-        if time_left > 0:
-            unfilled_tasks[task['id']] = time_left
-    return unfilled_tasks
+    new_events = add_event(sorted_tasks, free_timeslots)
+    for event in new_events:
+        add_calendar_event(**event)
 
 def deschedule_task(task) -> None:
     """

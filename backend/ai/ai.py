@@ -176,7 +176,8 @@ def generate_response(message, current_date, user_id = 0):
             content=(user_content)
         )
     ]
-    return llm.chat(messages)
+    # TODO stream_chat in future
+    return llm.chat(messages).message.content
 
 # for testing
 if __name__ == "__main__":

@@ -23,22 +23,57 @@ interface ChatMessage {
 
 const server_base_url = process.env.NEXT_PUBLIC_SERVER_BASE_URL;
 
+const welcomeMessage = 'Welcome! You can add, update, delete, or ' + 
+'list tasks and events, or ask for help. Please provide more context' + 
+'so I can assist you better.';
+
 const ChatPage = () => {
-    const [messages, setMessages] = useState<ChatMessage[]>([]);
+    const [messages, setMessages] = useState<ChatMessage[]>([{isUser: false, message: welcomeMessage}]);
     const [message, setMessage] = useState('');
     const chatBottomRef = useRef<HTMLDivElement>(null);
     const [replyWaiting, setReplyWaiting] = useState(false);
 
     useEffect(() => {
         // Fetch chat list from backend
+        chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, []);
 
     const sendRequest = () => {
         setMessages([...messages, {isUser: true, message}]);
         setReplyWaiting(true);
         // TODO: get response from backend
-
-
+        fetch(`${server_base_url}/chat/query`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                message: message,
+                current_date: new Date().toISOString()
+            })
+        })
+        .then((response) => response.json())
+        .then((data: any) => {
+            if ('response' in data) {
+                console.log(data.response);
+                const response = data.response;
+                switch (response.action_type) {
+                    case 'question':
+                        setMessages([...messages, {isUser: false, message: response.content.response}]);
+                        break;
+                    case 'chat':
+                        setMessages([...messages, {isUser: false, message: response.content.response}]);
+                        break;
+                    default:
+                        // todo: render calendar event or task
+                        break;
+                }
+            }
+            else {
+                // TODO: handle error
+            }
+            chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+        });
         setReplyWaiting(false);
         setMessage('');
     }
@@ -57,6 +92,7 @@ const ChatPage = () => {
                 width: '100%',
                 height: '100dvh',
                 paddingBottom: 7,
+                paddingTop: '80vh',
                 overflowY: 'auto',
                 // justifyContent: 'center',
                 // display: 'flex',
