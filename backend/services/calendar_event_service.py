@@ -1,4 +1,5 @@
 from models.calendar_model import CalendarEventDB
+from models.task_calendar_link_model import TaskCalendarLinkDB
 from typing import Dict, List
 from datetime import datetime, timedelta
 
@@ -25,8 +26,8 @@ def get_calendar_events(start_datetime_str: str, end_datetime_str: str) -> List[
             "id": int,
             "name": str,
             "Tags": [str],
-            "start_datetime": "YYYY-MM-DDTHH:mm:ss.sssZ",
-            "end_datetime": "YYYY-MM-DDTHH:mm:ss.sssZ",
+            "start_datetime": iso_datetime_string,
+            "end_datetime": iso_datetime_string,
             "description": str
         },
         ...]
@@ -72,11 +73,10 @@ def edit_calendar_event(id: int, title: str, tags: List[str], str_start_datetime
     start_datetime = datetime.fromisoformat(str_start_datetime)
     end_datetime = datetime.fromisoformat(str_end_datetime)
     CalendarEventDB.update_event(id, title, tags, start_datetime, end_datetime, description)
-    # TODO: update task calendar links
 
 def delete_calendar_event(id: int):
     CalendarEventDB.delete_event(id)
-    # TODO: delete task calendar links
+    TaskCalendarLinkDB.unlink_task_from_event(id)
 
 def get_calendar_event(event_id: int) -> Dict:
     return CalendarEventDB.get_event(event_id)

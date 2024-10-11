@@ -43,8 +43,8 @@ const TaskInfoSideBar: React.FC<TaskInfoSideBarProps> =
     }
 
     const scheduleTask = () => {
-        const time_left = taskApi.scheduleTask(task.id);
-        setTask({...task, hoursToSchedule: time_left});
+        const timeLeft = taskApi.scheduleTask(task.id);
+        setTask({...task, hoursToSchedule: timeLeft});
     }
 
     const deScheduleTask = () => {

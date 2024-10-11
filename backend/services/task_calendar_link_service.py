@@ -34,35 +34,6 @@ def get_free_timeslots(start_datetime: datetime, end_datetime: datetime,
 
     return timeslots
 
-def get_scheduled_tasks(start_datetime: datetime, end_datetime: datetime) -> Dict:
-    """
-    return:
-    {
-        "[task_id]": {
-            "estimated_time": int,
-        },
-        ...
-    }
-    """
-    events = get_calendar_events(start_datetime.isoformat(), end_datetime.isoformat())
-    task_events = {}
-
-    # filter out events that are linked to tasks
-    for event in events:
-        task_id = TaskCalendarLinkDB.get_task_for_calendar_event(event['id'])
-        if task_id is not None:
-            # delete the current event
-            delete_calendar_event(event['id'])
-            if task_id not in task_events:
-                task_events[task_id] = {}
-                task_events[task_id]['estimated_time'] = \
-                    event['end_datetime'] - event['start_datetime']
-            else:
-                task_events[task_id]['estimated_time'] += \
-                    event['end_datetime'] - event['start_datetime']
-                
-    return task_events
-
 def schedule_task(task) -> int:
     """
     "task": {
@@ -79,6 +50,9 @@ def schedule_task(task) -> int:
         time_left: int
     Schedule a task by adding it to the calendar
     """
+    time_left = get_time_left_to_schedule(task)
+    if time_left <= 0:
+        return 0
     # get all free timeslots
     if task['start_datetime'] is not None and \
         task['end_datetime'] is not None and \
@@ -86,10 +60,8 @@ def schedule_task(task) -> int:
         free_timeslots = get_free_timeslots(task['start_datetime'], task['end_datetime'],
                                             task['estimated_time'])
     else:
-        # not enough information to schedule task
         return
 
-    time_left = task['estimated_time']
     for free_slot in free_timeslots:
         if time_left <= 0:
             break
@@ -130,24 +102,12 @@ def batch_schedule_tasks(tasks: List[Dict]) -> Dict:
     for event in new_events:
         add_calendar_event(**event)
 
-def deschedule_task(task) -> None:
-    """
-    "task": {
-        "id": int,
-        "title": str,
-        "description": str,
-        "start_datetime": datetime,
-        "end_datetime": datetime,
-        "priority": int,
-        "estimated_time": int,
-        "completed": bool
-    }
-    """
+def deschedule_task(task_id) -> None:
     # find all events linked to task
-    event_ids = TaskCalendarLinkDB.get_calendar_id_for_task(task['id'])
+    event_ids = TaskCalendarLinkDB.get_calendar_id_for_task(task_id)
     for event_id in event_ids:
-        TaskCalendarLinkDB.unlink_task_from_event(task['id'], event_id)
-        delete_calendar_event(event_id)
+        TaskCalendarLinkDB.unlink_task_from_event(event_id)
+        delete_calendar_event(event_id)  
 
 def get_calendar_id_for_task(task_id: int) -> List[int]:
     """
@@ -171,8 +131,8 @@ def update_scheduled_task(task) -> int:
         "id": int,
         "title": str,
         "description": str,
-        "start_datetime": datetime,
-        "end_datetime": datetime,
+        "start_datetime": iso_date_string,
+        "end_datetime": iso_date_string,
         "priority": int,
         "estimated_time": int,
         "completed": bool
@@ -188,11 +148,11 @@ def update_scheduled_task(task) -> int:
             title = task['title'] if task['title'] is not None else event['title']
             description = task['description'] if task['description'] is not None \
                 else event['description']
-            edit_calendar_event(event['id'], title, event['tags'], task['start_datetime'].isoformat(),
-                                task['end_datetime'].isoformat(), description)
+            edit_calendar_event(event['id'], title, event['tags'], task['start_datetime'],
+                                task['end_datetime'], description)
         return 0
     else:
-        deschedule_task(task)
+        deschedule_task(task["id"])
         return schedule_task(task)
 
 def get_time_left_to_schedule(task) -> int:
@@ -218,8 +178,4 @@ def get_time_left_to_schedule(task) -> int:
         total_time += (event['end_datetime'] - event['start_datetime']).total_seconds() // 3600
     return task['estimated_time'] - total_time
     
-
-
-    
-
 

@@ -3,6 +3,7 @@ from typing import List, Dict
 from datetime import datetime
 from services.task_calendar_link_service import schedule_task, deschedule_task,\
     update_scheduled_task, get_calendar_id_for_task
+from flask import current_app as app
 
 def get_tasks_by_parent_id(parent_id: int) -> List[Dict]:
     """
@@ -11,8 +12,8 @@ def get_tasks_by_parent_id(parent_id: int) -> List[Dict]:
             "id": int,
             "name": str,
             "description": str,
-            "start_date": "YYYY-MM-DD",
-            "end_date": "YYYY-MM-DD",
+            "start_date": iso_date_string,
+            "end_date": iso_date_string,
             "priority": int,
             "estimated_time": int,
             "completed": bool
@@ -49,10 +50,18 @@ def service_add_task(parent_id: int, title: str,
     event_id = TaskDB.add_task(parent_id, title, description, start_date, end_date,
                             priority, estimated_time, completed)
     
-    task = TaskDB.get_task(event_id)
     # TODO: this should be a user setting, to automatically schedule tasks
     if start_date is not None and end_date is not None and estimated_time is not None:
-        schedule_task(task)
+        schedule_task({
+            "id": event_id,
+            "title": title,
+            "description": description,
+            "start_datetime": start_date,
+            "end_datetime": end_date,
+            "priority": priority,
+            "estimated_time": estimated_time,
+            "completed": completed
+        })
     return event_id
     
 def service_update_task(id: int, title: str | None,
@@ -71,10 +80,18 @@ def service_update_task(id: int, title: str | None,
     TaskDB.update_task(id, title, description, start_date, end_date, 
                    priority, estimated_time, completed)
     
-    task = TaskDB.get_task(id)
     # if task is scheduled, update the scheduled task event
     if len(get_calendar_id_for_task(id)) > 0:
-        update_scheduled_task(task)
+        update_scheduled_task({
+            "id": id,
+            "title": title,
+            "description": description,
+            "start_datetime": start_date,
+            "end_datetime": end_date,
+            "priority": priority,
+            "estimated_time": estimated_time,
+            "completed": completed
+        })
     
 def service_delete_task(id: int) -> None:
     """
@@ -83,8 +100,8 @@ def service_delete_task(id: int) -> None:
     Returns:
         None
     """
+    deschedule_task(id)
     TaskDB.delete_task(id)
-    # TODO: delete task calendar links
 
 def schedule_task_from_id(task_id: int) -> int:
     """
@@ -93,12 +110,12 @@ def schedule_task_from_id(task_id: int) -> int:
     schedule task from task_id
     """
     task = TaskDB.get_task(task_id)
+    app.logger.info(f"task: {task}")
     return schedule_task(task)
 
 def deschedule_task_from_id(task_id: int) -> int:
     """
     deschedule task from task_id
     """
-    task = TaskDB.get_task(task_id)
-    deschedule_task(task)
+    deschedule_task(task_id)
     

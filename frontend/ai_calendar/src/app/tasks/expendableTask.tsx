@@ -4,11 +4,13 @@ import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import ArrowRightIcon from '@mui/icons-material/ArrowRight';
 import AddIcon from '@mui/icons-material/Add';
 import InfoIcon from '@mui/icons-material/Info';
+import ScheduleIcon from '@mui/icons-material/Schedule';
 import { Box, Button, Collapse, Divider, Typography, IconButton } from '@mui/material';
 import LiveSyncTextfield from './live_sync_textfield';
 import LiveSyncDatePicker from './live_sync_date_picker';
 import LiveSyncCheckbox from './live_sync_checkbox';
 import { fetchTasks, addTask } from '../utils/task_api_funcs';
+import * as taskApi from '../utils/task_api_funcs';
 
 interface ExpandableTaskProps {
     parentId: number;
@@ -37,6 +39,28 @@ const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft, s
         setExpandedTasks(newExpandedTasks);
     }
 
+    const handleSchedule = (id: number, hoursLeft: number | null) => {
+        if (hoursLeft === 0) {
+            taskApi.scheduleTask(id);
+            setTasks(tasks.map((task) => {
+                if (task.id === id) {
+                    task.hoursToSchedule = task.estimatedTime;
+                }
+                return task;
+            }));
+        }
+        else {
+            const timeLeft = taskApi.scheduleTask(id);
+            setTasks(tasks.map((task) => {
+                if (task.id === id) {
+                    task.hoursToSchedule = timeLeft;
+                }
+                return task;
+            }));
+        }
+    }
+
+
     return (
         <Box sx={{ overflowY: 'auto', width: '100%', height: '100%' }}>
             {tasks.map((task) => (
@@ -53,9 +77,19 @@ const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft, s
                         }}>
                             <LiveSyncCheckbox task_id={task.id} fieldKey='completed'
                             value={task.completed} />
+                            <Button onClick={() => handleSchedule(task.id, task.hoursToSchedule)}
+                            sx={{ justifyContent: 'center', color: 'primary.contrastText',
+                                minWidth: '40px', alignContent: 'center', display: 'flex',
+                                justifyItems: 'center', alignItems: 'center',
+                                // if task is not scheduled, no background color
+                                backgroundColor: task.hoursToSchedule === 0 ? 
+                                    'primary.light' : 'primary.dark',
+                            }}>
+                                <ScheduleIcon />
+                            </Button>
                             <IconButton onClick={() => handleToggle(task.id)}
                             sx={{ justifyContent: 'flex-start', padding: 0,
-                                color: 'primary.contrastText'
+                                color: 'primary.contrastText',
                             }}>
                                 {expandedTasks.has(task.id) 
                                 ? <ArrowDropDownIcon /> 

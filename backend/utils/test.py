@@ -3,8 +3,11 @@ from datetime import datetime, timedelta
 
 empty_event_test_cases = [
     {
-        "input": ([], "2024-10-05T10:00:00", "2024-10-05T11:00:00"),
-        "expected": [{"start_datetime": "2024-10-05T10:00:00", "end_datetime": "2024-10-05T11:00:00"}]
+        "input": ([], datetime.fromisoformat("2024-10-05T10:00:00"), datetime.fromisoformat("2024-10-05T11:00:00")),
+        "expected": [
+            {"start_datetime": datetime.fromisoformat("2024-10-05T10:00:00"), 
+                "end_datetime": datetime.fromisoformat("2024-10-05T11:00:00")}
+        ]
     },
     {
         "input": (
@@ -12,13 +15,16 @@ empty_event_test_cases = [
                 {"id": 1, "start_datetime": "2024-10-05T10:00:00", "end_datetime": "2024-10-05T11:00:00"},
                 {"id": 2, "start_datetime": "2024-10-05T12:00:00", "end_datetime": "2024-10-05T13:00:00"},
             ], 
-            "2024-10-05T09:00:00",
-            "2024-10-05T14:00:00"
+            datetime.fromisoformat("2024-10-05T09:00:00"),
+            datetime.fromisoformat("2024-10-05T14:00:00")
         ),
         "expected": [
-            {"start_datetime": "2024-10-05T09:00:00", "end_datetime": "2024-10-05T10:00:00"},
-            {"start_datetime": "2024-10-05T11:00:00", "end_datetime": "2024-10-05T12:00:00"},
-            {"start_datetime": "2024-10-05T13:00:00", "end_datetime": "2024-10-05T14:00:00"}
+            {"start_datetime": datetime.fromisoformat("2024-10-05T09:00:00"), 
+                "end_datetime": datetime.fromisoformat("2024-10-05T10:00:00")},
+            {"start_datetime": datetime.fromisoformat("2024-10-05T11:00:00"),
+                "end_datetime": datetime.fromisoformat("2024-10-05T12:00:00")},
+            {"start_datetime": datetime.fromisoformat("2024-10-05T13:00:00"),
+                "end_datetime": datetime.fromisoformat("2024-10-05T14:00:00")}
         ]
     },
     {
@@ -27,12 +33,14 @@ empty_event_test_cases = [
                 {"id": 1, "start_datetime": "2024-10-05T10:00:00", "end_datetime": "2024-10-05T11:30:00"},
                 {"id": 2, "start_datetime": "2024-10-05T11:00:00", "end_datetime": "2024-10-05T12:00:00"},
             ], 
-            "2024-10-05T09:00:00",
-            "2024-10-05T13:00:00"
+            datetime.fromisoformat("2024-10-05T09:00:00"),
+            datetime.fromisoformat("2024-10-05T14:00:00")
         ),
         "expected": [
-            {"start_datetime": "2024-10-05T09:00:00", "end_datetime": "2024-10-05T10:00:00"},
-            {"start_datetime": "2024-10-05T12:00:00", "end_datetime": "2024-10-05T13:00:00"}
+            {"start_datetime": datetime.fromisoformat("2024-10-05T09:00:00"),
+                "end_datetime": datetime.fromisoformat("2024-10-05T10:00:00")},
+            {"start_datetime": datetime.fromisoformat("2024-10-05T12:00:00"),
+                "end_datetime": datetime.fromisoformat("2024-10-05T14:00:00")}
         ]
     },
     {
@@ -41,12 +49,14 @@ empty_event_test_cases = [
                 {"id": 1, "start_datetime": "2024-10-05T08:00:00", "end_datetime": "2024-10-05T09:00:00"},
                 {"id": 2, "start_datetime": "2024-10-05T09:30:00", "end_datetime": "2024-10-05T10:30:00"},
             ],
-            "2024-10-05T09:00:00",
-            "2024-10-05T11:00:00"
+            datetime.fromisoformat("2024-10-05T09:00:00"),
+            datetime.fromisoformat("2024-10-05T11:00:00")
         ),
         "expected": [
-            {"start_datetime": "2024-10-05T09:00:00", "end_datetime": "2024-10-05T09:30:00"},
-            {"start_datetime": "2024-10-05T10:30:00", "end_datetime": "2024-10-05T11:00:00"}
+            {"start_datetime": datetime.fromisoformat("2024-10-05T09:00:00"),
+                "end_datetime": datetime.fromisoformat("2024-10-05T09:30:00")},
+            {"start_datetime": datetime.fromisoformat("2024-10-05T10:30:00"),
+                "end_datetime": datetime.fromisoformat("2024-10-05T11:00:00")}
         ]
     },
     {
@@ -55,12 +65,14 @@ empty_event_test_cases = [
                 {"id": 1, "start_datetime": "2024-10-05T09:00:00", "end_datetime": "2024-10-05T10:00:00"},
                 {"id": 2, "start_datetime": "2024-10-05T10:30:00", "end_datetime": "2024-10-05T11:30:00"},
             ],
-            "2024-10-05T09:00:00",
-            "2024-10-05T14:00:00"
+            datetime.fromisoformat("2024-10-05T09:00:00"),
+            datetime.fromisoformat("2024-10-05T14:00:00")
         ),
         "expected": [
-            {"start_datetime": "2024-10-05T10:00:00", "end_datetime": "2024-10-05T10:30:00"},
-            {"start_datetime": "2024-10-05T11:30:00", "end_datetime": "2024-10-05T14:00:00"}
+            {"start_datetime": datetime.fromisoformat("2024-10-05T10:00:00"),
+                "end_datetime": datetime.fromisoformat("2024-10-05T10:30:00")},
+            {"start_datetime": datetime.fromisoformat("2024-10-05T11:30:00"),
+                "end_datetime": datetime.fromisoformat("2024-10-05T14:00:00")}
         ]
     },
         {
@@ -71,11 +83,12 @@ empty_event_test_cases = [
                 {"id": 3, "start_datetime": "2024-10-05T09:40:00", "end_datetime": "2024-10-05T11:00:00"},
                 {"id": 4, "start_datetime": "2024-10-05T09:50:00", "end_datetime": "2024-10-05T13:50:00"},
             ],
-            "2024-10-05T09:00:00",
-            "2024-10-05T14:00:00"
+            datetime.fromisoformat("2024-10-05T09:00:00"),
+            datetime.fromisoformat("2024-10-05T14:00:00")
         ),
         "expected": [
-            {"start_datetime": "2024-10-05T13:50:00", "end_datetime": "2024-10-05T14:00:00"}
+            {"start_datetime": datetime.fromisoformat("2024-10-05T13:50:00"),
+                "end_datetime": datetime.fromisoformat("2024-10-05T14:00:00")}
         ]
     },
 ]

@@ -7,8 +7,8 @@ def get_empty_timeslots_util(current_events: List[Dict],
                          start_datetime: datetime, end_datetime: datetime) -> List[Dict]:
     event_times = []
     for event in current_events:
-        event_times.append((event['start_datetime'], True, event['id']))
-        event_times.append((event['end_datetime'], False, event['id']))
+        event_times.append((datetime.fromisoformat(event['start_datetime']), True, event['id']))
+        event_times.append((datetime.fromisoformat(event['end_datetime']), False, event['id']))
     event_times.sort()
     timeslots = []
     start = start_datetime

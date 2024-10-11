@@ -33,13 +33,13 @@ class TaskCalendarLinkDB:
         conn.commit()
         return_connection(conn, cursor)
 
-    def unlink_task_from_event(task_id: int, calendar_id: int):
+    def unlink_task_from_event(calendar_id: int):
         conn, cursor = get_connection()
         cursor.execute(
             """
             DELETE FROM task_calendar_links
-            WHERE task_id = %s AND calendar_id = %s
-            """, (task_id, calendar_id)
+            WHERE calendar_id = %s
+            """, (calendar_id,)
         )
         conn.commit()
         return_connection(conn, cursor)
@@ -64,6 +64,9 @@ class TaskCalendarLinkDB:
             WHERE calendar_id = %s
             """, (calendar_id,)
         )
-        result = cursor.fetchone()[0]
+        try:
+            result = cursor.fetchone()[0]
+        except TypeError:
+            result = -1
         return_connection(conn, cursor)
         return result

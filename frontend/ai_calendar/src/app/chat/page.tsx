@@ -65,7 +65,7 @@ const ChatPage = () => {
                         setMessages([...messages, {isUser: false, message: response.content.response}]);
                         break;
                     default:
-                        // todo: render calendar event or task
+                        // TODO: render calendar event or task
                         break;
                 }
             }

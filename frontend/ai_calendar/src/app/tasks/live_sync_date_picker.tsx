@@ -63,6 +63,7 @@ const LiveSyncDatePicker: React.FC<LiveSyncDatePickerProps> = ({ task_id, fieldK
                     onFocus: () => {
                         if (dateValue === null) {
                             setDateValue(new Date());
+                            setValueChanged(true);
                         }
                     }
                 },
