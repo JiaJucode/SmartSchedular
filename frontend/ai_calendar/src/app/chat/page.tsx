@@ -11,11 +11,6 @@ import AssistantIcon from '@mui/icons-material/Assistant';
 import {IconButton, InputAdornment, TextField } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 
-interface ChatBox {
-    name: string;
-    messages: string[];
-}
-
 interface ChatMessage {
     isUser: boolean;
     message: string;
@@ -24,7 +19,7 @@ interface ChatMessage {
 const server_base_url = process.env.NEXT_PUBLIC_SERVER_BASE_URL;
 
 const welcomeMessage = 'Welcome! You can add, update, delete, or ' + 
-'list tasks and events, or ask for help. Please provide more context' + 
+'list tasks and events, or ask for help. Please provide more context ' + 
 'so I can assist you better.';
 
 const ChatPage = () => {
@@ -90,12 +85,11 @@ const ChatPage = () => {
             sx={{
                 backgroundColor: 'primary.dark',
                 width: '100%',
-                height: '100dvh',
-                paddingBottom: 7,
-                paddingTop: '80vh',
+                height: 'calc(100vh - 119px)',
+                paddingBottom: '70px',
                 overflowY: 'auto',
-                // justifyContent: 'center',
-                // display: 'flex',
+                justifyContent: 'center',
+                display: 'flex',
             }}>
                     <Stack spacing={2} direction="column" alignItems="center"
                         sx={{ width: '100%', marginBottom: '70px' }}>
@@ -119,7 +113,7 @@ const ChatPage = () => {
                         ))}
                     </Stack>
                     <div ref={chatBottomRef} />
-                    <Box sx={{ width: '100%', height: '70px', display: 'flex', justifyContent: 'center',
+                    <Box sx={{ width: '90%', height: '65px', display: 'flex', justifyContent: 'center',
                         backgroundColor: 'primary.dark', position: 'fixed', bottom: 0
                      }}>
                     <TextField variant='standard' multiline fullWidth value={message} 
@@ -141,6 +135,7 @@ const ChatPage = () => {
                         sx={{
                             position: 'fixed',
                             bottom: 10, width: '70%',
+                            height: '55px',
                             // marginLeft: '15%',
                             padding: 1,
                             opacity: 0.99,
@@ -151,8 +146,8 @@ const ChatPage = () => {
                                 color: 'primary.contrastText',
                             },
                             '& .MuiOutlinedInput-root.Mui-disabled': {
-                                backgroundColor: 'primary.main',
-                                borderRadius: 7,
+                                // backgroundColor: 'primary.main',
+                                // borderRadius: 7,
                             }
                         }}/>
                     </Box>
