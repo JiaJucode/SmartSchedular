@@ -41,7 +41,7 @@ const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft, s
 
     const handleSchedule = (id: number, hoursLeft: number | null) => {
         if (hoursLeft === 0) {
-            taskApi.scheduleTask(id);
+            taskApi.descheduleTask(id);
             setTasks(tasks.map((task) => {
                 if (task.id === id) {
                     task.hoursToSchedule = task.estimatedTime;
