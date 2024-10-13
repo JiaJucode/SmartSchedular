@@ -1,5 +1,4 @@
 from ai.ai import generate_response, response_schema
-import jsonschema
 from jsonschema import validate, ValidationError
 from flask import current_app as app
 import json
@@ -12,8 +11,10 @@ def handle_chat_message(message: str, str_current_date: str) -> dict:
     # parse string json
     try:
         content = json.loads(response)
-    except json.JSONDecodeError:
+    except json.JSONDecodeError as e:
+        app.logger.info(e)
         app.logger.info(response)
+        app.logger.info("failed to parse response")
         return {"error": "invalid response from AI"}
     
     # check if response is valid
@@ -21,6 +22,7 @@ def handle_chat_message(message: str, str_current_date: str) -> dict:
         validate(content, response_schema)
     except ValidationError as e:
         app.logger.info(e)
+        app.logger.info("response does not follow schema")
         return {"error": "invalid response from AI"}
     
     return content

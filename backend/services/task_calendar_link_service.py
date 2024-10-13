@@ -18,6 +18,7 @@ def get_free_timeslots(start_datetime: datetime, end_datetime: datetime,
     total_time = timedelta(hours=0)
     # assume user working hours are from 9am to 5pm
     # this will be configurable in the user settings in the future
+    # TODO: also convert to correct timezone
     start_work_time = time(9, 0, 0)
     end_work_time = time(17, 0, 0)
     if start_datetime.time() > end_work_time:

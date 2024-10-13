@@ -29,84 +29,140 @@ response_schema = {
             "enum": ["question", "chat", "task", "calendar"]
         },
         "content": {
+            "type": "object",
             "oneOf": [
                 {
-                    "type": "object",
                     "properties": {
-                        "response": {"type": "string"}
+                        "response": {
+                            "type": "string"
+                        }
                     },
-                    "required": ["response"]
+                    "required": ["response"],
+                    "additionalProperties": False
                 },
                 {
-                    "type": "array",
-                    "items": {
-                        "type": "object",
-                        "properties": {
-                            "action": {
-                                "type": "string",
-                                "enum": ["add", "update", "delete", "list"]
-                            },
-                            "task": {
+                    "properties": {
+                        "message": {
+                            "type": "string"
+                        },
+                        "action": {
+                            "type": "string",
+                            "enum": ["add", "update", "delete", "list"]
+                        },
+                        "parent_id": {
+                            "type": "integer"
+                        },
+                        "tasks": {
+                            "type": "array",
+                            "items": {
                                 "type": "object",
                                 "properties": {
-                                    "parent_id": {"type": "integer"},
-                                    "title": {"type": "string"},
-                                    "description": {"type": "string"},
-                                    "start_date": {"type": "string", "format": "date-time"},
-                                    "end_date": {"type": "string", "format": "date-time"},
-                                    "priority": {"type": "integer"},
-                                    "estimated_time": {"type": "integer"},
-                                    "completed": {"type": "boolean"}
+                                    "task": {
+                                        "type": "object",
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer"
+                                            },
+                                            "title": {
+                                                "type": "string"
+                                            },
+                                            "description": {
+                                                "type": "string"
+                                            },
+                                            "start_date": {
+                                                "type": "string",
+                                                "format": "date-time"
+                                            },
+                                            "end_date": {
+                                                "type": "string",
+                                                "format": "date-time"
+                                            },
+                                            "priority": {
+                                                "type": "integer"
+                                            },
+                                            "estimated_time": {
+                                                "type": "integer"
+                                            },
+                                            "completed": {
+                                                "type": "boolean"
+                                            }
+                                        },
+                                        "required": ["id", "title", "description", "start_date", "end_date", 
+                                                     "priority", "estimated_time", "completed"]
+                                    }
                                 },
-                                "required": ["title", "description", "start_date", "end_date", "priority", "estimated_time", "completed"]
+                                "required": ["action", "task"]
                             }
-                        },
-                        "required": ["action", "task"]
-                    }
-                },  # For "task"
+                        }
+                    },
+                    "required": ["message", "action", "tasks"]
+                },
                 {
-                    "type": "array",
-                    "items": {
-                        "type": "object",
-                        "properties": {
-                            "action": {
-                                "type": "string",
-                                "enum": ["add", "update", "delete", "list"]
-                            },
-                            "event": {
+                    "properties": {
+                        "message": {
+                            "type": "string"
+                        },
+                        "action": {
+                            "type": "string",
+                            "enum": ["add", "update", "delete", "list"]
+                        },
+                        "events": {
+                            "type": "array",
+                            "items": {
                                 "type": "object",
                                 "properties": {
-                                    "title": {"type": "string"},
-                                    "description": {"type": "string"},
-                                    "start_date": {"type": "string", "format": "date-time"},
-                                    "end_date": {"type": "string", "format": "date-time"},
-                                    "location": {"type": "string"},
-                                    "reminder": {"type": "boolean"}
+                                    "event": {
+                                        "type": "object",
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer"
+                                            },
+                                            "title": {
+                                                "type": "string"
+                                            },
+                                            "tags": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "description": {
+                                                "type": "string"
+                                            },
+                                            "start_date": {
+                                                "type": "string",
+                                                "format": "date-time"
+                                            },
+                                            "end_date": {
+                                                "type": "string",
+                                                "format": "date-time"
+                                            },
+                                        },
+                                        "required": ["id", "title", "tags", "start_date", "end_date", "description"]
+                                    }
                                 },
-                                "required": ["title", "description", "start_date", "end_date", "location", "reminder"]
+                                "required": ["event"]
                             }
-                        },
-                        "required": ["action", "event"]
-                    }
-                }  # For "calendar"
+                        }
+                    },
+                    "required": ["message", "action", "events"]
+                }
             ]
         }
     },
-    "required": ["action_type", "content"]
+    "required": ["action_type", "content"],
+    "additionalProperties": False
 }
 
 
-
-# this is below 250 tokens(estimate)
-# keep the reference date below 1500 (3 reference documents) tokens(on top of the 250 tokens)
 system_content = \
 """You are an assistant that helps user with scheduling and task management. Analyze user input and execute the specified actions based on the structured input format:
 {
     "user_query": "string",
     "context": {
         "current_date": "iso date string",
-        "reference_data": "string",
-    },
+        "reference_data": "string"
+    }
 }
 
 your reponse should not have anything other than the following format(no extra text):
@@ -114,47 +170,56 @@ your reponse should not have anything other than the following format(no extra t
     "action_type": "string" in ["question", "chat", "task", "calendar"],
     "content": json
 }
-If the action_type is "question", only question when there isnt enough reference data for response, the content is the response to the user query in the following format:
+If the action_type is "question", only question when there isnt enough reference data for response, general estimation of facts can be used.
+the content is the response to the user query in the following format:
 {
-    "response": "string",
+    "response": "string"
 }
 Only delete or list when there is reference data for response
 If the action_type is "chat", the content is the response to the user query in the following format:
 {
-    "response": "string",
+    "response": "string"
 }
-If the action_type is "task", the content is in the following format:
-[
-    {
-        "action": "string" in ["add", "update", "delete", "list"],
-        "task": {
-            "parent_id": "int",
-            "title": "string",
-            "description": "string",
-            "start_date": "iso date string",
-            "end_date": "iso date string",
-            "priority": "int",
-            "estimated_time": "int",
-            "completed": "bool",
+If the action_type is "task", parent_id is the id of the project tasks fed as reference data, if no project fits the task, use parent_id = 0 to create a new project, 
+task id should be -1 when action is add, otherwise use the reference data id. The content is in the following format:
+{
+    "message": "string",
+    "action": "string" in ["add", "update", "delete", "list"],
+    "parent_id": "int",
+    "tasks": [
+        {
+            "task": {
+                "id": "int",
+                "title": "string",
+                "description": "string",
+                "start_date": "iso date string",
+                "end_date": "iso date string",
+                "priority": "int",
+                "estimated_time": "int",
+                "completed": "bool"
+            }
         },
-    },
-    ...
-]
-If the action_type is "calendar", the content is in the following format:
-[
-    {
-        "action": "string" in ["add", "update", "delete", "list"],
-        "event": {
-            "title": "string",
-            "description": "string",
-            "start_date": "iso date string",
-            "end_date": "iso date string",
-            "location": "string",
-            "reminder": "bool",
+        ...
+    ]
+}
+If the action_type is "calendar", event id should be -1 when action is add, otherwise use the reference data id. The content is in the following format:
+{
+    "message": "string",
+    "action": "string" in ["add", "update", "delete", "list"],
+    "events": [
+        {
+            "event": {
+                "id": "int",
+                "title": "string",
+                "tags": "string[]",
+                "description": "string",
+                "start_date": "iso date string",
+                "end_date": "iso date string"
+            }
         },
-    },
-    ...
-]
+        ...
+    ]
+}
 """
 
 def generate_response(message, current_date, user_id = 0):

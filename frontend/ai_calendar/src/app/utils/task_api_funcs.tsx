@@ -2,38 +2,34 @@ import { Task } from '../tasks/page';
 
 const server_base_url = process.env.NEXT_PUBLIC_SERVER_BASE_URL;
 
+const defaultNewTask = {
+    id: 0,
+    title: 'new task',
+    description: '',
+    startDate: null,
+    endDate: null,
+    priority: 0,
+    estimatedTime: null,
+    hoursToSchedule: null,
+    completed: false,
+};
+
 export const addTask = 
-(parentId: number, setTasks: React.Dispatch<React.SetStateAction<Task[]>>) => {
+(parentId: number, setTasks: React.Dispatch<React.SetStateAction<Task[]>>, taskDetails: Task=defaultNewTask) => {
     fetch(`${server_base_url}/task/add_task`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+            ...taskDetails,
             parent_id: parentId,
-            title: parentId === 0 ? 'new project' : 'new task',
-            description: '',
-            start_datetime: null,
-            end_datetime: null,
-            priority: 0,
-            estimated_time: null,
-            completed: false,
-        }),
+        })
     }
     ).then((response) => response.json())
     .then((data: {id: number}) => {
         setTasks((prevTasks) => {
-            return [...prevTasks, {
-                id: data.id,
-                title: parentId === 0 ? 'new project' : 'new task',
-                description: '',
-                startDate: null,
-                endDate: null,
-                priority: 0,
-                estimatedTime: null,
-                hoursToSchedule: null,
-                completed: false,
-            }];
+            return [...prevTasks, taskDetails];
         });
     });
 }

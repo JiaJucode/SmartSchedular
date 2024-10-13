@@ -16,7 +16,9 @@ import TaskBox from './taskBox';
 
 interface ChatMessage {
     isUser: boolean;
-    message: string | Task[] | Event[];
+    message: string
+    tasks?: {tasks: Task[], parentId: number}
+    events?: Event[];
 }
 
 const server_base_url = process.env.NEXT_PUBLIC_SERVER_BASE_URL;
@@ -30,31 +32,47 @@ const testChatMessages: ChatMessage[] = [
     {isUser: true, message: 'I need to finish with my course work by tmr midnight.'},
     {
         isUser: false, 
-        message: [
-            {
-                id: -1,
-                title: 'Finish course work',
-                description: 'Finish course work before midnight',
-                startDate: new Date(),
-                endDate: new Date(new Date().getTime() + 1000 * 60 * 60 * 24),
-                priority: 1,
-                estimatedTime: 5,
-                hoursToSchedule: 5,
-                completed: false,
-            }
-        ]
+        message: 'I see. Here are some tasks that you can do to finish your course work:',
+        tasks: {
+            tasks: [
+                {
+                    id: -1,
+                    title: 'Finish homework',
+                    description: 'Finish homework for all courses',
+                    startDate: new Date(),
+                    endDate: new Date(),
+                    priority: 1,
+                    estimatedTime: 8,
+                    completed: false,
+                    hoursToSchedule: 0,
+                },
+                {
+                    id: -2,
+                    title: 'Study for exam',
+                    description: 'Study for exam for all courses',
+                    startDate: new Date(),
+                    endDate: new Date(),
+                    priority: 1,
+                    estimatedTime: 8,
+                    completed: false,
+                    hoursToSchedule: 0,
+                }
+            ],
+            parentId: 0,
+        }
     },
     {isUser: true, message: 'I have a meeting with my professor at 3pm tomorrow.'},
     {
         isUser: false,
-        message: [
+        message: 'I have added the event to your calendar. Here are the details:',
+        events: [
             {
                 id: -1,
-                title: 'Meeting with professor',
+                title: 'Meeting with Professor',
                 tags: [],
-                startDateTime: new Date(new Date().getTime() + 1000 * 60 * 60 * 24),
-                endDateTime: new Date(new Date().getTime() + 1000 * 60 * 60 * 25),    
-                description: 'Meeting with professor at 3pm',
+                description: 'Meeting with Professor',
+                startDateTime: new Date(),
+                endDateTime: new Date(),
             }
         ]
     },
@@ -74,7 +92,7 @@ const ChatPage = () => {
     }, []);
 
     const sendRequest = () => {
-        setMessages([...messages, {isUser: true, message}]);
+        setMessages(prevMessages => [...prevMessages, {isUser: true, message: message}]);
         setReplyWaiting(true);
         // TODO: get response from backend
         fetch(`${server_base_url}/chat/query`, {
@@ -89,37 +107,48 @@ const ChatPage = () => {
         })
         .then((response) => response.json())
         .then((data: any) => {
+            console.log(data);
             if ('response' in data) {
                 console.log(data.response);
                 const response = data.response;
                 const content = response.content;
                 switch (response.action_type) {
                     case 'question':
-                        setMessages([...messages, {isUser: false, message: content.response}]);
+                        setMessages(prevMessages => [...prevMessages, {isUser: false, message: content.response}]);
                         break;
                     case 'chat':
-                        setMessages([...messages, {isUser: false, message: content.response}]);
+                        setMessages(prevMessages => [...prevMessages, {isUser: false, message: content.message}]);
                         break;
                     case 'task':
-                        // content format: [
-                        //     {
-                        //         "action": "string" in ["add", "update", "delete", "list"],
-                        //         "task": {
-                        //             "title": "string",
-                        //             "description": "string",
-                        //             "start_date": "iso date string",
-                        //             "end_date": "iso date string",
-                        //             "priority": "int",
-                        //             "estimated_time": "int",
-                        //             "completed": "bool",
-                        //         },
-                        //     },
-                        //     ...
-                        // ]
-
+                        setMessages(prevMessages => [...prevMessages, {isUser: false, message: content.message,
+                            parentId: content.parentId, tasks: content.tasks.map((task: any) => {
+                                return {
+                                    id: task.id,
+                                    title: task.title,
+                                    description: task.description,
+                                    startDate: new Date(task.start_date),
+                                    endDate: new Date(task.end_date),
+                                    priority: task.priority,
+                                    estimatedTime: task.estimated_time,
+                                    completed: task.completed,
+                                    hoursToSchedule: task.estimated_time,
+                                }
+                            }
+                        )}]);
                         break;
                     case 'calendar':
-                        break;
+                        setMessages(prevMessages => [...prevMessages, {isUser: false, message: content.message,
+                            events: content.events.map((event: any) => {
+                                return {
+                                    id: event.id,
+                                    title: event.title,
+                                    tags: event.tags,
+                                    description: event.description,
+                                    startDateTime: new Date(event.start_date),
+                                    endDateTime: new Date(event.end_date),
+                                }
+                            }
+                        )}]);
                     default:
                         // TODO: render calendar event or task
                         break;
@@ -139,18 +168,6 @@ const ChatPage = () => {
             sendRequest();
             event.preventDefault();
         }
-    }
-
-    const isTaskType = (content: any): content is Task[] => {
-        return Array.isArray(content) && content.length > 0 && 'hoursToSchedule' in content[0];
-    }
-
-    const isCalendarType = (content: any): content is Event[] => {
-        return Array.isArray(content) && content.length > 0 && !('hoursToSchedule' in content[0]);
-    }
-
-    const isMessageType = (content: any): content is string => {
-        return typeof content === 'string';
     }
 
     return (
@@ -173,25 +190,28 @@ const ChatPage = () => {
                                     justifyContent: message.isUser ? 'flex-end' : 'flex-start',
                                     display: 'flex',
                                     width: '70%',
-                                    padding: 2,
+                                    flexDirection: 'column',
+                                    paddingLeft: message.isUser ? '10%' : '0',
+                                    paddingRight: message.isUser ? '0' : '10%',
+                                    transform: !message.isUser ? 'translateY(-30px)' : 'none',
                                 }}
                             >
                                 {!message.isUser ? (
-                                    <AssistantIcon sx={{ marginLeft: '-5%', padding: 1, fontSize: 50 }} />
+                                    <AssistantIcon sx={{ marginLeft: '-10%', fontSize: 50, padding: 0.2,
+                                        position: 'sticky', transform: 'translateY(40px)' }} />
                                 ) : null}
-                                {isMessageType(message.message) ? (
-                                    <Typography variant='h5'>
-                                        {message.message}
-                                    </Typography>
-                                ) : (isTaskType(message.message) ? (
-                                    // TODO: render task
-                                    <Box sx={{ width: '70%' }}>
-                                        <TaskBox suggestedTasks={message.message} />
-                                    </Box>
-                                ) : isCalendarType(message.message) ? (
-                                    // TODO: render event
+                                <Typography variant='h5' align={message.isUser ? 'right' : 'left'}
+                                    sx = {{ paddingBottom: '10px' }}>
+                                    {message.message}
+                                </Typography>
+                                {message.tasks !== undefined ? (
+                                    <TaskBox 
+                                        suggestedTasks={message.tasks.tasks} 
+                                        parentId={message.tasks.parentId}/>
+                                ) : message.events !== undefined ? (
                                     <Box></Box>
-                                ) : null)}
+                                ) : null
+                                }
                             </Box>
                         ))}
                     </Stack>

@@ -18,7 +18,7 @@ import KeyboardDoubleArrowRightIcon from '@mui/icons-material/KeyboardDoubleArro
 const CalendarPage = () => {
     const [openSideBar, setOpenSideBar] = useState(true);
     const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-    const [viewMode, setViewMode] = useState<'day' | 'week'>('day');
+    const [viewMode, setViewMode] = useState<'day' | 'week'>('week');
     const [eventSources, setEventSources] = useState<{[key: string]: boolean}>({});
 
     useEffect(() => {
