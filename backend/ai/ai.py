@@ -49,6 +49,7 @@ response_schema = {
                             "task": {
                                 "type": "object",
                                 "properties": {
+                                    "parent_id": {"type": "integer"},
                                     "title": {"type": "string"},
                                     "description": {"type": "string"},
                                     "start_date": {"type": "string", "format": "date-time"},
@@ -127,6 +128,7 @@ If the action_type is "task", the content is in the following format:
     {
         "action": "string" in ["add", "update", "delete", "list"],
         "task": {
+            "parent_id": "int",
             "title": "string",
             "description": "string",
             "start_date": "iso date string",
@@ -156,7 +158,7 @@ If the action_type is "calendar", the content is in the following format:
 """
 
 def generate_response(message, current_date, user_id = 0):
-    # TODO: NLP to get relevant text from vector search for task and calendars
+    # TODO: NER to get key dates and retreive all relevant calendar events in those months
     # TODO: embed the message and get relevant text from vector search for documents
     relevant_text = ""
     user_content = json.dumps({

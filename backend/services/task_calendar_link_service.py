@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time
 from models.task_calendar_link_model import TaskCalendarLinkDB
 from services.calendar_event_service import get_calendar_events, add_calendar_event, \
     delete_calendar_event, edit_calendar_event, get_calendar_event
@@ -16,15 +16,22 @@ def get_free_timeslots(start_datetime: datetime, end_datetime: datetime,
     current_events = get_calendar_events(start_datetime.isoformat(), end_datetime.isoformat())
     timeslots = []
     total_time = timedelta(hours=0)
+    # assume user working hours are from 9am to 5pm
+    # this will be configurable in the user settings in the future
+    start_work_time = time(9, 0, 0)
+    end_work_time = time(17, 0, 0)
+    if start_datetime.time() > end_work_time:
+        start_datetime += timedelta(days=1)
+        start_datetime = start_datetime.replace(hour=0, minute=0, second=0)
     # for each day
     for i in range((end_datetime - start_datetime).days + 1):
         if total_time >= required_free_time:
             break
-        # assume user working hours are from 9am to 5pm
-        # this will be configurable in the user settings in the future
         current_date = start_datetime + timedelta(days=i)
-        current_date = current_date.replace(hour=9, minute=0, second=0)
-        end_datetime = current_date.replace(hour=17, minute=0, second=0)
+        current_date += timedelta(hours=start_work_time.hour, minutes=start_work_time.minute)
+        end_datetime = current_date \
+            + timedelta(hours=end_work_time.hour, minutes=end_work_time.minute) \
+            - timedelta(hours=start_work_time.hour, minutes=start_work_time.minute)
         current_events_day = [event for event in current_events if 
                                 datetime.fromisoformat(
                                     event['start_datetime']

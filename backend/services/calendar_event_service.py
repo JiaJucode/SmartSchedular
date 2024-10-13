@@ -77,6 +77,7 @@ def edit_calendar_event(id: int, title: str, tags: List[str], str_start_datetime
 def delete_calendar_event(id: int):
     CalendarEventDB.delete_event(id)
     TaskCalendarLinkDB.unlink_task_from_event(id)
+    # TODO: delete link
 
 def get_calendar_event(event_id: int) -> Dict:
     return CalendarEventDB.get_event(event_id)

@@ -69,7 +69,7 @@ export const updateTask = (task_id: number, updateKey: string, updateValue: any)
         },
         body: JSON.stringify({
             id: task_id,
-            [updateKey]: updateValue,
+            [updateKey]: updateValue instanceof Date ? updateValue.toISOString() : updateValue,
         }),
     });
 }
