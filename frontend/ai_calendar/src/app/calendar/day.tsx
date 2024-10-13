@@ -67,7 +67,6 @@ const DayComponent: React.FC<DayProps> = ({date, sizeChange}) => {
         endDateTime: Date, description: string, id: number) => {
         if (id === -1) {
             // let id: number;
-            console.log("posting event: ", title, startDateTime, endDateTime, description);
             calendarApi.addEvent(title, startDateTime, endDateTime, description, 
                 [], setEvents);
 

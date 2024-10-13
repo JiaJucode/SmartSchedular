@@ -13,6 +13,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import { Task } from '../tasks/page';
 import { Event } from '../calendar/day';
 import TaskBox from './taskBox';
+import CalendarBox from './calendarBox';
 
 interface ChatMessage {
     isUser: boolean;
@@ -27,56 +28,56 @@ const welcomeMessage = 'Welcome! You can add, update, delete, or ' +
 'list tasks and events, or ask for help. Please provide more context ' + 
 'so I can assist you better.';
 
-const testChatMessages: ChatMessage[] = [
-    {isUser: false, message: 'Hello! How can I help you today?'},
-    {isUser: true, message: 'I need to finish with my course work by tmr midnight.'},
-    {
-        isUser: false, 
-        message: 'I see. Here are some tasks that you can do to finish your course work:',
-        tasks: {
-            tasks: [
-                {
-                    id: -1,
-                    title: 'Finish homework',
-                    description: 'Finish homework for all courses',
-                    startDate: new Date(),
-                    endDate: new Date(),
-                    priority: 1,
-                    estimatedTime: 8,
-                    completed: false,
-                    hoursToSchedule: 0,
-                },
-                {
-                    id: -2,
-                    title: 'Study for exam',
-                    description: 'Study for exam for all courses',
-                    startDate: new Date(),
-                    endDate: new Date(),
-                    priority: 1,
-                    estimatedTime: 8,
-                    completed: false,
-                    hoursToSchedule: 0,
-                }
-            ],
-            parentId: 0,
-        }
-    },
-    {isUser: true, message: 'I have a meeting with my professor at 3pm tomorrow.'},
-    {
-        isUser: false,
-        message: 'I have added the event to your calendar. Here are the details:',
-        events: [
-            {
-                id: -1,
-                title: 'Meeting with Professor',
-                tags: [],
-                description: 'Meeting with Professor',
-                startDateTime: new Date(),
-                endDateTime: new Date(),
-            }
-        ]
-    },
-];
+// const testChatMessages: ChatMessage[] = [
+//     {isUser: false, message: 'Hello! How can I help you today?'},
+//     {isUser: true, message: 'I need to finish with my course work by tmr midnight.'},
+//     {
+//         isUser: false, 
+//         message: 'I see. Here are some tasks that you can do to finish your course work:',
+//         tasks: {
+//             tasks: [
+//                 {
+//                     id: -1,
+//                     title: 'Finish homework',
+//                     description: 'Finish homework for all courses',
+//                     startDate: new Date(),
+//                     endDate: new Date(),
+//                     priority: 1,
+//                     estimatedTime: 8,
+//                     completed: false,
+//                     hoursToSchedule: 0,
+//                 },
+//                 {
+//                     id: -2,
+//                     title: 'Study for exam',
+//                     description: 'Study for exam for all courses',
+//                     startDate: new Date(),
+//                     endDate: new Date(),
+//                     priority: 1,
+//                     estimatedTime: 8,
+//                     completed: false,
+//                     hoursToSchedule: 0,
+//                 }
+//             ],
+//             parentId: 0,
+//         }
+//     },
+//     {isUser: true, message: 'I have a meeting with my professor at 3pm tomorrow.'},
+//     {
+//         isUser: false,
+//         message: 'I have added the event to your calendar. Here are the details:',
+//         events: [
+//             {
+//                 id: -1,
+//                 title: 'Meeting with Professor',
+//                 tags: [],
+//                 description: 'Meeting with Professor',
+//                 startDateTime: new Date(),
+//                 endDateTime: new Date(),
+//             }
+//         ]
+//     },
+// ];
     
 
 const ChatPage = () => {
@@ -86,8 +87,7 @@ const ChatPage = () => {
     const [replyWaiting, setReplyWaiting] = useState(false);
 
     useEffect(() => {
-        // Fetch chat list from backend
-        setMessages(testChatMessages);
+        // setMessages(testChatMessages);
         chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, []);
 
@@ -138,14 +138,14 @@ const ChatPage = () => {
                         break;
                     case 'calendar':
                         setMessages(prevMessages => [...prevMessages, {isUser: false, message: content.message,
-                            events: content.events.map((event: any) => {
+                            events: content.events.map((item: any) => {
                                 return {
-                                    id: event.id,
-                                    title: event.title,
-                                    tags: event.tags,
-                                    description: event.description,
-                                    startDateTime: new Date(event.start_date),
-                                    endDateTime: new Date(event.end_date),
+                                    id: item.event.id,
+                                    title: item.event.title,
+                                    tags: item.event.tags,
+                                    description: item.event.description,
+                                    startDateTime: new Date(item.event.start_date),
+                                    endDateTime: new Date(item.event.end_date),
                                 }
                             }
                         )}]);
@@ -193,6 +193,7 @@ const ChatPage = () => {
                                     flexDirection: 'column',
                                     paddingLeft: message.isUser ? '10%' : '0',
                                     paddingRight: message.isUser ? '0' : '10%',
+                                    paddingBottom: '20px',
                                     transform: !message.isUser ? 'translateY(-30px)' : 'none',
                                 }}
                             >
@@ -209,7 +210,7 @@ const ChatPage = () => {
                                         suggestedTasks={message.tasks.tasks} 
                                         parentId={message.tasks.parentId}/>
                                 ) : message.events !== undefined ? (
-                                    <Box></Box>
+                                    <CalendarBox suggestedEvents={message.events} />
                                 ) : null
                                 }
                             </Box>
