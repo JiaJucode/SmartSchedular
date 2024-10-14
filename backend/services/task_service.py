@@ -23,6 +23,26 @@ def get_tasks_by_parent_id(parent_id: int) -> List[Dict]:
     tasks = TaskDB.get_child_tasks(parent_id)
     return tasks
 
+def get_tasks_by_date_range(str_start_date: str, str_end_date: str) -> List[Dict]:
+    """
+    return:
+        [{
+            "id": int,
+            "name": str,
+            "description": str,
+            "start_date": iso_date_string,
+            "end_date": iso_date_string,
+            "priority": int,
+            "estimated_time": int,
+            "completed": bool
+        },
+        ...]
+    """
+    start_date = datetime.fromisoformat(str_start_date)
+    end_date = datetime.fromisoformat(str_end_date)
+    tasks = TaskDB.get_tasks_by_date_range(start_date, end_date)
+    return tasks
+
 def service_add_task(parent_id: int, title: str, 
                      description: str, str_start_date: str | None, 
                      str_end_date: str | None, priority: int,

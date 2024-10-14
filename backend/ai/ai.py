@@ -179,7 +179,7 @@ This is the input format:
     }
 }
 
-your reponse should not have anything other than the following format(no extra text):
+your reponse should not have anything other than the following json format(no extra text):
 {
     "action_type": "string" in ["question", "chat", "task", "calendar"],
     "tag": "string", # this is the tag for this response
@@ -213,7 +213,7 @@ The content is in the following format:
                 "end_date": "iso date string",
                 "priority": "int",
                 "estimated_time": "int", # in hours
-                "completed": "bool"
+                "completed": "bool" # lowercased
             }
         },
         ...
@@ -241,9 +241,7 @@ The content is in the following format:
 """
 
 def generate_response(message, current_date, all_tags, context = "", user_id = 0):
-    # TODO: NER to get key dates and retreive all relevant calendar events in those months
     # TODO: embed the message and get relevant text from vector search for documents
-    # TODO: feed in all project tasks
     relevant_text = context
     user_content = json.dumps({
         "user_query": message,

@@ -76,6 +76,26 @@ class TaskDB:
         task = dict(zip(tasks_columns, cursor.fetchone()))
         return_connection(conn, cursor)
         return task
+    
+    def get_tasks_by_date_range(start_date: datetime, end_date: datetime) -> List[Dict]:
+        conn, cursor = get_connection()
+        query = sql.SQL(
+            """
+            SELECT * FROM tasks
+            WHERE (
+                (start_datetime IS NOT NULL AND start_datetime BETWEEN {start_date} AND {end_date})
+                OR (end_datetime IS NOT NULL AND end_datetime BETWEEN {start_date} AND {end_date})
+                OR (start_datetime < {start_date} AND end_datetime > {end_date})
+            )
+            """
+        ).format(
+            start_date=sql.Literal(start_date),
+            end_date=sql.Literal(end_date)
+        )
+        cursor.execute(query)
+        tasks = [dict(zip(tasks_columns, row)) for row in cursor.fetchall()]
+        return_connection(conn, cursor)
+        return tasks
 
     def get_child_tasks(parent_id: int) -> List[Dict]:
         conn, cursor = get_connection()
