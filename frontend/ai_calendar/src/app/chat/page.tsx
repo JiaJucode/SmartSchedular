@@ -14,11 +14,14 @@ import { Task } from '../tasks/page';
 import { Event } from '../calendar/day';
 import TaskBox from './taskBox';
 import CalendarBox from './calendarBox';
+import { json } from 'stream/consumers';
 
 interface ChatMessage {
+    tag: string;
     isUser: boolean;
     message: string
-    tasks?: {tasks: Task[], parentId: number}
+    parentId?: number;
+    tasks?: Task[];
     events?: Event[];
 }
 
@@ -81,20 +84,32 @@ const welcomeMessage = 'Welcome! You can add, update, delete, or ' +
     
 
 const ChatPage = () => {
-    const [messages, setMessages] = useState<ChatMessage[]>([{isUser: false, message: welcomeMessage}]);
+    const [messages, setMessages] = useState<ChatMessage[]>([{isUser: false, tag: 'intro', message: welcomeMessage}]);
     const [message, setMessage] = useState('');
     const chatBottomRef = useRef<HTMLDivElement>(null);
     const [replyWaiting, setReplyWaiting] = useState(false);
+    const [chatTags, setChatTags] = useState<string[]>([]);
 
     useEffect(() => {
         // setMessages(testChatMessages);
+        // fetch chat history
         chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, []);
 
+    useEffect(() => {
+        console.log("messages: ", messages);
+    }, [messages]);
+
     const sendRequest = () => {
-        setMessages(prevMessages => [...prevMessages, {isUser: true, message: message}]);
+        const lastTag = messages[messages.length - 1].tag;
+        setMessages(prevMessages => [...prevMessages, {isUser: true, tag: lastTag, message: message}]);
         setReplyWaiting(true);
-        // TODO: get response from backend
+        let context = 'Chat History: ';
+        for (let i = messages.length - 1; i >= 0; i--) {
+            if (messages[i].tag === lastTag) {
+                context += JSON.stringify(messages[i]);
+            }
+        }
         fetch(`${server_base_url}/chat/query`, {
             method: 'POST',
             headers: {
@@ -102,7 +117,9 @@ const ChatPage = () => {
             },
             body: JSON.stringify({
                 message: message,
-                current_date: new Date().toISOString()
+                all_tags: chatTags,
+                current_date: new Date().toISOString(),
+                context: context,
             })
         })
         .then((response) => response.json())
@@ -112,32 +129,42 @@ const ChatPage = () => {
                 console.log(data.response);
                 const response = data.response;
                 const content = response.content;
+                if (!(response.tag in chatTags)) {
+                    setChatTags(prevTags => [...prevTags, response.tag]);
+                }
                 switch (response.action_type) {
                     case 'question':
-                        setMessages(prevMessages => [...prevMessages, {isUser: false, message: content.response}]);
+                        // TODO: 
+                        setMessages(prevMessages => [...prevMessages, 
+                            {isUser: false, tag: response.tag, message: content.response}]);
                         break;
                     case 'chat':
-                        setMessages(prevMessages => [...prevMessages, {isUser: false, message: content.message}]);
+                        setMessages(prevMessages => [...prevMessages, 
+                            {isUser: false, tag: response.tag, message: content.response}]);
                         break;
                     case 'task':
-                        setMessages(prevMessages => [...prevMessages, {isUser: false, message: content.message,
-                            parentId: content.parentId, tasks: content.tasks.map((task: any) => {
-                                return {
-                                    id: task.id,
-                                    title: task.title,
-                                    description: task.description,
-                                    startDate: new Date(task.start_date),
-                                    endDate: new Date(task.end_date),
-                                    priority: task.priority,
-                                    estimatedTime: task.estimated_time,
-                                    completed: task.completed,
-                                    hoursToSchedule: task.estimated_time,
-                                }
+                        console.log("content: ", content);
+                        console.log("parent id: ", content.parent_id);
+                        setMessages(prevMessages => [...prevMessages, 
+                            {isUser: false, tag: response.tag, message: content.message,
+                                parentId: content.parent_id, tasks: content.tasks.map((item: any) => {
+                                    return {
+                                        id: item.task.id,
+                                        title: item.task.title,
+                                        description: item.task.description,
+                                        startDate: new Date(item.task.start_date),
+                                        endDate: new Date(item.task.end_date),
+                                        priority: item.task.priority,
+                                        estimatedTime: item.task.estimated_time,
+                                        completed: item.task.completed,
+                                        hoursToSchedule: item.task.estimated_time,
+                                    }
                             }
                         )}]);
                         break;
                     case 'calendar':
-                        setMessages(prevMessages => [...prevMessages, {isUser: false, message: content.message,
+                        setMessages(prevMessages => [...prevMessages, 
+                            {isUser: false, tag: response.tag, message: content.message,
                             events: content.events.map((item: any) => {
                                 return {
                                     id: item.event.id,
@@ -150,12 +177,12 @@ const ChatPage = () => {
                             }
                         )}]);
                     default:
-                        // TODO: render calendar event or task
                         break;
                 }
             }
             else {
                 // TODO: handle error
+                console.log('Error in response');
             }
             chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
         });
@@ -205,10 +232,10 @@ const ChatPage = () => {
                                     sx = {{ paddingBottom: '10px' }}>
                                     {message.message}
                                 </Typography>
-                                {message.tasks !== undefined ? (
+                                {message.tasks !== undefined && message.parentId !== undefined ? (
                                     <TaskBox 
-                                        suggestedTasks={message.tasks.tasks} 
-                                        parentId={message.tasks.parentId}/>
+                                        suggestedTasks={message.tasks} 
+                                        parentId={message.parentId}/>
                                 ) : message.events !== undefined ? (
                                     <CalendarBox suggestedEvents={message.events} />
                                 ) : null
@@ -239,8 +266,7 @@ const ChatPage = () => {
                         sx={{
                             position: 'fixed',
                             bottom: 10, width: '70%',
-                            height: '55px',
-                            // marginLeft: '15%',
+                            minheight: '55px',
                             padding: 1,
                             opacity: 0.99,
                             borderRadius: 7,

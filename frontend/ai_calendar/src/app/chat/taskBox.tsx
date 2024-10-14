@@ -16,17 +16,21 @@ const TaskBox: React.FC<TaskBoxProps> = ({suggestedTasks, parentId}) => {
     const [tasks, setTasks] = useState<Task[]>([]);
 
     useEffect(() => {
-        setTasks(suggestedTasks);
+        console.log("suggestedTasks: ", suggestedTasks);
+        setTimeout(() => {
+            console.log("suggestedTasks: ", suggestedTasks);
+            setTasks(suggestedTasks);
+        }, 1000);
     }, [suggestedTasks]);
 
     const handleDelete = (index: number) => {
-        setTasks(tasks.filter((task, i) => i !== index));
+        setTasks(prevTasks => prevTasks.filter((_, i) => i !== index));
     }
 
     const handleAdd = (index: number) => {
         // TODO: send add task request to backend
         taskApi.addTask(parentId, (() => {}), tasks[index]);
-        setTasks(tasks.filter((_, i) => i !== index));
+        setTasks(prevTasks => prevTasks.filter((_, i) => i !== index));
     }
 
 
@@ -149,7 +153,7 @@ const TaskBox: React.FC<TaskBoxProps> = ({suggestedTasks, parentId}) => {
                             id='priority'
                             value={task.priority}
                             onChange = {(e) => {
-                                setTasks(tasks.map((task, i) => {
+                                setTasks(prevTasks => prevTasks.map((task, i) => {
                                     if (i === index) {
                                         task.priority = e.target.value === "" ? 0 : parseInt(e.target.value);
                                     }
@@ -180,7 +184,7 @@ const TaskBox: React.FC<TaskBoxProps> = ({suggestedTasks, parentId}) => {
                             id='description'
                             value={task.estimatedTime}
                             onChange = {(e) => {
-                                setTasks(tasks.map((task, i) => {
+                                setTasks(prevTasks => prevTasks.map((task, i) => {
                                     if (i === index) {
                                         task.estimatedTime = e.target.value === "" ? 0 : parseInt(e.target.value);
                                     }

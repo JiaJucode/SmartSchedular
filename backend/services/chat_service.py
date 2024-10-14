@@ -3,11 +3,11 @@ from jsonschema import validate, ValidationError
 from flask import current_app as app
 import json
 
-def handle_chat_message(message: str, str_current_date: str) -> dict:
+def handle_chat_message(message: str, str_current_date: str, tags: list, context: str) -> dict:
     """
     return response following the schema
     """
-    response = generate_response(message, str_current_date)
+    response = generate_response(message, str_current_date, tags, context)
     # parse string json
     try:
         content = json.loads(response)
