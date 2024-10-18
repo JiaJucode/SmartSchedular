@@ -29,7 +29,10 @@ export const addTask =
     ).then((response) => response.json())
     .then((data: {id: number}) => {
         setTasks((prevTasks) => {
-            return [...prevTasks, taskDetails];
+            return [...prevTasks, {
+                ...taskDetails,
+                id: data.id,
+            }];
         });
     });
 }

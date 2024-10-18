@@ -1,4 +1,4 @@
-from ai.ai import generate_response, response_schema
+from backend.ai.llm import generate_response, response_schema
 from jsonschema import validate, ValidationError
 import dateparser
 from datetime import datetime

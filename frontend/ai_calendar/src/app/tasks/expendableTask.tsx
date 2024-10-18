@@ -42,21 +42,32 @@ const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft, s
     const handleSchedule = (id: number, hoursLeft: number | null) => {
         if (hoursLeft === 0) {
             taskApi.descheduleTask(id);
-            setTasks(tasks.map((task) => {
-                if (task.id === id) {
-                    task.hoursToSchedule = task.estimatedTime;
-                }
-                return task;
-            }));
+            setTasks(prevTasks => {
+                return prevTasks.map((task) => {
+                    if (task.id === id) {
+                        task.hoursToSchedule = null;
+                    }
+                    return task;
+                });
+            });
         }
         else {
             const timeLeft = taskApi.scheduleTask(id);
-            setTasks(tasks.map((task) => {
-                if (task.id === id) {
-                    task.hoursToSchedule = timeLeft;
-                }
-                return task;
-            }));
+            setTasks(prevTasks => {
+                return prevTasks.map((task) => {
+                    if (task.id === id) {
+                        task.hoursToSchedule = timeLeft;
+                    }
+                    return task;
+                });
+            });
+        }
+    }
+
+    const handleInfoClick = (task_id: number) => {
+        const task = tasks.find((task) => task.id === task_id);
+        if (task) {
+            openInfo(task);
         }
     }
 
@@ -97,7 +108,7 @@ const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft, s
                             </IconButton>
                             <LiveSyncTextfield task_id={task.id} value={task.title}
                             fieldKey='title' numberOnly={false} />
-                            <IconButton onClick={() => {openInfo(task); 
+                            <IconButton onClick={() => {handleInfoClick(task.id);
                             setSetRefresh(() => () => {
                                 setRefresh(!refresh)
                             });}}

@@ -10,6 +10,9 @@ import AddIcon from '@mui/icons-material/Add';
 import TaskInfoSideBar from './task_info_side_bar';
 import KeyboardDoubleArrowRightIcon from '@mui/icons-material/KeyboardDoubleArrowRight';
 import { fetchTasks, addTask } from '../utils/task_api_funcs';
+import dynamic from 'next/dynamic';
+const GoogleDriveLinker = dynamic(() => import('../components/google_drive_linker'), { ssr: false });
+
 
 export interface Task {
     id: number;
@@ -46,6 +49,7 @@ const TasksPage = () => {
 
     useEffect(() => {
         if (selectedProject === -1 && projects.length > 0) {
+            console.log('projects:', projects);
             setSelectedProject(projects[0].id);
         }
     }, [projects]);
@@ -158,13 +162,7 @@ const TasksPage = () => {
                         <FileUploadIcon />
                     </Button>
                     {!googleDriveLinked ? (
-                        <Button color="inherit" sx={{ textTransform: 'none' }}>
-                            <Typography sx={{ fontSize: '1.2em' }}>
-                                Link Google Drive 
-                            </Typography>   
-                            <img src="/google_drive_icon.ico" alt="Google Drive Icon"
-                            style={{ width: '30px', height: '30px', marginLeft: '5px'}} />
-                        </Button>
+                        <GoogleDriveLinker />
                     ) : null}
                     <Divider sx={{ backgroundColor: 'primary.contrastText', 
                         width: "95%", marginLeft: "2.5%" }} />
