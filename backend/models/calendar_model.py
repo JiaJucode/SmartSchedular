@@ -3,6 +3,9 @@ from datetime import datetime
 from typing import List, Optional, Dict
 from models.db_pool import get_scheduling_connection, return_scheduling_connection
 
+# for deleting link before removing event
+from models.task_calendar_link_model import TaskCalendarLinkDB
+
 calendar_events_columns = ['id', 'title', 'tags', 'start_datetime', 'end_datetime', 'description']
 
 class CalendarEventDB:
@@ -78,6 +81,7 @@ class CalendarEventDB:
         return event_id
 
     def delete_event(event_id: int) -> None:
+        TaskCalendarLinkDB.unlink_task_from_event(event_id)
         conn, cursor = get_scheduling_connection()
         cursor.execute(
             """

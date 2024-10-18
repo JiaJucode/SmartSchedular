@@ -1,10 +1,12 @@
-from llama_index.embeddings.nvidia import NVIDIAEmbedding
 from llama_index.llms.nvidia import NVIDIA
 from llama_index.core.node_parser import SentenceSplitter
 from llama_index.core.llms import ChatMessage, MessageRole
+from dotenv import load_dotenv
+import os
 import json
 
-api_key = "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"
+load_dotenv()
+api_key = os.getenv("NVIDIA_API_KEY")
 
 text_splitter = SentenceSplitter(chunk_size=400)
 llm = NVIDIA(
@@ -14,11 +16,6 @@ llm = NVIDIA(
     base_url="https://integrate.api.nvidia.com/v1",
     temperature=0.8,
     max_tokens=3000,
-)
-embeddings = NVIDIAEmbedding(
-    model="nvidia/nv-embedqa-e5-v5",
-    nvidia_api_key=api_key,
-    base_url="https://integrate.api.nvidia.com/v1"
 )
 
 response_schema = {
