@@ -4,6 +4,8 @@ WORKDIR /app
 
 COPY requirements.txt requirements.txt
 
+COPY .env .env
+
 RUN pip install -r requirements.txt
 
 # Download the English model for spaCy

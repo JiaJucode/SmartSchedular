@@ -4,6 +4,8 @@ llama-index-embeddings-nvidia
 psycopg2
 jsonschema
 dateparser
+requests
+python-dotenv
 
 # vector database
 protobuf
@@ -18,3 +20,8 @@ llama-index-readers-file
 
 # NER (need 3.7.2 for numpy < 2.0.0 which is a requirement for llama-index-core)
 spacy==3.7.2
+
+# google drive
+google-api-python-client 
+google-auth-httplib2 
+google-auth-oauthlib

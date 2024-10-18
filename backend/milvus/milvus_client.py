@@ -18,7 +18,8 @@ class MyMilvusClient:
         schema.add_field(field_name="id", field_type=DataType.INT64, is_primary=True)
         schema.add_field(field_name="user_id", field_type=DataType.INT32)
         schema.add_field(field_name="embedding", field_type=DataType.FLOAT_VECTOR, dim=1024)
-        schema.add_field(field_name="content_id", field_type=DataType.INT32)
+        schema.add_field(field_name="file_id", field_type=DataType.STRING)
+        schema.add_field(field_name="segment_id", field_type=DataType.INT32)
 
         index_params = self.client.prepare_index_params()
 
@@ -82,7 +83,8 @@ class MyMilvusClient:
                 "id": 1,
                 "user_id": 1,
                 "embedding": [0.1, 0.2, 0.3, ...],
-                "content_type": 1
+                "file_id": "file_id",
+                "segment_id": 1
             },
             ...
         ]]
@@ -96,8 +98,7 @@ class MyMilvusClient:
             filter='user_id == {}'.format(user_id)
         )
 
-        fetched_result = []
-        for result in results[0]:
+        return results
             
 
      

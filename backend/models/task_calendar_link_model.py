@@ -1,5 +1,5 @@
 from typing import List
-from models.db_pool import get_connection, return_connection
+from models.db_pool import get_scheduling_connection, return_scheduling_connection
 
 
 class TaskCalendarLinkDB:
@@ -7,7 +7,7 @@ class TaskCalendarLinkDB:
         pass
 
     def create_table():
-        conn, cursor = get_connection()
+        conn, cursor = get_scheduling_connection()
         cursor.execute(
             """
             CREATE TABLE IF NOT EXISTS task_calendar_links (
@@ -20,10 +20,10 @@ class TaskCalendarLinkDB:
             """
         )
         conn.commit()
-        return_connection(conn, cursor)
+        return_scheduling_connection(conn, cursor)
 
     def link_task_to_event(task_id, calendar_id):
-        conn, cursor = get_connection()
+        conn, cursor = get_scheduling_connection()
         cursor.execute(
             """
             INSERT INTO task_calendar_links (task_id, calendar_id)
@@ -31,10 +31,10 @@ class TaskCalendarLinkDB:
             """, (task_id, calendar_id)
         )
         conn.commit()
-        return_connection(conn, cursor)
+        return_scheduling_connection(conn, cursor)
 
     def unlink_task_from_event(calendar_id: int):
-        conn, cursor = get_connection()
+        conn, cursor = get_scheduling_connection()
         cursor.execute(
             """
             DELETE FROM task_calendar_links
@@ -42,10 +42,10 @@ class TaskCalendarLinkDB:
             """, (calendar_id,)
         )
         conn.commit()
-        return_connection(conn, cursor)
+        return_scheduling_connection(conn, cursor)
 
     def get_calendar_id_for_task(task_id: int) -> List[int]:
-        conn, cursor = get_connection()
+        conn, cursor = get_scheduling_connection()
         cursor.execute(
             """
             SELECT calendar_id FROM task_calendar_links
@@ -53,11 +53,11 @@ class TaskCalendarLinkDB:
             """, (task_id,)
         )
         calendar_ids = [row[0] for row in cursor.fetchall()]
-        return_connection(conn, cursor)
+        return_scheduling_connection(conn, cursor)
         return calendar_ids
     
     def get_task_for_calendar_event(calendar_id: int) -> int:
-        conn, cursor = get_connection()
+        conn, cursor = get_scheduling_connection()
         cursor.execute(
             """
             SELECT task_id FROM task_calendar_links
@@ -68,5 +68,5 @@ class TaskCalendarLinkDB:
             result = cursor.fetchone()[0]
         except TypeError:
             result = -1
-        return_connection(conn, cursor)
+        return_scheduling_connection(conn, cursor)
         return result
