@@ -238,8 +238,7 @@ The content is in the following format:
 """
 
 def generate_response(message, current_date, all_tags, context = "", user_id = 0):
-    # TODO: task and calendar retrieval by keyword search
-    # TODO: embed the message and get relevant text from vector search for documents
+    context = "document context: " + context
     relevant_text = context
     user_content = json.dumps({
         "user_query": message,

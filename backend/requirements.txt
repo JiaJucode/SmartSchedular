@@ -4,8 +4,8 @@ llama-index-embeddings-nvidia
 psycopg2
 jsonschema
 dateparser
-requests
 python-dotenv
+PyPDF2
 
 # vector database
 protobuf

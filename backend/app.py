@@ -8,6 +8,7 @@ from models.task_calendar_link_model import TaskCalendarLinkDB
 from models.task_model import TaskDB
 from models.calendar_model import CalendarEventDB
 from models.google_model import GoogleDB
+from milvus.milvus_client import milvus_client
 
 app = Flask(__name__)
 
@@ -27,4 +28,5 @@ if __name__ == '__main__':
     CalendarEventDB.create_table()
     TaskCalendarLinkDB.create_table()
     GoogleDB.create_table()
+    milvus_client.setup()
     app.run(host='0.0.0.0', port=5148, debug=True)

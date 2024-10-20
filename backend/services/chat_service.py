@@ -4,6 +4,9 @@ import dateparser
 from datetime import datetime
 from services.calendar_event_service import get_calendar_events
 from services.task_service import get_tasks_by_parent_id, get_tasks_by_date_range
+from services.google_service import get_doc
+from ai.embedder import get_embeddings
+from milvus.milvus_client import milvus_client
 import spacy
 from flask import current_app as app
 import json
@@ -16,12 +19,9 @@ def ner_extraction(message: str, today: datetime) -> str:
     dates = [ent.text for ent in parsed_message.ents if ent.label_ == "DATE"]
     # convert to absolute date
     dates = [dateparser.parse(date, settings={"RETURN_AS_TIMEZONE_AWARE": True, "RELATIVE_BASE": today}) for date in dates]
-    app.logger.info("dates: " + str(dates))
-    app.logger.info("today: " + str(today))
     dates += [today]
     latest_date = max(dates)
     earliest_date = min(dates)
-    app.logger.info("range: " + str(earliest_date) + " to " + str(latest_date))
     # find all calendar events between earliest_date and latest_date
     events = get_calendar_events(earliest_date.isoformat(), latest_date.isoformat())
     # find all tasks between earliest_date and latest_date
@@ -31,15 +31,40 @@ def ner_extraction(message: str, today: datetime) -> str:
     results = "relevant events: " + str(events) + "\n"
     results += "relevant tasks: " + str(tasks) + "\n"
     results += "projects: " + str(project_tasks) + "\n"
-    app.logger.info(results)
     return results
 
+def document_context_extraction(message: str, user_id: int) -> str:
+    """
+    extract document context from message
+    """
+    question_embeddings = get_embeddings(message, "")
+    context = []
+    for embedding in question_embeddings:
+        context += milvus_client.get(user_id, embedding)
+    text = []
+    metadata = []
+    if len(context) > 0:
+        for item in context:
+            if len(item) == 0:
+                break
+            content = get_doc(user_id, item["file_id"], item["segment_id"])
+            if content:
+                text.append(content[0])
+                metadata.append(content[1])
+    result = ""
+    for i in range(len(text)):
+        result += "for file: " + metadata[i] + "\n"
+        result += text[i] + "\n"
+    return result
 
-def handle_chat_message(message: str, str_current_date: str, tags: list, context: str) -> dict:
+
+def handle_chat_message(message: str, str_current_date: str, tags: list, context: str, user_id: int) -> dict:
     """
     return response following the schema
     """
     context += "\n" + ner_extraction(message, datetime.fromisoformat(str_current_date))
+    context += "\n from documents: \n" + document_context_extraction(message, user_id)
+    app.logger.info("context: " + context)
     response = generate_response(message, str_current_date, tags, context)
     # parse string json
     try:
@@ -58,7 +83,7 @@ def handle_chat_message(message: str, str_current_date: str, tags: list, context
         app.logger.info("response does not follow schema")
         return {"error": "invalid response from AI"}
     
-    return content
+    return content, context
 
 
     

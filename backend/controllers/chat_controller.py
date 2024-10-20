@@ -1,7 +1,6 @@
 from flask import Blueprint, jsonify, request
 from flask_cors import CORS
 from services.chat_service import handle_chat_message
-from flask import current_app as app
 
 bp = Blueprint("chat_controller", __name__)
 
@@ -14,7 +13,7 @@ def query():
         "message": str,
         "all_tags": List[str],
         "current_date": iso_date_string
-        "context": Optional[String]
+        "history": Optional[String]
     Returns:
         {
             "response": str,
@@ -24,6 +23,7 @@ def query():
     message = request.json.get("message")
     current_date = request.json.get("current_date")
     context = request.json.get("context")
+    user_id = 0
     if not message:
         return jsonify({"error": "message is required"}), 400
     if not current_date:
@@ -31,5 +31,5 @@ def query():
     if not context:
         context = ""
 
-    response = handle_chat_message(message, current_date, tags, context)
-    return jsonify({"response": response}), 200
+    response, context_used = handle_chat_message(message, current_date, tags, context, user_id)
+    return jsonify({"response": response, "context": context_used}), 200

@@ -2,7 +2,6 @@ from flask import Blueprint, jsonify, request
 from flask_cors import CORS
 from services.google_service import google_drive_setup
 
-
 bp = Blueprint("google_controller", __name__)
 
 CORS(bp, resources={r"/*": {"origins": "http://localhost:3000"}})
@@ -31,7 +30,7 @@ def setup_refresh_token():
     result = google_drive_setup(user_id, id_token, refresh_token, access_token)
     if "error" in result:
         return jsonify(result), 400
-    return jsonify({"message": "Refresh token set up successfully"})
+    return jsonify(result)
 
 # TODO: receive push notification from google drive
 @bp.route("/push_notification", methods=["POST"])

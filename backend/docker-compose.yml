@@ -5,21 +5,11 @@ services:
       - "5148:5148"
     environment:
       - SCHEDULING_DATABASE_URL=postgresql://postgres:postgres@postgres_scheduling:5432/scheduling
-      - GOOGLE_SERVICES_DATABASE_URL=postgresql://postgres:postgres@postgres_google_services:5432/google_services
     env_file:
       - .env
     depends_on:
-      - postgres_google_services
       - postgres_scheduling
-
-  postgres_google_services:
-    image: postgres
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=google_services
-    ports:
-      - "5433:5432"
+      - standalone
 
   postgres_scheduling:
     image: postgres

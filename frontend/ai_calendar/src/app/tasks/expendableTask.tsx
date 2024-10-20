@@ -12,6 +12,8 @@ import LiveSyncCheckbox from './live_sync_checkbox';
 import { fetchTasks, addTask } from '../utils/task_api_funcs';
 import * as taskApi from '../utils/task_api_funcs';
 
+// TODO: sync with live components
+
 interface ExpandableTaskProps {
     parentId: number;
     paddingLeft: number;
@@ -62,6 +64,7 @@ const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft, s
                 });
             });
         }
+        console.log('updated_task:', tasks);
     }
 
     const handleInfoClick = (task_id: number) => {
@@ -93,7 +96,8 @@ const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft, s
                                 minWidth: '40px', alignContent: 'center', display: 'flex',
                                 justifyItems: 'center', alignItems: 'center',
                                 // if task is not scheduled, no background color
-                                backgroundColor: task.hoursToSchedule === 0 ? 
+                                backgroundColor: task.hoursToSchedule === 0 
+                                && task.estimatedTime !== null ?
                                     'primary.light' : 'primary.dark',
                             }}>
                                 <ScheduleIcon />

@@ -11,6 +11,8 @@ const GoogleDriveLinker = () => {
     const [accessToken, setAccessToken] = React.useState('');
     const [refreshToken, setRefreshToken] = React.useState('');
     const [idToken, setIdToken] = React.useState('');
+    const [linking, setLinking] = React.useState(false);
+    const [linked, setLinked] = React.useState(false);
 
     useEffect(() => {
         if (typeof window !== 'undefined') {
@@ -33,10 +35,8 @@ const GoogleDriveLinker = () => {
     }, []);
 
     useEffect(() => {
-        console.log('idToken:', idToken);
-        console.log('accessToken:', accessToken);
-        console.log('refreshToken:', refreshToken);
         if (accessToken !== '' && refreshToken !== '' && idToken !== '') {
+            setLinking(true);
             fetch(`${server_base_url}/google/setup_token`, {
                 method: 'POST',
                 headers: {
@@ -48,10 +48,13 @@ const GoogleDriveLinker = () => {
                     refresh_token: refreshToken,
                 }),
             }).then((response) => {
+                setLinking(false);
                 console.log('response:', response);
                 if (response.ok) {
+                    setLinked(true);
                     console.log('Google Drive linked successfully');
                 } else {
+                    setLinked(false);
                     console.log('Error linking Google Drive');
                 }
             });
@@ -62,7 +65,6 @@ const GoogleDriveLinker = () => {
         if (gapiLoaded) {
             const response = gapi.auth2.getAuthInstance()
             .currentUser.get().getAuthResponse();
-            console.log('response:', response);
             setIdToken(response.id_token);
             setAccessToken(response.access_token);
             gapi.auth2.getAuthInstance().grantOfflineAccess().then((authResult: any) => {
@@ -74,7 +76,7 @@ const GoogleDriveLinker = () => {
     };
     
     return (
-        <Button onClick={handleSignIn}>
+        <Button onClick={handleSignIn} disabled={linking || linked}>
             <Typography sx={{ fontSize: '1.2em', color: 'primary.contrastText', textTransform: 'none' }}>
                 Link Google Drive
             </Typography>

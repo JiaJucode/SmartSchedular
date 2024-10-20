@@ -14,7 +14,6 @@ import { Task } from '../tasks/page';
 import { Event } from '../calendar/day';
 import TaskBox from './taskBox';
 import CalendarBox from './calendarBox';
-import { json } from 'stream/consumers';
 
 interface ChatMessage {
     tag: string;
@@ -31,60 +30,9 @@ const welcomeMessage = 'Welcome! You can add, update, delete, or ' +
 'list tasks and events, or ask for help. Please provide more context ' + 
 'so I can assist you better.';
 
-// const testChatMessages: ChatMessage[] = [
-//     {isUser: false, message: 'Hello! How can I help you today?'},
-//     {isUser: true, message: 'I need to finish with my course work by tmr midnight.'},
-//     {
-//         isUser: false, 
-//         message: 'I see. Here are some tasks that you can do to finish your course work:',
-//         tasks: {
-//             tasks: [
-//                 {
-//                     id: -1,
-//                     title: 'Finish homework',
-//                     description: 'Finish homework for all courses',
-//                     startDate: new Date(),
-//                     endDate: new Date(),
-//                     priority: 1,
-//                     estimatedTime: 8,
-//                     completed: false,
-//                     hoursToSchedule: 0,
-//                 },
-//                 {
-//                     id: -2,
-//                     title: 'Study for exam',
-//                     description: 'Study for exam for all courses',
-//                     startDate: new Date(),
-//                     endDate: new Date(),
-//                     priority: 1,
-//                     estimatedTime: 8,
-//                     completed: false,
-//                     hoursToSchedule: 0,
-//                 }
-//             ],
-//             parentId: 0,
-//         }
-//     },
-//     {isUser: true, message: 'I have a meeting with my professor at 3pm tomorrow.'},
-//     {
-//         isUser: false,
-//         message: 'I have added the event to your calendar. Here are the details:',
-//         events: [
-//             {
-//                 id: -1,
-//                 title: 'Meeting with Professor',
-//                 tags: [],
-//                 description: 'Meeting with Professor',
-//                 startDateTime: new Date(),
-//                 endDateTime: new Date(),
-//             }
-//         ]
-//     },
-// ];
-    
-
 const ChatPage = () => {
     const [messages, setMessages] = useState<ChatMessage[]>([{isUser: false, tag: 'intro', message: welcomeMessage}]);
+    const [hiddenContext, setHiddenContext] = useState<string[]>([]);
     const [message, setMessage] = useState('');
     const chatBottomRef = useRef<HTMLDivElement>(null);
     const [replyWaiting, setReplyWaiting] = useState(false);
@@ -92,7 +40,6 @@ const ChatPage = () => {
 
     useEffect(() => {
         // setMessages(testChatMessages);
-        // fetch chat history
         chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, []);
 
@@ -103,11 +50,15 @@ const ChatPage = () => {
     const sendRequest = () => {
         const lastTag = messages[messages.length - 1].tag;
         setMessages(prevMessages => [...prevMessages, {isUser: true, tag: lastTag, message: message}]);
+        setHiddenContext(prevContext => [...prevContext, ""]);
         setReplyWaiting(true);
         let context = 'Chat History: ';
         for (let i = messages.length - 1; i >= 0; i--) {
             if (messages[i].tag === lastTag) {
                 context += JSON.stringify(messages[i]);
+                if (hiddenContext[i] !== "") {
+                    context += "\n" + "chat context: " + hiddenContext[i];
+                }
             }
         }
         fetch(`${server_base_url}/chat/query`, {
@@ -178,6 +129,9 @@ const ChatPage = () => {
                         )}]);
                     default:
                         break;
+                }
+                if ('context' in response) {
+                    setHiddenContext(prevContext => [...prevContext, response.context]);
                 }
             }
             else {

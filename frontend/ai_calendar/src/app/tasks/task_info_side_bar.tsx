@@ -9,6 +9,8 @@ import LiveSyncCheckbox from './live_sync_checkbox';
 import DeleteIcon from '@mui/icons-material/Delete';
 import * as taskApi from '../utils/task_api_funcs';
 
+// TODO: when add new task, syn this
+
 interface TaskInfoSideBarProps {
     currentTask: Task;
     openSideBar: boolean;

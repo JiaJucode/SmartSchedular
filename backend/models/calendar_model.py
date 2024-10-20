@@ -1,7 +1,7 @@
 from psycopg2 import sql
 from datetime import datetime
 from typing import List, Optional, Dict
-from models.db_pool import get_scheduling_connection, return_scheduling_connection
+from models.db_pool import get_connection, return_connection
 
 # for deleting link before removing event
 from models.task_calendar_link_model import TaskCalendarLinkDB
@@ -13,7 +13,7 @@ class CalendarEventDB:
         pass
 
     def create_table():
-        conn, cursor = get_scheduling_connection()
+        conn, cursor = get_connection()
         cursor.execute(
             """
             CREATE TABLE IF NOT EXISTS calendar_events (
@@ -27,10 +27,10 @@ class CalendarEventDB:
             """
         )
         conn.commit()
-        return_scheduling_connection(conn, cursor)
+        return_connection(conn, cursor)
     
     def get_events(start_datetime: datetime, end_datetime: datetime) -> List[Dict]:
-        conn, cursor = get_scheduling_connection()
+        conn, cursor = get_connection()
         query = sql.SQL(
             """
             SELECT * FROM calendar_events
@@ -44,11 +44,11 @@ class CalendarEventDB:
         )
         cursor.execute(query)
         events = [dict(zip(calendar_events_columns, row)) for row in cursor.fetchall()]
-        return_scheduling_connection(conn, cursor)
+        return_connection(conn, cursor)
         return events
     
     def get_event(event_id: int) -> Dict:
-        conn, cursor = get_scheduling_connection()
+        conn, cursor = get_connection()
         cursor.execute(
             """
             SELECT * FROM calendar_events
@@ -57,12 +57,12 @@ class CalendarEventDB:
             (event_id,)
         )
         event = dict(zip(calendar_events_columns, cursor.fetchone()))
-        return_scheduling_connection(conn, cursor)
+        return_connection(conn, cursor)
         return event
     
     def add_event(title: str | None, tags: List[str], start_datetime: datetime, 
                   end_datetime: datetime, description: str) -> int:
-        conn, cursor = get_scheduling_connection()
+        conn, cursor = get_connection()
         query = sql.SQL(
             """
             INSERT INTO calendar_events ({columns})
@@ -77,12 +77,12 @@ class CalendarEventDB:
         cursor.execute(query)
         event_id = cursor.fetchone()[0]
         conn.commit()
-        return_scheduling_connection(conn, cursor)
+        return_connection(conn, cursor)
         return event_id
 
     def delete_event(event_id: int) -> None:
         TaskCalendarLinkDB.unlink_task_from_event(event_id)
-        conn, cursor = get_scheduling_connection()
+        conn, cursor = get_connection()
         cursor.execute(
             """
             DELETE FROM calendar_events
@@ -91,14 +91,14 @@ class CalendarEventDB:
             (event_id,)
         )
         conn.commit()
-        return_scheduling_connection(conn, cursor)
+        return_connection(conn, cursor)
 
     def update_event(event_id: int, title: Optional[str] = None,
                      tags: Optional[List[str]] = None,
                      start_datetime: Optional[datetime] = None,
                      end_datetime: Optional[datetime] = None, 
                      description: Optional[str] = None) -> None:
-        conn, cursor = get_scheduling_connection()
+        conn, cursor = get_connection()
         set_clause = {}
         input = [event_id, title, tags, start_datetime, end_datetime, description]
         for i in range(1, len(calendar_events_columns)):
@@ -122,5 +122,5 @@ class CalendarEventDB:
         )
         cursor.execute(query)
         conn.commit()
-        return_scheduling_connection(conn, cursor)
+        return_connection(conn, cursor)
         

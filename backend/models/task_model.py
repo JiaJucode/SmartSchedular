@@ -2,7 +2,7 @@ from psycopg2 import sql
 from datetime import datetime
 from typing import List, Optional, Dict
 from flask import current_app as app
-from models.db_pool import get_scheduling_connection, return_scheduling_connection
+from models.db_pool import get_connection, return_connection
 
 tasks_columns = ['id', 'title', 'description', 'start_datetime', 
                  'end_datetime', 'priority', 'estimated_time', 'completed']
@@ -12,7 +12,7 @@ class TaskDB:
         pass
 
     def create_table():
-        conn, cursor = get_scheduling_connection()
+        conn, cursor = get_connection()
         cursor.execute(
             """
             CREATE TABLE IF NOT EXISTS tasks (
@@ -60,10 +60,10 @@ class TaskDB:
             )
             conn.commit()
         
-        return_scheduling_connection(conn, cursor)
+        return_connection(conn, cursor)
 
     def get_task(id: int) -> Dict:
-        conn, cursor = get_scheduling_connection()
+        conn, cursor = get_connection()
         query = sql.SQL(
             """
             SELECT * FROM tasks
@@ -74,11 +74,11 @@ class TaskDB:
         )
         cursor.execute(query)
         task = dict(zip(tasks_columns, cursor.fetchone()))
-        return_scheduling_connection(conn, cursor)
+        return_connection(conn, cursor)
         return task
     
     def get_tasks_by_date_range(start_date: datetime, end_date: datetime) -> List[Dict]:
-        conn, cursor = get_scheduling_connection()
+        conn, cursor = get_connection()
         query = sql.SQL(
             """
             SELECT * FROM tasks
@@ -94,11 +94,11 @@ class TaskDB:
         )
         cursor.execute(query)
         tasks = [dict(zip(tasks_columns, row)) for row in cursor.fetchall()]
-        return_scheduling_connection(conn, cursor)
+        return_connection(conn, cursor)
         return tasks
 
     def get_child_tasks(parent_id: int) -> List[Dict]:
-        conn, cursor = get_scheduling_connection()
+        conn, cursor = get_connection()
         query = sql.SQL(
             """
             SELECT * FROM task_links
@@ -110,17 +110,17 @@ class TaskDB:
         cursor.execute(query)
         try: 
             child_ids = [row[1] for row in cursor.fetchall()]
-            return_scheduling_connection(conn, cursor)
+            return_connection(conn, cursor)
             return [TaskDB.get_task(child_id) for child_id in child_ids]
         except:
-            return_scheduling_connection(conn, cursor)
+            return_connection(conn, cursor)
             return []
     
     def update_task(id: int | None, title: str | None,
                     description: str | None, start_datetime: datetime | None,
                     end_datetime: datetime | None, priority: int | None,
                     estimated_time: int | None, completed: bool | None) -> None:
-        conn, cursor = get_scheduling_connection()
+        conn, cursor = get_connection()
         if (id == 0):
             raise ValueError("id cannot be root task")
 
@@ -147,13 +147,13 @@ class TaskDB:
         cursor.execute(query)
         conn.commit()
 
-        return_scheduling_connection(conn, cursor)
+        return_connection(conn, cursor)
 
     def add_task(parent_id: int, title: str, description: str = "",
                  start_datetime: Optional[datetime] = None, end_datetime: Optional[datetime] = None,
                  priority: Optional[int] = None, estimated_time: Optional[int] = None,
                  completed: Optional[bool] = False) -> int:
-        conn, cursor = get_scheduling_connection()
+        conn, cursor = get_connection()
         query = sql.SQL(
             """
             INSERT INTO tasks ({columns})   
@@ -178,11 +178,11 @@ class TaskDB:
             (parent_id, task_id)
         )
         conn.commit()
-        return_scheduling_connection(conn, cursor)
+        return_connection(conn, cursor)
         return task_id
     
     def delete_task(id: int) -> None:
-        conn, cursor = get_scheduling_connection()
+        conn, cursor = get_connection()
         if (id == 0):
             raise ValueError("id cannot be root task")
         
@@ -220,4 +220,4 @@ class TaskDB:
         )
         conn.commit()
 
-        return_scheduling_connection(conn, cursor)
+        return_connection(conn, cursor)
