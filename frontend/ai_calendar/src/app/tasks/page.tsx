@@ -51,7 +51,6 @@ const TasksPage = () => {
 
     useEffect(() => {
         if (selectedProject === -1 && projects.length > 0) {
-            console.log('projects:', projects);
             setSelectedProject(projects[0].id);
         }
     }, [projects]);
@@ -180,7 +179,8 @@ const TasksPage = () => {
                         Projects:
                     </Typography>
                     {projects.map((project) => (
-                        <Box sx={{ flexDirection: 'row', display: 'flex', width: '100%' }}>
+                        <Box sx={{ flexDirection: 'row', display: 'flex', width: '100%' }}
+                        key={project.id}>
                             <Button key={project.id} color="inherit"
                             sx={{ textTransform: 'none', flexGrow: 1, justifyContent: 'flex-start',
                                 height: '40px', overflow: 'hidden', textOverflow: 'ellipsis' }}

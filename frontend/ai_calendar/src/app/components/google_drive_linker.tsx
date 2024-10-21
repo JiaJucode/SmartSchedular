@@ -13,6 +13,7 @@ const GoogleDriveLinker = () => {
     const [idToken, setIdToken] = React.useState('');
     const [linking, setLinking] = React.useState(false);
     const [linked, setLinked] = React.useState(false);
+    const [displayText, setDisplayText] = React.useState('Link Google Drive');
 
     useEffect(() => {
         if (typeof window !== 'undefined') {
@@ -32,11 +33,22 @@ const GoogleDriveLinker = () => {
             }
             loadGapi();
         }
+        fetch(`${server_base_url}/google/check_connected?user_id=${0}`, {
+            method: 'GET',
+        }).then((response) => response.json())
+        .then((data) => {
+            console.log('data:', data);
+            if (data.connected) {
+                setLinked(true);
+                setDisplayText('Google Drive Linked');
+            }
+        });
     }, []);
 
     useEffect(() => {
         if (accessToken !== '' && refreshToken !== '' && idToken !== '') {
             setLinking(true);
+            setDisplayText('Linking...');
             fetch(`${server_base_url}/google/setup_token`, {
                 method: 'POST',
                 headers: {
@@ -52,9 +64,11 @@ const GoogleDriveLinker = () => {
                 console.log('response:', response);
                 if (response.ok) {
                     setLinked(true);
+                    setDisplayText('Google Drive Linked');
                     console.log('Google Drive linked successfully');
                 } else {
                     setLinked(false);
+                    setDisplayText('Link Google Drive');
                     console.log('Error linking Google Drive');
                 }
             });
@@ -78,7 +92,7 @@ const GoogleDriveLinker = () => {
     return (
         <Button onClick={handleSignIn} disabled={linking || linked}>
             <Typography sx={{ fontSize: '1.2em', color: 'primary.contrastText', textTransform: 'none' }}>
-                Link Google Drive
+                {displayText}
             </Typography>
             <img
                 src="/google_drive_icon.ico"

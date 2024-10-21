@@ -111,7 +111,6 @@ class MyMilvusClient:
             index = result["segment_id"]
             data[index]["id"] = result["id"]
             
-        app.logger.info("results: " + str(results))
         insert_result = self.client.upsert(
             collection_name="task",
             data=data

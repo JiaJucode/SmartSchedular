@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify, request
 from flask_cors import CORS
 from services.google_service import google_drive_setup
+from models.google_model import GoogleDB
 
 bp = Blueprint("google_controller", __name__)
 
@@ -36,3 +37,18 @@ def setup_refresh_token():
 @bp.route("/push_notification", methods=["POST"])
 def push_notification():
     pass
+
+@bp.route("/check_connected", methods=["GET"])
+def check_connected():
+    """
+    params:
+        user_id: int
+    Returns:
+        {"connected": bool}
+    """
+    # temporary user_id = 0
+    user_id = request.args.get("user_id")
+    if not user_id:
+        return jsonify({"error": "user_id is required"}), 400
+    result = GoogleDB.check_connected(user_id)
+    return jsonify({"connected": result})
