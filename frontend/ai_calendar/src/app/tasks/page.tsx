@@ -7,10 +7,12 @@ import { Box, Button, Divider, Stack, Toolbar, Typography } from '@mui/material'
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 import ExpandableTask from './expendableTask';
 import AddIcon from '@mui/icons-material/Add';
+import DeleteIcon from '@mui/icons-material/Delete';
 import TaskInfoSideBar from './task_info_side_bar';
 import KeyboardDoubleArrowRightIcon from '@mui/icons-material/KeyboardDoubleArrowRight';
-import { fetchTasks, addTask } from '../utils/task_api_funcs';
+import * as taskApi from '../utils/task_api_funcs';
 import dynamic from 'next/dynamic';
+import LiveSyncTextfield from './live_sync_textfield';
 const GoogleDriveLinker = dynamic(() => import('../components/google_drive_linker'), { ssr: false });
 
 
@@ -44,7 +46,7 @@ const TasksPage = () => {
     const [setRefresh, setSetRefresh] = useState<() => void>(() => () => {console.log('old')});
 
     useEffect(() => {
-        fetchTasks(0, setProjects);
+        taskApi.fetchTasks(0, setProjects);
     }, []);
 
     useEffect(() => {
@@ -58,6 +60,14 @@ const TasksPage = () => {
         setInfoTask(task);
         setInfoSiderOpen(true);
     }
+
+    const deleteProject = (project_id: number) => {
+        taskApi.deleteTask(project_id, setProjects);
+        if (selectedProject === project_id) {
+            setSelectedProject(-1);
+        }
+    }
+
 
     return (
         <Box sx={{ width: '100vw', display: 'flex', flexDirection: 'row', 
@@ -170,15 +180,21 @@ const TasksPage = () => {
                         Projects:
                     </Typography>
                     {projects.map((project) => (
-                        <Button key={project.id} color="inherit" 
-                        sx={{ textTransform: 'none' }}
-                        onClick={() => setSelectedProject(project.id)}>
-                            <Typography sx={{ fontSize: '1.2em' }}>
-                                {project.title}
-                            </Typography>
-                        </Button>
+                        <Box sx={{ flexDirection: 'row', display: 'flex', width: '100%' }}>
+                            <Button key={project.id} color="inherit"
+                            sx={{ textTransform: 'none', flexGrow: 1, justifyContent: 'flex-start',
+                                height: '40px', overflow: 'hidden', textOverflow: 'ellipsis' }}
+                            onClick={() => setSelectedProject(project.id)}>
+                                <LiveSyncTextfield task_id={project.id} fieldKey='title'
+                                value={project.title} numberOnly={false} />
+                            </Button>
+                            <Button onClick={() => deleteProject(project.id)}
+                            sx={{ color: 'inherit', padding: 0, width: '40px', height: '40px' }}>
+                                <DeleteIcon />
+                            </Button>
+                        </Box>
                     ))}
-                    <Button onClick={() => addTask(0, setProjects)}
+                    <Button onClick={() => taskApi.addTask(0, setProjects)}
                     sx={{ 
                         width: '100%', justifyContent: 'flex-start',
                         color: 'primary.contrastText',
