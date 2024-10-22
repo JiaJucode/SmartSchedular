@@ -95,16 +95,16 @@ def add_event(sorted_tasks: List[Dict], free_time_slots: List[Dict]) -> List[Dic
             scheduled_events.append({
                 "title": task["title"],
                 "tags": [],
-                "str_start_datetime": start_time.isoformat(),
-                "str_end_datetime": end_time.isoformat(),
+                "str_start_datetime": start_time,
+                "str_end_datetime": end_time,
                 "description": task["description"]
             })
         else:
             scheduled_events.append({
                 "title": task["title"],
                 "tags": [],
-                "str_start_datetime": start_time.isoformat(),
-                "str_end_datetime": (start_time + timedelta(hours=task["estimated_time"])).isoformat(),
+                "str_start_datetime": start_time,
+                "str_end_datetime": (start_time + timedelta(hours=task["estimated_time"])),
                 "description": task["description"]
             })
             start_time += timedelta(hours=task["estimated_time"])

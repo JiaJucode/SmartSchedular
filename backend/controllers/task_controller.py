@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, request
 from flask_cors import CORS
 from services.task_service import *
-from services.task_calendar_link_service import get_time_left_to_schedule
+from services.task_schedular_service import get_time_left_to_schedule
 
 bp = Blueprint("task_controller", __name__)
 

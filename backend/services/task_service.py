@@ -1,7 +1,7 @@
 from models.task_model import TaskDB
 from typing import List, Dict
 from datetime import datetime
-from services.task_calendar_link_service import schedule_task, deschedule_task,\
+from services.task_schedular_service import schedule_task, deschedule_task,\
     update_scheduled_task, get_calendar_id_for_task
 from flask import current_app as app
 

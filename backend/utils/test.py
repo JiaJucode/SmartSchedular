@@ -128,8 +128,8 @@ multi_schedule_test_cases = [
         "expected": [{
             "title": "Task 1",
             "tags": [],
-            "str_start_datetime": start_time.isoformat(),
-            "str_end_datetime": (start_time + timedelta(hours=5)).isoformat(),
+            "str_start_datetime": start_time,
+            "str_end_datetime": (start_time + timedelta(hours=5)),
             "description": "Description of Task 1"
         }]
     },
@@ -148,8 +148,8 @@ multi_schedule_test_cases = [
         "expected": [{
             "title": "Task 1",
             "tags": [],
-            "str_start_datetime": start_time.isoformat(),
-            "str_end_datetime": (start_time + timedelta(hours=5)).isoformat(),
+            "str_start_datetime": start_time,
+            "str_end_datetime": (start_time + timedelta(hours=5)),
             "description": "Description of Task 1"
         }]
     },
@@ -176,15 +176,15 @@ multi_schedule_test_cases = [
             {
                 "title": "Task 1",
                 "tags": [],
-                "str_start_datetime": (start_time + timedelta(hours=1)).isoformat(),
-                "str_end_datetime": (start_time + timedelta(hours=3)).isoformat(),
+                "str_start_datetime": (start_time + timedelta(hours=1)),
+                "str_end_datetime": (start_time + timedelta(hours=3)),
                 "description": "Description of Task 1"
             },
             {
                 "title": "Task 2",
                 "tags": [],
-                "str_start_datetime": (start_time + timedelta(hours=4)).isoformat(),
-                "str_end_datetime": (start_time + timedelta(hours=5)).isoformat(),
+                "str_start_datetime": (start_time + timedelta(hours=4)),
+                "str_end_datetime": (start_time + timedelta(hours=5)),
                 "description": "Description of Task 2"
             }
         ]
@@ -212,15 +212,15 @@ multi_schedule_test_cases = [
             {
                 "title": "Task 1",
                 "tags": [],
-                "str_start_datetime": (start_time + timedelta(hours=1)).isoformat(),
-                "str_end_datetime": (start_time + timedelta(hours=2)).isoformat(),
+                "str_start_datetime": (start_time + timedelta(hours=1)),
+                "str_end_datetime": (start_time + timedelta(hours=2)),
                 "description": "Description of Task 1"
             },
             {
                 "title": "Task 2",
                 "tags": [],
-                "str_start_datetime": (start_time + timedelta(hours=3)).isoformat(),
-                "str_end_datetime": (start_time + timedelta(hours=4)).isoformat(),
+                "str_start_datetime": (start_time + timedelta(hours=3)),
+                "str_end_datetime": (start_time + timedelta(hours=4)),
                 "description": "Description of Task 2"
             }
         ]
@@ -248,22 +248,22 @@ multi_schedule_test_cases = [
             {
                 "title": "Task 1",
                 "tags": [],
-                "str_start_datetime": (start_time + timedelta(hours=1)).isoformat(),
-                "str_end_datetime": (start_time + timedelta(hours=2)).isoformat(),
+                "str_start_datetime": (start_time + timedelta(hours=1)),
+                "str_end_datetime": (start_time + timedelta(hours=2)),
                 "description": "Description of Task 1"
             },
             {
                 "title": "Task 2",
                 "tags": [],
-                "str_start_datetime": (start_time + timedelta(hours=2)).isoformat(),
-                "str_end_datetime": (start_time + timedelta(hours=3)).isoformat(),
+                "str_start_datetime": (start_time + timedelta(hours=2)),
+                "str_end_datetime": (start_time + timedelta(hours=3)),
                 "description": "Description of Task 2"
             },
             {
                 "title": "Task 1",
                 "tags": [],
-                "str_start_datetime": (start_time + timedelta(hours=3)).isoformat(),
-                "str_end_datetime": (start_time + timedelta(hours=4)).isoformat(),
+                "str_start_datetime": (start_time + timedelta(hours=3)),
+                "str_end_datetime": (start_time + timedelta(hours=4)),
                 "description": "Description of Task 1"
             }
         ]
