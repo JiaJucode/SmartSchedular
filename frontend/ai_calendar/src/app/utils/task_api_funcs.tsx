@@ -23,7 +23,7 @@ export const addTask =
         },
         body: JSON.stringify({
             ...taskDetails,
-            parent_id: parentId,
+            parentId: parentId,
         })
     }
     ).then((response) => response.json())
@@ -39,7 +39,7 @@ export const addTask =
 
 export const fetchTasks = 
 (parentId: number, setTasks: React.Dispatch<React.SetStateAction<Task[]>>) => {
-    fetch(`${server_base_url}/task/get_tasks?parent_id=${parentId}`)
+    fetch(`${server_base_url}/task/get_tasks?parentId=${parentId}`)
     .then((response) => response.json())
     .then((data: {tasks: {id: number, title: string, description: string,
         start_datetime: string, end_datetime: string, priority: number,
@@ -90,9 +90,8 @@ export const deleteTask = (task_id: number,
     });
 }
 
-export const scheduleTask = (task_id: number) => {
-    let timeLeft = 0;
-    fetch(`${server_base_url}/task/schedule_task`, {
+export const scheduleTask = async (task_id: number) => {
+    const response = await fetch(`${server_base_url}/task/schedule_task`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -100,11 +99,9 @@ export const scheduleTask = (task_id: number) => {
         body: JSON.stringify({
             id: task_id,
         }),
-    }).then((response) => response.json())
-    .then((data: {time_left: number}) => {
-        timeLeft = data.time_left;
     });
-    return timeLeft;
+    const data = await response.json();
+    return data.timeLeft
 }
 
 export const descheduleTask = (task_id: number) => {

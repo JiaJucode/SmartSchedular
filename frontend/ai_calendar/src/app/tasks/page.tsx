@@ -43,6 +43,7 @@ const TasksPage = () => {
     const [selectedProject, setSelectedProject] = useState<number>(-1);
     const [infoSiderOpen, setInfoSiderOpen] = useState(false);
     const [infoTask, setInfoTask] = useState<Task | null>(null);
+    const [updateInfoTask, setUpdateInfoTask] = useState<(task: Task) => void>(() => () => {console.log('old')});
     const [setRefresh, setSetRefresh] = useState<() => void>(() => () => {console.log('old')});
 
     useEffect(() => {
@@ -55,8 +56,9 @@ const TasksPage = () => {
         }
     }, [projects]);
 
-    const openInfo = (task: Task) => {
+    const openInfo = (task: Task, setTask: (task: Task) => void) => {
         setInfoTask(task);
+        setUpdateInfoTask(() => setTask);
         setInfoSiderOpen(true);
     }
 
@@ -155,7 +157,7 @@ const TasksPage = () => {
                 : null}
             </Box>
             {infoTask === null ? null :
-            <TaskInfoSideBar currentTask={infoTask} openSideBar={infoSiderOpen}
+            <TaskInfoSideBar currentTask={infoTask} setCurrentTask={updateInfoTask} openSideBar={infoSiderOpen}
             setOpenSideBar={setInfoSiderOpen} setRefresh={() => setRefresh()} />}
             
             <SideBar open={openSideBar} setOpen={setOpenSideBar}>
@@ -185,8 +187,9 @@ const TasksPage = () => {
                             sx={{ textTransform: 'none', flexGrow: 1, justifyContent: 'flex-start',
                                 height: '40px', overflow: 'hidden', textOverflow: 'ellipsis' }}
                             onClick={() => setSelectedProject(project.id)}>
-                                <LiveSyncTextfield task_id={project.id} fieldKey='title'
-                                value={project.title} numberOnly={false} />
+                                <LiveSyncTextfield task_id={project.id} fieldKey='title' textValue={project.title}
+                                setTextValue={(title) => taskApi.updateTask(project.id, 'title', title)} 
+                                numberOnly={false} />
                             </Button>
                             <Button onClick={() => deleteProject(project.id)}
                             sx={{ color: 'inherit', padding: 0, width: '40px', height: '40px' }}>

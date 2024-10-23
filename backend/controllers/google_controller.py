@@ -11,22 +11,20 @@ CORS(bp, resources={r"/*": {"origins": "http://localhost:3000"}})
 def setup_refresh_token():
     """
     params:
-        "id_token": str
-        "refresh_token": str
-        "access_token": str
+        "idToken": str
+        "refreshToken": str
+        "accessToken": str
     Returns:
         {"message": str}
     """
-    id_token = request.json.get("id_token")
-    refresh_token = request.json.get("refresh_token")
-    access_token = request.json.get("access_token")
+    id_token = request.json.get("idToken")
+    refresh_token = request.json.get("refreshToken")
+    access_token = request.json.get("accessToken")
     # temporary user_id = 0
     user_id = 0
 
-    if not refresh_token:
-        return jsonify({"error": "refresh_token is required"}), 400
-    if not access_token:
-        return jsonify({"error": "access_token is required"}), 400
+    if not id_token or not refresh_token or not access_token:
+        return jsonify({"error": "idToken, refreshToken, and accessToken are required"}), 400
     
     result = google_drive_setup(user_id, id_token, refresh_token, access_token)
     if "error" in result:
@@ -42,13 +40,13 @@ def push_notification():
 def check_connected():
     """
     params:
-        user_id: int
+        userId: int
     Returns:
         {"connected": bool}
     """
     # temporary user_id = 0
-    user_id = request.args.get("user_id")
+    user_id = request.args.get("userId")
     if not user_id:
-        return jsonify({"error": "user_id is required"}), 400
+        return jsonify({"error": "userId is required"}), 400
     result = GoogleDB.check_connected(user_id)
     return jsonify({"connected": result})

@@ -56,7 +56,7 @@ const EditEvent = ({eventInfo, updateEvent, deleteEvent, closeCreateEvent}: Crea
             <LocalizationProvider dateAdapter={AdapterDayjs}>
                 <DateTimePicker label="Start Date and Time" value={dayjs(startTime)}
                 onChange={(newValue) => newValue ? setStartTime(newValue.toDate()) : null}
-                disableOpenPicker
+                disableOpenPicker format="DD/MM/YYYY HH:mm"
                 sx={{
                     marginTop: '10px',
                     paddingRight: '4%',
@@ -79,7 +79,7 @@ const EditEvent = ({eventInfo, updateEvent, deleteEvent, closeCreateEvent}: Crea
                 />
                 <DateTimePicker label="End Date and Time" value={dayjs(endTime)}
                 onChange={(newValue) => newValue ? setEndTime(newValue.toDate()) : null}
-                disableOpenPicker
+                disableOpenPicker format="DD/MM/YYYY HH:mm"
                 sx={{
                     marginTop: '10px',
                     input: {

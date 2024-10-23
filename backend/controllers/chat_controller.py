@@ -12,7 +12,7 @@ def query():
     params:
         "message": str,
         "all_tags": List[str],
-        "current_date": iso_date_string
+        "currentDate": iso_date_string
         "history": Optional[String]
     Returns:
         {
@@ -21,7 +21,7 @@ def query():
     """
     tags = request.json.get("all_tags")
     message = request.json.get("message")
-    current_date = request.json.get("current_date")
+    current_date = request.json.get("currentDate")
     context = request.json.get("context")
     user_id = 0
     if not message:

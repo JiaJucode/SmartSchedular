@@ -2,27 +2,23 @@ import { Typography } from "@mui/material";
 import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs from "dayjs";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { updateTask } from "../utils/task_api_funcs";
 
 
 interface LiveSyncDatePickerProps {
     task_id: number;
     fieldKey: string;
-    value: Date | null;
+    dateValue: Date | null;
+    setDateValue: (value: Date | null) => void;
 }
 
-const LiveSyncDatePicker: React.FC<LiveSyncDatePickerProps> = ({ task_id, fieldKey, value }) => {
-    const [dateValue, setDateValue] = useState<Date | null>(null);
-    const [valueChanged, setValueChanged] = useState<boolean>();
+const LiveSyncDatePicker: React.FC<LiveSyncDatePickerProps> = ({ task_id, fieldKey, dateValue, setDateValue }) => {
+    const [oldDateValue, setOldDateValue] = useState<Date | null>(dateValue);
 
     useEffect(() => {
-        if (value !== null) {
-            value.setHours(0, 0, 0, 0);
-            setDateValue(value);
-        }
-        setValueChanged(false);
-    }, [task_id, value]);
+        setOldDateValue(dateValue);
+    }, [task_id]);
 
     const saveUpdatedTask = () => {
         updateTask(task_id, fieldKey, dateValue);
@@ -47,23 +43,20 @@ const LiveSyncDatePicker: React.FC<LiveSyncDatePickerProps> = ({ task_id, fieldK
             format="DD/MM/YYYY"
             onChange={(newValue) => {
                 if (newValue !== null && newValue.toDate() !== dateValue) {
-                    console.log(newValue.toDate());
-                    setValueChanged(true);
                     setDateValue(newValue.toDate());
                 }
             }}
             slotProps={{ 
                 textField: {
-                    placeholder: value === null ? '' : 'No Date Selected',
+                    placeholder: dateValue === null ? '' : 'No Date Selected',
                     onBlur: () => {
-                        if (valueChanged) {
+                        if (dateValue?.getTime() !== oldDateValue?.getTime()) {
                             saveUpdatedTask();
-                            setValueChanged(false);
+                            setOldDateValue(dateValue);
                         }},
                     onFocus: () => {
                         if (dateValue === null) {
                             setDateValue(new Date(new Date().setHours(0, 0, 0, 0)));
-                            setValueChanged(true);
                         }
                     }
                 },

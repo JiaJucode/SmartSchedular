@@ -11,7 +11,7 @@ CORS(bp, resources={r"/*": {"origins": "http://localhost:3000"}})
 def get_tasks():
     """
     params:
-        "parent_id": int
+        "parentId": int
     Returns:
         JSON list of tasks
         example:
@@ -20,8 +20,8 @@ def get_tasks():
                     "id": 1,
                     "name": "Task 1",
                     "description": "Description 1",
-                    "start_date": iso_date_string | None,
-                    "end_date": iso_date_string | None,
+                    "startDate": iso_date_string | None,
+                    "endDate": iso_date_string | None,
                     "priority": int,
                     "estimated_time": int | None,
                     "hours_to_schedule": int | None,
@@ -30,9 +30,9 @@ def get_tasks():
                 ...
             ]
     """
-    parent_id = request.args.get("parent_id")
+    parent_id = request.args.get("parentId")
     if not parent_id:
-        return jsonify({"error": "parent_id is required"}), 400
+        return jsonify({"error": "parentId is required"}), 400
     
     tasks = get_tasks_by_parent_id(parent_id)
     for task in tasks:
@@ -44,7 +44,7 @@ def get_tasks():
 def add_task():
     """
     params:
-        "parent_id": int,
+        "parentId": int,
         "title": str,
         "description": str,
         "startDate": iso_date_string | None,
@@ -53,9 +53,9 @@ def add_task():
         "estimatedTime": int | None,
         "completed": bool
     Returns:
-        {"id": int,` "time_left": int}
+        {"id": int,` "timeLeft": int}
     """
-    parent_id = request.json.get("parent_id")
+    parent_id = request.json.get("parentId")
     title = request.json.get("title")
     description = request.json.get("description")
     start_date = request.json.get("startDate")
@@ -110,11 +110,11 @@ def schedule_task():
     params:
         "id": int
     Returns:
-        {"time_left": int}
+        {"timeLeft": int}
     """
     task_id = request.json.get("id")
     time_left = schedule_task_from_id(task_id)
-    return jsonify({"time_left": time_left})
+    return jsonify({"timeLeft": time_left})
 
 @bp.route("/deschedule_task", methods=["POST"])
 def deschedule_task():

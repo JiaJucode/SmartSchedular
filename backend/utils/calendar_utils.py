@@ -7,8 +7,8 @@ def get_empty_timeslots_util(current_events: List[Dict],
                          start_datetime: datetime, end_datetime: datetime) -> List[Dict]:
     event_times = []
     for event in current_events:
-        event_times.append((datetime.fromisoformat(event['start_datetime']), True, event['id']))
-        event_times.append((datetime.fromisoformat(event['end_datetime']), False, event['id']))
+        event_times.append((event['start_datetime'], True, event['id']))
+        event_times.append((event['end_datetime'], False, event['id']))
     event_times.sort()
     timeslots = []
     start = start_datetime
@@ -123,3 +123,35 @@ def add_event(sorted_tasks: List[Dict], free_time_slots: List[Dict]) -> List[Dic
                 break
     
     return scheduled_events
+
+def _split_event(event: Dict) -> List[Dict]:
+    """
+    Split an event that spans multiple days into multiple events
+    """
+    start = event['start_datetime']
+    end = event['end_datetime']
+    split_events = []
+    while start < end:
+        current_end = start.replace(hour=23, minute=59, second=59)
+        event_copy = event.copy()
+        event_copy['start_datetime'] = start
+        event_copy['end_datetime'] = current_end
+        start = current_end + timedelta(seconds=1)
+        split_events.append(event_copy)
+    return split_events
+
+def trim_events(events: List[Dict], start_datetime: datetime, end_datetime: datetime) -> List[Dict]:
+    """
+    Trim events to the requested time range
+    """
+    trimmed_events = []
+    for event in events:
+        if event['start_datetime'] < start_datetime:
+            event['start_datetime'] = start_datetime
+        if event['end_datetime'] > end_datetime:
+            event['end_datetime'] = end_datetime
+        if event['start_datetime'].date() != event['end_datetime'].date():
+            trimmed_events.extend(_split_event(event))
+        else:
+            trimmed_events.append(event)
+    return trimmed_events

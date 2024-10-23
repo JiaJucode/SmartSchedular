@@ -18,7 +18,7 @@ interface ExpandableTaskProps {
     parentId: number;
     paddingLeft: number;
     setSetRefresh: React.Dispatch<React.SetStateAction<() => void>>;
-    openInfo: (task: Task) => void;
+    openInfo: (task: Task, setTask: (task: Task) => void) => void;
 }
 
 const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft, setSetRefresh, openInfo}) => {
@@ -28,6 +28,7 @@ const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft, s
     const [refresh, setRefresh] = useState(false);
 
     useEffect(() => {
+        console.log('fetching tasks');
         fetchTasks(parentId, setTasks);
     }, [parentId, refresh]);
 
@@ -70,8 +71,76 @@ const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft, s
     const handleInfoClick = (task_id: number) => {
         const task = tasks.find((task) => task.id === task_id);
         if (task) {
-            openInfo(task);
+            openInfo(task, (task: Task) => {
+                setTasks(prevTasks => {
+                    return prevTasks.map((t) => {
+                        if (t.id === task.id) {
+                            return task;
+                        }
+                        return t;
+                    });
+                });
+            });
         }
+    }
+
+    const updateChecked = (task_id: number, checked: boolean) => {
+        setTasks(prevTasks => {
+            return prevTasks.map((task) => {
+                if (task.id === task_id) {
+                    task.completed = checked;
+                }
+                return task;
+            });
+        });
+    }
+
+    const updateTaskTitle = (task_id: number, title: string) => {
+        setTasks(prevTasks => {
+            return prevTasks.map((task) => {
+                if (task.id === task_id) {
+                    task.title = title;
+                }
+                return task;
+            });
+        });
+    }
+
+    const updateTaskDate = (task_id: number, date: Date | null, startDate: boolean) => {
+        setTasks(prevTasks => {
+            return prevTasks.map((task) => {
+                if (task.id === task_id) {
+                    if (startDate) {
+                        task.startDate = date;
+                    } else {
+                        task.endDate = date;
+                    }
+                }
+                return task;
+            });
+        });
+    }
+
+    const updateTaskPriority = (task_id: number, priority: number) => {
+        setTasks(prevTasks => {
+            return prevTasks.map((task) => {
+                if (task.id === task_id) {
+                    task.priority = priority;
+                }
+                return task;
+            });
+        });
+    }
+
+    const updateTaskEstimatedTime = (task_id: number, estimatedTime: number) => {
+        setTasks(prevTasks => {
+            return prevTasks.map((task) => {
+                if (task.id === task_id) {
+                    task.estimatedTime = estimatedTime;
+                }
+                return task;
+            });
+        });
     }
 
 
@@ -90,7 +159,7 @@ const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft, s
                             }
                         }}>
                             <LiveSyncCheckbox task_id={task.id} fieldKey='completed'
-                            value={task.completed} />
+                            checked={task.completed} setChecked={(checked) => updateChecked(task.id, checked)} />
                             <Button onClick={() => handleSchedule(task.id, task.hoursToSchedule)}
                             sx={{ justifyContent: 'center', color: 'primary.contrastText',
                                 minWidth: '40px', alignContent: 'center', display: 'flex',
@@ -110,7 +179,8 @@ const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft, s
                                 ? <ArrowDropDownIcon /> 
                                 : <ArrowRightIcon />}
                             </IconButton>
-                            <LiveSyncTextfield task_id={task.id} value={task.title}
+                            <LiveSyncTextfield task_id={task.id} textValue={task.title}
+                            setTextValue={(title) => updateTaskTitle(task.id, title)}
                             fieldKey='title' numberOnly={false} />
                             <IconButton onClick={() => {handleInfoClick(task.id);
                             setSetRefresh(() => () => {
@@ -128,21 +198,22 @@ const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft, s
                         <Box sx={{ width: '10%', display: 'flex', flexDirection: 'row',
                             justifyContent: 'flex-end', position: 'relative' }}>
                             <LiveSyncDatePicker task_id={task.id} fieldKey='startDate'
-                            value={task.startDate} />
+                            dateValue={task.startDate} setDateValue={(date) => updateTaskDate(task.id, date, true)} />
                             <Divider orientation='vertical'
                             sx={{ backgroundColor: 'primary.contrastText', width: '1px', zIndex: 2 }} />
                         </Box>
                         <Box sx={{ width: '10%', display: 'flex', flexDirection: 'row',
                             justifyContent: 'flex-end', position: 'relative' }}>
                             <LiveSyncDatePicker task_id={task.id} fieldKey='endDate'
-                            value={task.endDate} />
+                            dateValue={task.endDate} setDateValue={(date) => updateTaskDate(task.id, date, false)} />
                             <Divider orientation='vertical'
                             sx={{ backgroundColor: 'primary.contrastText', width: '1px', zIndex: 2 }} />
                         </Box>
                         <Box sx={{ width: '10%', display: 'flex', flexDirection: 'row',
                             justifyContent: 'flex-end', position: 'relative' }}>
                             <LiveSyncTextfield task_id={task.id} fieldKey='priority'
-                            value={task.priority !== null ? task.priority.toString() : ""}
+                            textValue={task.priority !== null ? task.priority.toString() : ""}
+                            setTextValue={(priority) => updateTaskPriority(task.id, parseInt(priority))}
                             numberOnly />
                             <Divider orientation='vertical'
                             sx={{ backgroundColor: 'primary.contrastText', width: '1px', zIndex: 2 }} />
@@ -150,7 +221,8 @@ const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft, s
                         <Box sx={{ width: '10%', display: 'flex', flexDirection: 'row',
                             justifyContent: 'flex-end', position: 'relative' }}>
                             <LiveSyncTextfield task_id={task.id} fieldKey='estimatedTime'
-                            value={task.estimatedTime !== null ? task.estimatedTime.toString() : ""}
+                            setTextValue={(time) => updateTaskEstimatedTime(task.id, parseInt(time))}
+                            textValue={task.estimatedTime !== null ? task.estimatedTime.toString() : ""}
                             numberOnly />
                         </Box>
                     </Box>

@@ -5,18 +5,18 @@ import { updateTask } from '../utils/task_api_funcs';
 interface LiveSyncTextfieldProps {
     task_id: number;
     fieldKey: string;
-    value: string | null;
+    textValue: string | null;
+    setTextValue: (value: string) => void;
     numberOnly: boolean;
 }
 
-const LiveSyncTextfield: React.FC<LiveSyncTextfieldProps> = ({ task_id, fieldKey, value, 
+const LiveSyncTextfield: React.FC<LiveSyncTextfieldProps> = ({ task_id, fieldKey, textValue, setTextValue,
     numberOnly = false }) => {
-    const [textValue, setTextValue] = useState<string | null>(value);
-    const [valueChanged, setValueChanged] = useState<boolean>(false);
+    const [oldTextValue, setOldTextValue] = useState<string | null>(textValue);
 
     useEffect(() => {
-        setTextValue(value);
-    }, [task_id, value]);
+        setOldTextValue(textValue);
+    }, [task_id]);
 
     const saveUpdatedTask = (task_id: number) => {
         updateTask(task_id, fieldKey, textValue);
@@ -30,18 +30,18 @@ const LiveSyncTextfield: React.FC<LiveSyncTextfieldProps> = ({ task_id, fieldKey
         onChange={(e) => {
                 if (e.target.value !== textValue) {
                     if (numberOnly) {
-                        setTextValue(e.target.value === "" ? "" :
+                        console.log(e.target.value);
+                        setTextValue(e.target.value === "" ? "0" :
                             parseInt(e.target.value).toString());
                     }
                     else {
                         setTextValue(e.target.value);
                     }
-                    setValueChanged(true);
                 }}}
         onBlur={() => {
-            if (valueChanged && textValue !== "") {
+            if (textValue !== oldTextValue) {
                 saveUpdatedTask(task_id);
-                setValueChanged(false);
+                setOldTextValue(textValue);
             }}}
         sx={{
             display: 'flex', justifyContent: 'center', alignItems: 'center',

@@ -33,11 +33,10 @@ const GoogleDriveLinker = () => {
             }
             loadGapi();
         }
-        fetch(`${server_base_url}/google/check_connected?user_id=${0}`, {
+        fetch(`${server_base_url}/google/check_connected?userId=${0}`, {
             method: 'GET',
         }).then((response) => response.json())
         .then((data) => {
-            console.log('data:', data);
             if (data.connected) {
                 setLinked(true);
                 setDisplayText('Google Drive Linked');
@@ -55,9 +54,9 @@ const GoogleDriveLinker = () => {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    id_token: idToken,
-                    access_token: accessToken,
-                    refresh_token: refreshToken,
+                    idToken: idToken,
+                    accessToken: accessToken,
+                    refreshToken: refreshToken,
                 }),
             }).then((response) => {
                 setLinking(false);

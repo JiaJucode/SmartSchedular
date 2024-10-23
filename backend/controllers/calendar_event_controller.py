@@ -10,8 +10,8 @@ CORS(bp, resources={r"/*": {"origins": "http://localhost:3000"}})
 def get_events():
     """
     Params:
-        "start_datetime": ISO datetime string,
-        "end_datetime": ISO datetime string
+        "startDatetime": ISO datetime string,
+        "endDatetime": ISO datetime string
     
     Returns:
         JSON list of events
@@ -28,10 +28,10 @@ def get_events():
                 ...
             ]
     """
-    start_datetime = request.args.get("start_datetime")
-    end_datetime = request.args.get("end_datetime")
+    start_datetime = request.args.get("startDatetime")
+    end_datetime = request.args.get("endDatetime")
     if not start_datetime or not end_datetime:
-        return jsonify({"error": "start_datetime and end_datetime are required"}), 400
+        return jsonify({"error": "startDatetime and endDatetime are required"}), 400
 
     events = get_calendar_events(start_datetime, end_datetime)
 
@@ -43,8 +43,8 @@ def add_event():
     params:
         "title": str,
         "tags": [str],
-        "start_datetime": ISO datetime string,
-        "end_datetime": ISO datetime string,
+        "startDatetime": ISO datetime string,
+        "endDatetime": ISO datetime string,
         "description": str
 
     Returns:
@@ -52,8 +52,8 @@ def add_event():
     """
     title = request.json.get("title")
     tags = request.json.get("tags")
-    str_start_datetime = request.json.get("start_datetime")
-    str_end_datetime = request.json.get("end_datetime")
+    str_start_datetime = request.json.get("startDatetime")
+    str_end_datetime = request.json.get("endDatetime")
     description = request.json.get("description")
     id = add_calendar_event(title, tags, str_start_datetime, 
                             str_end_datetime, description)
@@ -66,8 +66,8 @@ def edit_event():
         "id": int,
         "title": str,
         "tags": [str],
-        "start_datetime": ISO datetime string,
-        "end_datetime": ISO datetime string,
+        "startDatetime": ISO datetime string,
+        "endDatetime": ISO datetime string,
         "description": str
 
     Returns:
@@ -76,8 +76,8 @@ def edit_event():
     id = request.json.get("id")
     title = request.json.get("title")
     tags = request.json.get("tags")
-    str_start_datetime = request.json.get("start_datetime")
-    str_end_datetime = request.json.get("end_datetime")
+    str_start_datetime = request.json.get("startDatetime")
+    str_end_datetime = request.json.get("endDatetime")
     description = request.json.get("description")
     edit_calendar_event(id, title, tags, str_start_datetime, 
                         str_end_datetime, description)

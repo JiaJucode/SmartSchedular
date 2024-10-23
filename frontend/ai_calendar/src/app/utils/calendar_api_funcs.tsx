@@ -5,8 +5,8 @@ const server_base_url = process.env.NEXT_PUBLIC_SERVER_BASE_URL;
 export const fetchEvents = (startDateTime: Date, endDateTime: Date,
     setEvents: React.Dispatch<React.SetStateAction<Event[]>>) => {
     fetch(`${server_base_url}/calendar/get_events?` + 
-        `start_datetime=${startDateTime.toISOString()}` + 
-        `&end_datetime=${endDateTime.toISOString()}`)
+        `startDatetime=${startDateTime.toISOString()}` + 
+        `&endDatetime=${endDateTime.toISOString()}`)
     .then((response) => response.json())
     .then((data: {events: {id: number, title: string, tags: string[],
         start_datetime: string, end_datetime: string, description: string}[]}) => {
@@ -31,8 +31,8 @@ export const addEvent = (title: string, startDateTime: Date, endDateTime: Date,
         },
         body: JSON.stringify({
             title: title,
-            start_datetime: startDateTime.toISOString(),
-            end_datetime: endDateTime.toISOString(),
+            startDatetime: startDateTime.toISOString(),
+            endDatetime: endDateTime.toISOString(),
             description: description,
             tags: tags,
         }),
@@ -63,8 +63,8 @@ export const updateEvent = (title: string, startDateTime: Date, endDateTime: Dat
         body: JSON.stringify({
             id: id,
             title: title,
-            start_datetime: startDateTime.toISOString(),
-            end_datetime: endDateTime.toISOString(),
+            startDatetime: startDateTime.toISOString(),
+            endDatetime: endDateTime.toISOString(),
             description: description,
             tags: tags,
         }),

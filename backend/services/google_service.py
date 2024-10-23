@@ -122,10 +122,6 @@ def google_drive_setup(user_id: int,
     # for file in files:
     doc_process(files["files"][0], creds, user_id)
 
-    # TODO:
-    # get all documents, calculate embedding and store in milvus
-    # set up push notification for all files
-
     return {"message": "Refresh token set up successfully"}
 
 

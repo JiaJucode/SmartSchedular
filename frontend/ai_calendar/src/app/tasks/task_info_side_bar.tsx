@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { use, useEffect, useState } from 'react';
 import { Task } from './page';
 import { Box, Button, Drawer, IconButton, Stack, TextField, Typography } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
@@ -13,13 +13,14 @@ import * as taskApi from '../utils/task_api_funcs';
 
 interface TaskInfoSideBarProps {
     currentTask: Task;
+    setCurrentTask: (task: Task) => void;
     openSideBar: boolean;
     setOpenSideBar: (value: boolean) => void;
     setRefresh: () => void;
 }
 
 const TaskInfoSideBar: React.FC<TaskInfoSideBarProps> = 
-({ currentTask, openSideBar, setOpenSideBar, setRefresh }) => {
+({ currentTask, setCurrentTask, openSideBar, setOpenSideBar, setRefresh }) => {
     const [task, setTask] = useState<Task>(currentTask);
     const [subtasks, setSubtasks] = useState<Task[]>([]);
     const [description, setDescription] = useState<string>('');
@@ -31,7 +32,12 @@ const TaskInfoSideBar: React.FC<TaskInfoSideBarProps> =
     useEffect(() => {
         setDescription(task.description);
         taskApi.fetchTasks(task.id, setSubtasks);
-    }, [task]);
+    }, [currentTask]);
+
+    const updateTask = (task: Task) => {
+        setCurrentTask(task);
+        setTask(task);
+    }
 
     const addTask = () => {
         taskApi.addTask(task.id, setSubtasks);
@@ -44,14 +50,14 @@ const TaskInfoSideBar: React.FC<TaskInfoSideBarProps> =
         setOpenSideBar(false);
     }
 
-    const scheduleTask = () => {
-        const timeLeft = taskApi.scheduleTask(task.id);
-        setTask({...task, hoursToSchedule: timeLeft});
+    const scheduleTask = async () => {
+        const timeLeft = await taskApi.scheduleTask(task.id);
+        updateTask({...task, hoursToSchedule: timeLeft});
     }
 
     const deScheduleTask = () => {
         taskApi.descheduleTask(task.id);
-        setTask({...task, hoursToSchedule: task.estimatedTime});
+        updateTask({...task, hoursToSchedule: task.estimatedTime});
     }
 
     return (
@@ -72,7 +78,9 @@ const TaskInfoSideBar: React.FC<TaskInfoSideBarProps> =
                     <Box sx={{ flexDirection: 'row', display: 'flex', alignItems: 'center', 
                         width: '30%' }}>
                         <LiveSyncCheckbox task_id={task.id} fieldKey='completed'
-                        value={task.completed} />
+                        checked={task.completed} setChecked={(checked) => {
+                            updateTask({...task, completed: checked});
+                        }} />
                         <Button onClick={() => deleteTask(task.id)}
                         sx={{ color: 'inherit' }}>
                             <DeleteIcon />
@@ -88,7 +96,9 @@ const TaskInfoSideBar: React.FC<TaskInfoSideBarProps> =
                         },
                     }}>
                         <LiveSyncTextfield task_id={task.id} fieldKey='title'
-                        value={task.title} numberOnly={false} />
+                        textValue={task.title} setTextValue={(title) => {
+                            updateTask({...task, title: title});
+                        }} numberOnly={false} />
                     </Box>
                     <Box sx={{ flexDirection: 'row', display: 'flex', alignItems: 'center', 
                         justifyContent: 'space-between' }}>
@@ -97,7 +107,9 @@ const TaskInfoSideBar: React.FC<TaskInfoSideBarProps> =
                         </Typography>
                         <Box sx={{ width: '50%', position: 'relative' }}>
                         <LiveSyncDatePicker task_id={task.id} fieldKey='start_datetime'
-                        value={task.startDate} />
+                        dateValue={task.startDate} setDateValue={(date) => {
+                            updateTask({...task, startDate: date});
+                        }} />
                         </Box>
                     </Box>
                     <Box sx={{ flexDirection: 'row', display: 'flex', alignItems: 'center', 
@@ -107,7 +119,9 @@ const TaskInfoSideBar: React.FC<TaskInfoSideBarProps> =
                         </Typography>
                         <Box sx={{ width: '50%', position: 'relative' }}>
                         <LiveSyncDatePicker task_id={task.id} fieldKey='end_datetime'
-                        value={task.endDate} />
+                        dateValue={task.endDate} setDateValue={(date) => {
+                            updateTask({...task, endDate: date});
+                        }} />
                         </Box>
                     </Box>
                     <Box sx={{ flexDirection: 'row', display: 'flex', alignItems: 'center', 
@@ -117,7 +131,9 @@ const TaskInfoSideBar: React.FC<TaskInfoSideBarProps> =
                         </Typography>
                         <Box sx={{ width: '50%' }}>
                         <LiveSyncTextfield task_id={task.id} fieldKey='priority'
-                        value={task.priority.toString()} numberOnly={true} />
+                        textValue={task.priority.toString()} setTextValue={(priority) => {
+                            updateTask({...task, priority: parseInt(priority)});
+                        }} numberOnly={true} />
                         </Box>
                     </Box>
                     <Box sx={{ flexDirection: 'row', display: 'flex', alignItems: 'center', 
@@ -127,7 +143,9 @@ const TaskInfoSideBar: React.FC<TaskInfoSideBarProps> =
                         </Typography>
                         <Box sx={{ width: '50%' }}>
                         <LiveSyncTextfield task_id={task.id} fieldKey='estimated_time'
-                        value={task.estimatedTime ? task.estimatedTime.toString() : ''}
+                        setTextValue={(time) => {
+                            updateTask({...task, estimatedTime: parseInt(time)});
+                        }} textValue={task.estimatedTime ? task.estimatedTime.toString() : ''}
                         numberOnly={true} />
                         </Box>
                     </Box>
@@ -181,9 +199,11 @@ const TaskInfoSideBar: React.FC<TaskInfoSideBarProps> =
                                 flexDirection: 'row', display: 'flex', alignItems: 'center',
                                 justifyContent: 'space-between'}}>
                                 <LiveSyncCheckbox task_id={subtask.id} fieldKey='completed'
-                                value={subtask.completed} />
+                                checked={subtask.completed} setChecked={(checked) => {
+                                    taskApi.updateTask(subtask.id, 'completed', checked);
+                                }} />
                                 <Button 
-                                onClick={() => setTask(subtask)}
+                                onClick={() => updateTask(subtask)}
                                 sx={{ color: 'inherit', width: '100%' }}>
                                     {subtask.title}
                                 </Button>

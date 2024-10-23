@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta, time
 from models.task_calendar_link_model import TaskCalendarLinkDB
 from models.calendar_model import CalendarEventDB
-from utils.calendar_utils import get_empty_timeslots_util, add_event
+from utils.calendar_utils import get_empty_timeslots_util, add_event, trim_events
 from typing import List, Dict
 
 # TODO: prevent 2 reschedule tasks from running at the same time for the same user
@@ -13,6 +13,7 @@ def get_free_timeslots(start_datetime: datetime, end_datetime: datetime,
     """
     required_free_time = timedelta(hours=required_free_time)
     current_events = CalendarEventDB.get_events(start_datetime, end_datetime)
+    current_events = trim_events(current_events, start_datetime, end_datetime)
     timeslots = []
     total_time = timedelta(hours=0)
     # assume user working hours are from 9am to 5pm
@@ -33,9 +34,7 @@ def get_free_timeslots(start_datetime: datetime, end_datetime: datetime,
             + timedelta(hours=end_work_time.hour, minutes=end_work_time.minute) \
             - timedelta(hours=start_work_time.hour, minutes=start_work_time.minute)
         current_events_day = [event for event in current_events if 
-                                datetime.fromisoformat(
-                                    event['start_datetime']
-                                ).date() == current_date.date()]
+                              event['start_datetime'].date() == current_date.date()]
         timeslots.extend(get_empty_timeslots_util(current_events_day, current_date, end_datetime))
         total_time += end_datetime - current_date
 
@@ -79,7 +78,6 @@ def schedule_task(task) -> int:
                                         task['description'])
         TaskCalendarLinkDB.link_task_to_event(task['id'], event_id)
         time_left -= used_slot
-
     return time_left
 
 def batch_schedule_tasks(tasks: List[Dict]) -> Dict:
@@ -135,8 +133,8 @@ def update_scheduled_task(task) -> int:
         "id": int,
         "title": str,
         "description": str,
-        "start_datetime": iso_date_string,
-        "end_datetime": iso_date_string,
+        "start_datetime": datetime,
+        "end_datetime": datetime,
         "priority": int,
         "estimated_time": int,
         "completed": bool
@@ -152,10 +150,8 @@ def update_scheduled_task(task) -> int:
             title = task['title'] if task['title'] is not None else event['title']
             description = task['description'] if task['description'] is not None \
                 else event['description']
-            start_datetime = datetime.fromisoformat(task['start_datetime']) \
-                if task['start_datetime'] is not None else task['start_datetime']
-            end_datetime = datetime.fromisoformat(task['end_datetime']) \
-                if task['end_datetime'] is not None else task['end_datetime']
+            start_datetime = task['start_datetime']
+            end_datetime = task['end_datetime']
             CalendarEventDB.update_event(event['id'], title, event['tags'], start_datetime,
                                          end_datetime, description)
         return 0
