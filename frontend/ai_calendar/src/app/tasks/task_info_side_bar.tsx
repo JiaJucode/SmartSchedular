@@ -9,8 +9,6 @@ import LiveSyncCheckbox from './live_sync_checkbox';
 import DeleteIcon from '@mui/icons-material/Delete';
 import * as taskApi from '../utils/task_api_funcs';
 
-// TODO: when add new task, syn this
-
 interface TaskInfoSideBarProps {
     currentTask: Task;
     setCurrentTask: (task: Task) => void;
@@ -41,7 +39,6 @@ const TaskInfoSideBar: React.FC<TaskInfoSideBarProps> =
 
     const addTask = () => {
         taskApi.addTask(task.id, setSubtasks);
-        // TODO: refresh task in page
     }
 
     const deleteTask = (task_id: number) => {

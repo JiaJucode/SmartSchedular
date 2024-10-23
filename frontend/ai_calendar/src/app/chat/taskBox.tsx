@@ -28,7 +28,6 @@ const TaskBox: React.FC<TaskBoxProps> = ({suggestedTasks, parentId}) => {
     }
 
     const handleAdd = (index: number) => {
-        // TODO: send add task request to backend
         taskApi.addTask(parentId, (() => {}), tasks[index]);
         setTasks(prevTasks => prevTasks.filter((_, i) => i !== index));
     }

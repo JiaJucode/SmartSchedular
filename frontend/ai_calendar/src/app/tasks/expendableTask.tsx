@@ -12,8 +12,6 @@ import LiveSyncCheckbox from './live_sync_checkbox';
 import { fetchTasks, addTask } from '../utils/task_api_funcs';
 import * as taskApi from '../utils/task_api_funcs';
 
-// TODO: sync with live components
-
 interface ExpandableTaskProps {
     parentId: number;
     paddingLeft: number;

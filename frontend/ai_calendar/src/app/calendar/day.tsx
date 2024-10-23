@@ -127,7 +127,6 @@ const DayComponent: React.FC<DayProps> = ({date, sizeChange}) => {
                 height: '2px', position: 'absolute', bottom: '0px'}} />
             </Toolbar>
 
-            {/* TODO: Implement smarter event placement */}
             {events.map((event, index) => (
                 <div key={index}>
                 <Button

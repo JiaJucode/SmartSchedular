@@ -1,6 +1,5 @@
 "use client";
 
-// TODO implement file upload
 import React, { useEffect, useState } from 'react';
 import SideBar from '../components/side_bar';
 import { Box, Button, Divider, Stack, Toolbar, Typography } from '@mui/material';
@@ -166,12 +165,6 @@ const TasksPage = () => {
                     width: '100%',
                     height: '100%',
                 }}>
-                    <Button color="inherit" sx={{ textTransform: 'none' }}>
-                        <Typography sx={{ fontSize: '1.2em' }}>
-                            File upload
-                        </Typography>
-                        <FileUploadIcon />
-                    </Button>
                     {!googleDriveLinked ? (
                         <GoogleDriveLinker />
                     ) : null}

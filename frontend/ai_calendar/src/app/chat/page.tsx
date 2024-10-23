@@ -85,7 +85,6 @@ const ChatPage = () => {
                 }
                 switch (response.action_type) {
                     case 'question':
-                        // TODO: 
                         setMessages(prevMessages => [...prevMessages, 
                             {isUser: false, tag: response.tag, message: content.response}]);
                         break;
