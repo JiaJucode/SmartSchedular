@@ -39,8 +39,6 @@ class MyMilvusClient:
                 index_params=index_params)
         else:
             res = self.client.describe_collection("task")
-            print("current collection description: " + str(res))
-            print("schema: " + str(schema.to_dict()))
             equal = True
             schema_dict = schema.to_dict()
             for field in schema_dict:
@@ -65,6 +63,8 @@ class MyMilvusClient:
                         break
 
             if not equal:
+                print("current collection description: " + str(res))
+                print("schema: " + str(schema.to_dict()))
                 print("schema not match, drop and recreate collection")
                 self.client.drop_collection("task")
                 self.client.create_collection(

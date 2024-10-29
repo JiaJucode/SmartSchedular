@@ -13,6 +13,7 @@ for i in range(5):
         )
         break
     except:
+        print("Failed to connect to database, retrying in 5 seconds")
         time.sleep(5)
 
 def get_connection():
