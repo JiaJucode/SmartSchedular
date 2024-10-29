@@ -88,13 +88,10 @@ class MyMilvusClient:
         )
         print("collection description: " + str(res))
 
-    def inserts(self, user_id: int, embeddings: List[List[float]], file_id: str):
-        # check if file for user_id already exists
-        results = self.client.query(
-            collection_name="task",
-            filter='user_id == {} && file_id == "{}"'.format(user_id, file_id),
-            limit=len(embeddings)
-        )
+    def inserts(self, user_id: int, file_id: str, embeddings: List[List[float]], embedding_range: List[tuple]) -> None:
+        """
+        If file_id is in the collection, data can be duplicated
+        """
         next_ids = []
         with self.id_lock:
             next_ids = list(range(self.next_id, self.next_id + len(embeddings)))
@@ -105,6 +102,8 @@ class MyMilvusClient:
                 "id": next_ids[i],
                 "user_id": user_id,
                 "embedding": embeddings[i],
+                "start_sentence_index": embedding_range[i][0],
+                "end_sentence_index": embedding_range[i][1],
                 "file_id": file_id,
             })
             
@@ -168,5 +167,24 @@ class MyMilvusClient:
         for item in results:
             chunk_ranges.append((item["start_sentence_index"], item["end_sentence_index"]))
         return chunk_ranges
-            
+        
+    def update_segment(self, user_id: int, file_id: str, old_range: tuple, embedding: List[float] | None, embedding_range: tuple) -> None:
+        current_item = self.client.query(
+            collection_name="task",
+            filter='user_id == {} && file_id == "{}" && start_sentence_index == {} && end_sentence_index == {}'
+                .format(user_id, file_id, old_range[0], old_range[1])
+        )
+        if len(current_item) == 0:
+            app.logger.info("item not found")
+            return
+        current_item = current_item[0]
+        if embedding:
+            current_item["embedding"] = embedding
+        current_item["start_sentence_index"] = embedding_range[0]
+        current_item["end_sentence_index"] = embedding_range[1]
+        self.client.upsert(
+            collection_name="task",
+            data=[current_item]
+        )
+
 milvus_client = MyMilvusClient()

@@ -83,7 +83,7 @@ def doc_process(file_info: dict, creds: Credentials, user_id: int) -> None:
     embeddings, embedding_range = get_embeddings(text, metadata)
     app.logger.info("embedding length: " + str(len(embeddings)))
     # store in milvus
-    milvus_client.inserts(user_id, embeddings, file_info["id"])
+    milvus_client.inserts(user_id, file_info["id"], embeddings, embedding_range)
 
 def google_drive_setup(user_id: int, 
                        token: str,
@@ -115,8 +115,8 @@ def google_drive_setup(user_id: int,
     # request for push notification
     # get all files
     # for each file, get content, calculate embedding and store in milvus
-    # for file in files:
-    doc_process(files["files"][0], creds, user_id)
+    for file in files["files"]:
+        doc_process(file, creds, user_id)
 
     return {"message": "Refresh token set up successfully"}
 
@@ -129,7 +129,6 @@ def update_from_file_change(user_id: int, file_id: str, file_metadata: str, old_
     segments.sort(key=lambda x: x[0])
     accu_shift = 0
     shift_buffer = {}
-    new_segments = []
     for start, end in segments:
         # clean up shift buffer
         old_shifts = [shift for i, shift in shift_buffer.items() if i < start]
@@ -142,12 +141,11 @@ def update_from_file_change(user_id: int, file_id: str, file_metadata: str, old_
 
         # if shift is 0, buffer is empty and no diff, copy the rest of the segments and break
         if len(diffs) == 0 and len(shift_buffer) == 0 and accu_shift == 0:
-            new_segments.extend([seg for seg in segments if seg[0] >= start])
             break
 
-        # if shift is not 0, update the current segment
+        # if shift is not 0 and no change in the segment, update the segment range and continue
         if len(segment_diffs) == 0:
-            new_segments.append(start + accu_shift, end + accu_shift)
+            milvus_client.update_segment_range(user_id, file_id, (start, end), (start + accu_shift, end + accu_shift))
             continue
         insert_or_delete = [diff for diff in segment_diffs if diff[1] == "insert" or diff[1] == "delete"]
         if len(insert_or_delete) > 0:
@@ -158,8 +156,6 @@ def update_from_file_change(user_id: int, file_id: str, file_metadata: str, old_
                 elif change[1] == "delete":
                     shift_buffer[change[0]] = -1
         shift_between = sum([shift for i, shift in shift_buffer.items() if i <= end])
-        start += accu_shift
-        end += accu_shift + shift_between
 
         # check if there is any insert or replace
         insert_or_replace = [diff for diff in segment_diffs if diff[1] == "insert" or diff[1] == "replace"]
@@ -167,11 +163,13 @@ def update_from_file_change(user_id: int, file_id: str, file_metadata: str, old_
             # might need to split the segment
             # get embedding for the new segment/s from embedder
             embeddings, index_ranges = get_embeddings(" ".join(
-                [str(sent) for sent in new_sentences[start:end + 1]]), file_metadata)
-            # TODO: update milvus instead of just inserting
-            milvus_client.inserts(user_id, embeddings, file_id)
-            new_segments.extend(index_ranges)
-                
+                [str(sent) for sent in new_sentences[start + accu_shift:end + accu_shift + shift_between]]), file_metadata)
+            # update the current segment and insert the rest
+            index_ranges = [(start + accu_shift + b, start + accu_shift + e) for b, e in index_ranges]
+            milvus_client.update_segment(user_id, file_id, (start, end), embeddings[0], index_ranges[0])
+            for i in range(1, len(embeddings)):
+                milvus_client.inserts(user_id, file_id, embeddings[i], index_ranges[i])
+
         else:
             # check if there are any deletes
             if len(segment_diffs) != len(insert_or_replace):
@@ -179,12 +177,13 @@ def update_from_file_change(user_id: int, file_id: str, file_metadata: str, old_
                 # if yes, delete the segment from milvus
                 if len(segment_diffs) == end - start + 1:
                     # delete from milvus
+                    milvus_client.delete_segment(user_id, file_id, (start, end))
                     continue
                 else:
                     # calculate the new embedding
                     # update milvus
-                    pass
-            shift_between = sum([shift for i, shift in shift_buffer.items() if i <= end])
-            start += accu_shift
-            end += accu_shift + shift_between
-            new_segments.append((start, end))
+                    embeddings, _ = get_embeddings(" ".join(
+                        [str(sent) for sent in 
+                         new_sentences[start + accu_shift:end + accu_shift + shift_between]]), file_metadata)
+                    milvus_client.update_segment(user_id, file_id, (start, end), embeddings[0],
+                                                    (start + accu_shift, end + accu_shift + shift_between))
