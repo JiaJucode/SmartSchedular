@@ -1,43 +1,18 @@
 from ai.llm import generate_response, response_schema
 from jsonschema import validate, ValidationError
-import dateparser
-from datetime import datetime
-from services.calendar_event_service import get_calendar_events
-from services.task_service import get_tasks_by_parent_id, get_tasks_by_date_range
 from services.google_service import get_doc
 from ai.embedder import get_embeddings
 from milvus.milvus_client import milvus_client
-import spacy
 from flask import current_app as app
+from datetime import datetime
+from services.text_processor_service import ner_extraction
 import json
-
-NER = spacy.load("en_core_web_sm")
-
-def ner_extraction(message: str, today: datetime) -> str:
-    parsed_message = NER(message)
-    # filter out dates
-    dates = [ent.text for ent in parsed_message.ents if ent.label_ == "DATE"]
-    # convert to absolute date
-    dates = [dateparser.parse(date, settings={"RETURN_AS_TIMEZONE_AWARE": True, "RELATIVE_BASE": today}) for date in dates]
-    dates += [today]
-    latest_date = max(dates)
-    earliest_date = min(dates)
-    # find all calendar events between earliest_date and latest_date
-    events = get_calendar_events(earliest_date.isoformat(), latest_date.isoformat())
-    # find all tasks between earliest_date and latest_date
-    tasks = get_tasks_by_date_range(earliest_date.isoformat(), latest_date.isoformat())
-    # get all project tasks
-    project_tasks = get_tasks_by_parent_id(0)
-    results = "relevant events: " + str(events) + "\n"
-    results += "relevant tasks: " + str(tasks) + "\n"
-    results += "projects: " + str(project_tasks) + "\n"
-    return results
 
 def document_context_extraction(message: str, user_id: int) -> str:
     """
     extract document context from message
     """
-    question_embeddings = get_embeddings(message, "")
+    question_embeddings, _ = get_embeddings(message, "")
     context = []
     for embedding in question_embeddings:
         context += milvus_client.get(user_id, embedding)

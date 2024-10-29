@@ -18,10 +18,11 @@ class MyMilvusClient:
             enable_dynamic_field=False
         )
         schema.add_field(field_name="id", datatype=DataType.INT64, is_primary=True)
-        schema.add_field(field_name="user_id", datatype=DataType.INT32)
+        schema.add_field(field_name="user_id", datatype=DataType.INT32) # filter when performing vector search
         schema.add_field(field_name="embedding", datatype=DataType.FLOAT_VECTOR, dim=1024)
         schema.add_field(field_name="file_id", datatype=DataType.VARCHAR, max_length=44) # for google drive file id
-        schema.add_field(field_name="segment_id", datatype=DataType.INT32)
+        schema.add_field(field_name="start_sentence_index", datatype=DataType.INT32)
+        schema.add_field(field_name="end_sentence_index", datatype=DataType.INT32)
 
         index_params = self.client.prepare_index_params()
 
@@ -105,11 +106,7 @@ class MyMilvusClient:
                 "user_id": user_id,
                 "embedding": embeddings[i],
                 "file_id": file_id,
-                "segment_id": i
             })
-        for result in results:
-            index = result["segment_id"]
-            data[index]["id"] = result["id"]
             
         insert_result = self.client.upsert(
             collection_name="task",
@@ -132,8 +129,9 @@ class MyMilvusClient:
                 "id": 1,
                 "user_id": 1,
                 "embedding": [0.1, 0.2, 0.3, ...],
+                "start_sentence_index": 0,
+                "end_sentence_index": 10,
                 "file_id": "file_id",
-                "segment_id": 1
             },
             ...
         ]
@@ -151,10 +149,24 @@ class MyMilvusClient:
             for item in search_result:
                 if item["distance"] > difference_threshold:
                     id = item["id"]
-                    results.append(self.client.query(
-                        collection_name="task",
-                        filter='id == {}'.format(id)
-                    )[0])
+                    results.append(item)
         return results
+    
+    def delete(self, file_id: str, start_sentence_index: int, end_sentence_index: int) -> None:
+        self.client.delete(
+            collection_name="task",
+            filter='file_id == "{}" && start_sentence_index == {} && end_sentence_index == {}'
+                .format(file_id, start_sentence_index, end_sentence_index)
+        )
+    
+    def get_chunk_ranges(self, file_id: str) -> List[tuple]:
+        results = self.client.query(
+            collection_name="task",
+            filter='file_id == "{}"'.format(file_id)
+        )
+        chunk_ranges = []
+        for item in results:
+            chunk_ranges.append((item["start_sentence_index"], item["end_sentence_index"]))
+        return chunk_ranges
             
 milvus_client = MyMilvusClient()
