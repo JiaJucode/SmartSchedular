@@ -27,11 +27,6 @@ def get_embeddings(text: str, metadata: str) -> Tuple[List[str], List[Tuple[int,
     embeddings = embedder.get_text_embedding_batch(chunks)
     return embeddings, get_chunks_sentence_range(text, chunks)
 
-def get_indexed_content(text: str, metadata: str, index: int) -> str:
-    chunks = text_splitter.split_text_metadata_aware(text, metadata)
-    return chunks[index]
-
-
 if __name__ == "__main__":
     text = "This is a test sentence." * 1000
     metadata = "metadata"

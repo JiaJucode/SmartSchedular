@@ -9,12 +9,15 @@ class GoogleDB:
     def create_table() -> None:
         conn, cursor = get_connection()
         # TODO: link user_id to user table
+        # TODO: redis the syncing status
+        
         cursor.execute(
             """
             CREATE TABLE IF NOT EXISTS google_drive_tokens (
                 user_id INTEGER PRIMARY KEY,
                 refresh_token TEXT NOT NULL,
-                access_token TEXT NOT NULL
+                access_token TEXT NOT NULL,
+                is_syncing BOOLEAN DEFAULT FALSE
             )
             """
         )
@@ -82,3 +85,32 @@ class GoogleDB:
         result = cursor.fetchone()
         return_connection(conn, cursor)
         return result is not None
+    
+    def set_syncing(user_id: int, is_syncing: bool) -> None:
+        conn, cursor = get_connection()
+        cursor.execute(
+            """
+            UPDATE google_drive_tokens
+            SET is_syncing = %s
+            WHERE user_id = %s
+            """,
+            (is_syncing, user_id)
+        )
+        conn.commit()
+        return_connection(conn, cursor)
+
+    def check_syncing(user_id: int) -> bool:
+        conn, cursor = get_connection()
+        cursor.execute(
+            """
+            SELECT is_syncing FROM google_drive_tokens
+            WHERE user_id = %s
+            """,
+            (user_id,)
+        )
+        result = cursor.fetchone()
+        if result is None:
+            return_connection(conn, cursor)
+            return False
+        return_connection(conn, cursor)
+        return result[0]

@@ -5,9 +5,19 @@ from services.calendar_event_service import get_calendar_events
 from services.task_service import get_tasks_by_parent_id, get_tasks_by_date_range
 from datetime import datetime
 from typing import List
+from flask import current_app as app
 
 nlp = spacy.load("en_core_web_sm")
 d = difflib.Differ()
+
+abbreviation_map = {
+    "e.g.": "for example",
+    "i.e.": "that is",
+    "etc.": "and so on",
+    "vs.": "versus",
+    "etc": "and so on",
+}
+
 
 def ner_extraction(message: str, today: datetime) -> str:
     parsed_message = nlp(message)
@@ -28,6 +38,15 @@ def ner_extraction(message: str, today: datetime) -> str:
     results += "relevant tasks: " + str(tasks) + "\n"
     results += "projects: " + str(project_tasks) + "\n"
     return results
+
+def text_preprocessing(text: str) -> str:
+    text = text.replace("\n-", ".\n")
+    text = text.replace("\n–", ".\n")
+    text = text.replace("\n•", ".\n")
+    for abbr, replacement in abbreviation_map.items():
+        text = text.replace(abbr, replacement)
+    return text
+
 
 def text_to_sentences(text: str) -> List[str]:
     return nlp(text).sents
@@ -58,26 +77,26 @@ def get_chunks_sentence_range(original_text: str, chunks: List[str]) -> List[tup
     """
     return the sentence range of each chunk
     """
-    original_text_sentences = list(nlp(original_text).sents)
+    original_text_sentences = text_to_sentences(original_text)
+    # split the result into smaller sentences withouth the new line character
+    original_text_sentences = [t.strip() for sentence in original_text_sentences 
+                               for t in str(sentence).split("\n") if t and t.strip() != ""]
     chunk_ranges = []
     start_sentence_index = 0
     for chunk in chunks:
         # find the start sentence index
-        while True:
-            if chunk.startswith(str(original_text_sentences[start_sentence_index])):
-                break
+        app.logger.info("start_sentence_index: " + str(start_sentence_index))
+        while start_sentence_index < len(original_text_sentences) \
+            and not chunk.startswith(str(original_text_sentences[start_sentence_index])):
             start_sentence_index += 1
-            if start_sentence_index >= len(original_text_sentences):
-                # something went wrong
-                break
         # find the end sentence index
         i = start_sentence_index
-        while True:
-            if chunk.endswith(str(original_text_sentences[i])):
-                break
+        while True and i < len(original_text_sentences) \
+            and not chunk.endswith(str(original_text_sentences[i])):
             i += 1
-            if i >= len(original_text_sentences):
-                # something went wrong
-                break
+        if start_sentence_index >= len(original_text_sentences) or i >= len(original_text_sentences):
+            # TODO: log error
+            pass
         chunk_ranges.append((start_sentence_index, i))
+    app.logger.info("chunk_ranges: " + str(chunk_ranges))
     return chunk_ranges

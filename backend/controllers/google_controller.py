@@ -48,5 +48,6 @@ def check_connected():
     user_id = request.args.get("userId")
     if not user_id:
         return jsonify({"error": "userId is required"}), 400
-    result = GoogleDB.check_connected(user_id)
-    return jsonify({"connected": result})
+    connected = GoogleDB.check_connected(user_id)
+    syncing = GoogleDB.check_syncing(user_id)
+    return jsonify({"connected": connected, "syncing": syncing})

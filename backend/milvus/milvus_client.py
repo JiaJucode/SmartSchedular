@@ -136,19 +136,31 @@ class MyMilvusClient:
         ]
         return the fetched content in json format
         """
+        # search only returns the id and distance
         search_result = self.client.search(
             collection_name="task",
             data=[embedding],
-            limit=3,
+            limit=10,
             search_params={"metric_type": "COSINE"},
             filter='user_id == {}'.format(user_id)
         )[0]
-        results = []
+        results = {}
         if len(search_result) > 0:
             for item in search_result:
                 if item["distance"] > difference_threshold:
-                    id = item["id"]
-                    results.append(item)
+                    # fetch the content if closeness is higher than threshold
+                    result = self.client.query(
+                        collection_name="task",
+                        filter='id == {}'.format(item["id"]),
+                        output_fields=["file_id", "start_sentence_index", "end_sentence_index"]
+                    )[0]
+                    if result:
+                        if result["file_id"] not in results:
+                            results[result["file_id"]] = \
+                                [(result["start_sentence_index"], result["end_sentence_index"])]
+                        else:
+                            results[result["file_id"]].append(
+                                (result["start_sentence_index"], result["end_sentence_index"]))
         return results
     
     def delete(self, file_id: str, start_sentence_index: int, end_sentence_index: int) -> None:

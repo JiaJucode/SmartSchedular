@@ -170,7 +170,7 @@ This is the input format:
 {
     "user_query": "string",
     "context": {
-        "all_tags": ["string"], # this is for filtering the history of the conversation, create a new tag for the response if needed, a new tag will not have any history for context
+        "all_tags": ["string"], # this is for filtering the history of your previous conversation with me, where I am the user, create a new tag for the response if needed. A new tag means the history is not relevant to the current conversation.
         "current_date": "iso date string",
         "reference_data": "string"
     }
@@ -210,7 +210,7 @@ The content is in the following format:
                 "end_date": "iso date string",
                 "priority": "int",
                 "estimated_time": "int", # in hours
-                "completed": "bool" # lowercased
+                "completed": "bool" # (False or True)
             }
         },
         ...

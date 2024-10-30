@@ -68,8 +68,8 @@ const ChatPage = () => {
             },
             body: JSON.stringify({
                 message: message,
-                all_tags: chatTags,
-                current_date: new Date().toISOString(),
+                allTags: chatTags,
+                currentDate: new Date().toISOString(),
                 context: context,
             })
         })

@@ -8,8 +8,8 @@ from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
 from milvus.milvus_client import milvus_client
 from googleapiclient.http import MediaIoBaseDownload
-from ai.embedder import get_embeddings, get_indexed_content
-from services.text_processor_service import get_text_difference, text_to_sentences
+from ai.embedder import get_embeddings
+from services.text_processor_service import get_text_difference, text_to_sentences, text_preprocessing
 import PyPDF2
 import io
 from flask import current_app as app
@@ -30,34 +30,36 @@ def init_cred(access_token: str, refresh_token: str) -> Credentials:
     )
 
 def get_cred(user_id: int) -> Credentials:
-    result = GoogleDB.get_tokens(user_id)
     access_token, refresh_token = GoogleDB.get_tokens(user_id)
+    app.logger.info("access_token: " + access_token)
+    app.logger.info("refresh_token: " + refresh_token)
+    # TODO check if the token is expired
     return init_cred(access_token, refresh_token)
 
-def get_doc(user_id: int, file_id: str, file_index: int) -> tuple | None:
+def get_doc(user_id: int, file_id: str) -> tuple | None:
     """
     Get the document from Google Drive
     """
     if GoogleDB.check_connected(user_id) is False:
         return None
     cred = get_cred(user_id)
+    app.logger.info("cred: " + str(cred))
     service = build("drive", "v3", credentials=cred)
     file_info = None
     try:
         file_info = service.files().get(fileId=file_id).execute()
-    except HttpError as e:
+    except Exception as e:
         app.logger.error("error: " + str(e))
-        return None
+        return None, None
     if file_info:
-        text, metadata = get_doc_content(file_info, cred)
-        return get_indexed_content(text, metadata, file_index), metadata
+        return get_doc_content(file_info, cred)
     
 def get_doc_content(file_info: dict, creds: Credentials) -> tuple:
     service = build("drive", "v3", credentials=creds)
     metadata = "file name: " + file_info["name"]
     text = ""
     if file_info["mimeType"] == "application/pdf":
-        request = service.files().get_media(fileId=file_info["id"], mimeType="application/pdf")
+        request = service.files().get_media(fileId=file_info["id"])
         fh = io.BytesIO()
         downloader = MediaIoBaseDownload(fh, request)
         done = False
@@ -65,12 +67,20 @@ def get_doc_content(file_info: dict, creds: Credentials) -> tuple:
             _, done = downloader.next_chunk()
         fh.seek(0)
 
-        reader = PyPDF2.PdfFileReader(fh)
+        reader = PyPDF2.PdfReader(fh)
         for page in reader.pages:
-            text += page.extract_text() + "\n"
+            try:
+                text += page.extract_text() + "\n"
+            except Exception as e:
+                app.logger.error("error while extracting text: " + str(e))
+                app.logger.error("page: " + str(page))
     elif file_info["mimeType"] == "application/vnd.google-apps.document":
         request = service.files().export_media(fileId=file_info["id"], mimeType="text/plain")
         text = request.execute().decode("utf-8")
+    # clean up the text
+    text = text_preprocessing(text)
+    # app.logger.info("text: " + text)
+    app.logger.info("metadata: " + metadata)
     return text, metadata
 
 def doc_process(file_info: dict, creds: Credentials, user_id: int) -> None:
@@ -99,6 +109,7 @@ def google_drive_setup(user_id: int,
     except ValueError:
         return {"error": "Invalid token"}
     GoogleDB.add_token(user_id, access_token, refresh_token)
+    GoogleDB.set_syncing(user_id, True)
     creds = init_cred(access_token, refresh_token)
     # if creds and creds.expired and creds.refresh_token:
     #     creds.refresh(Request())
@@ -117,6 +128,7 @@ def google_drive_setup(user_id: int,
     # for each file, get content, calculate embedding and store in milvus
     for file in files["files"]:
         doc_process(file, creds, user_id)
+    GoogleDB.set_syncing(user_id, False)
 
     return {"message": "Refresh token set up successfully"}
 

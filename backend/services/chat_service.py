@@ -5,7 +5,7 @@ from ai.embedder import get_embeddings
 from milvus.milvus_client import milvus_client
 from flask import current_app as app
 from datetime import datetime
-from services.text_processor_service import ner_extraction
+from services.text_processor_service import ner_extraction, text_to_sentences
 import json
 
 def document_context_extraction(message: str, user_id: int) -> str:
@@ -13,25 +13,20 @@ def document_context_extraction(message: str, user_id: int) -> str:
     extract document context from message
     """
     question_embeddings, _ = get_embeddings(message, "")
-    context = []
+    context = {}
     for embedding in question_embeddings:
-        context += milvus_client.get(user_id, embedding)
-    text = []
-    metadata = []
-    if len(context) > 0:
-        for item in context:
-            if len(item) == 0:
-                break
-            content = get_doc(user_id, item["file_id"], item["segment_id"])
-            if content:
-                text.append(content[0])
-                metadata.append(content[1])
+        context.update(milvus_client.get(user_id, embedding))
     result = ""
-    for i in range(len(text)):
-        result += "for file: " + metadata[i] + "\n"
-        result += text[i] + "\n"
+    if len(context) > 0:
+        for file_id, ranges in context.items():
+            content, metadata = get_doc(user_id, file_id)
+            if content:
+                content = text_to_sentences(content)
+                result += "metadata: " + metadata + "\n" + "file content: "
+                for start, end in ranges:
+                    content = content[start:end]
+                    result += " ".join([str(sent) for sent in content])
     return result
-
 
 def handle_chat_message(message: str, str_current_date: str, tags: list, context: str, user_id: int) -> dict:
     """
@@ -49,7 +44,7 @@ def handle_chat_message(message: str, str_current_date: str, tags: list, context
         app.logger.info(response)
         app.logger.info("failed to parse response")
         return {"error": "invalid response from AI"}
-    
+    app.logger.info("response: " + str(content))
     # check if response is valid
     try:
         validate(content, response_schema)
