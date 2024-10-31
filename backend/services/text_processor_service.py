@@ -49,7 +49,10 @@ def text_preprocessing(text: str) -> str:
 
 
 def text_to_sentences(text: str) -> List[str]:
-    return list(nlp(text).sents)
+    text_sentences = list(nlp(text).sents)
+    text_sentences = [t.strip() for sentence in text_sentences 
+                      for t in str(sentence).split("\n") if t and t.strip() != ""]
+    return text_sentences
 
 def get_text_difference(text1: str, text2: str) -> str:
     """
@@ -79,8 +82,6 @@ def get_chunks_sentence_range(original_text: str, chunks: List[str]) -> List[tup
     """
     original_text_sentences = text_to_sentences(original_text)
     # split the result into smaller sentences withouth the new line character
-    original_text_sentences = [t.strip() for sentence in original_text_sentences 
-                               for t in str(sentence).split("\n") if t and t.strip() != ""]
     chunk_ranges = []
     start_sentence_index = 0
     for chunk in chunks:
@@ -97,5 +98,6 @@ def get_chunks_sentence_range(original_text: str, chunks: List[str]) -> List[tup
             app.logger.error("unable to find sentence range for chunk: " + chunk)
             break
         chunk_ranges.append((start_sentence_index, i))
+        start_sentence_index += 1
     app.logger.info("chunk_ranges: " + str(chunk_ranges))
     return chunk_ranges

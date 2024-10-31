@@ -10,6 +10,13 @@ class GoogleDB:
         conn, cursor = get_connection()
         # TODO: link user_id to user table
         # TODO: redis the syncing status
+
+        # cursor.execute(
+        #     """
+        #     DROP TABLE IF EXISTS google_drive_tokens
+        #     """
+        # )
+        # conn.commit()
         
         cursor.execute(
             """

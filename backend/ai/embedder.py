@@ -23,9 +23,12 @@ def get_embeddings(text: str, metadata: str) -> Tuple[List[str], List[Tuple[int,
         List of embeddings with the text chunk sentence index range
         [embedding, ...], [(start_index, end_index), ...]
     """
-    chunks = text_splitter.split_text_metadata_aware(text, metadata)
-    embeddings = embedder.get_text_embedding_batch(chunks)
-    return embeddings, get_chunks_sentence_range(text, chunks)
+    chunks = text_splitter.split_text_metadata_aware(text, metadata + " at 200-300: ")
+    ranges = get_chunks_sentence_range(text, chunks)
+    chunks_with_metadata = [f"{metadata} at {ranges[i][0]}-{ranges[i][1]}: {chunk}"
+                            for i, chunk in enumerate(chunks)]
+    embeddings = embedder.get_text_embedding_batch(chunks_with_metadata)
+    return embeddings, ranges
 
 if __name__ == "__main__":
     text = "This is a test sentence." * 1000

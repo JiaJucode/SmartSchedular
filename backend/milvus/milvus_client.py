@@ -88,6 +88,11 @@ class MyMilvusClient:
         )
         print("collection description: " + str(res))
 
+        # self.client.delete(
+        #     collection_name="task",
+        #     filter="id >= 0"
+        # )
+
     def inserts(self, user_id: int, file_id: str, embeddings: List[List[float]], embedding_range: List[tuple]) -> None:
         """
         If file_id is in the collection, data can be duplicated
@@ -117,7 +122,7 @@ class MyMilvusClient:
         else:
             app.logger.info("insert success")
 
-    def get(self, user_id: int, embedding: List[float], difference_threshold: int = 0.5) -> List[Dict]:
+    def get(self, user_id: int, embedding: List[float], difference_threshold: int = 0.3) -> List[Dict]:
         """
         return the fetched content in json format
         """
@@ -161,6 +166,8 @@ class MyMilvusClient:
                         else:
                             results[result["file_id"]].append(
                                 (result["start_sentence_index"], result["end_sentence_index"]))
+                else:
+                    app.logger.info("closeness too low: " + str(item["distance"]))
         return results
     
     def delete(self, file_id: str, start_sentence_index: int, end_sentence_index: int) -> None:

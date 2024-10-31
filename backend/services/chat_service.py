@@ -22,13 +22,15 @@ def document_context_extraction(message: str, user_id: int) -> str:
         for file_id, ranges in context.items():
             content, metadata = get_doc(user_id, file_id)
             app.logger.info("content: " + str(content))
-            app.logger.info("metadata: " + str(metadata))
             if content:
                 content = text_to_sentences(content)
                 result += "metadata: " + metadata + "\n" + "file content: "
+                app.logger.info("content size: " + str(len(content)))
                 for start, end in ranges:
-                    content = content[start:end]
-                    result += " ".join([str(sent) for sent in content])
+                    sub_content = content[start:end + 1]
+                    app.logger.info("range: " + str(start) + " " + str(end))
+                    app.logger.info("sub content: " + str(sub_content))
+                    result += " ".join([str(sent) for sent in sub_content])
     return result
 
 def handle_chat_message(message: str, str_current_date: str, tags: list, context: str, user_id: int) -> dict:
