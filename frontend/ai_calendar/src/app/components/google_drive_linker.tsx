@@ -1,38 +1,50 @@
 "use client";
 
 import React, { useEffect } from 'react';
-import { gapi } from 'gapi-script';
 import { Button, Typography } from '@mui/material';
+import { jwtDecode } from 'jwt-decode';
+
 
 const server_base_url = process.env.NEXT_PUBLIC_SERVER_BASE_URL;
 
 const GoogleDriveLinker = () => {
-    const [gapiLoaded, setGapiLoaded] = React.useState(false);
-    const [accessToken, setAccessToken] = React.useState('');
-    const [refreshToken, setRefreshToken] = React.useState('');
-    const [idToken, setIdToken] = React.useState('');
+    const [googleClient, setGoogleClient] = React.useState<any>(null);
     const [linking, setLinking] = React.useState(false);
     const [linked, setLinked] = React.useState(false);
     const [displayText, setDisplayText] = React.useState('Link Google Drive');
 
-    useEffect(() => {
-        if (typeof window !== 'undefined') {
-            const loadGapi = async () => {
-                gapi.load('client:auth2', () => {
-                    gapi.auth2.init({
-                        apiKey: process.env.NEXT_PUBLIC_GOOGLE_DRIVE_API_KEY,
-                        clientId: process.env.NEXT_PUBLIC_GOOGLE_DRIVE_CLIENT_ID,
-                        discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'],
-                        scope: 'https://www.googleapis.com/auth/drive',
-                        accessType: 'offline',
-                        prompt: 'consent',
-                    }).then(() => {
-                        setGapiLoaded(true);
-                    });
-                });
+    const handleCallaback = (response: any) => {
+        console.log('response:', response);
+        fetch(`${server_base_url}/google/setup_token`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                code: response.code,
+            }),
+        }).then((response) => {
+            setLinking(false);
+            console.log('response:', response);
+            if (response.ok) {
+                setLinked(true);
+                setDisplayText('Google Drive Linked');
+                console.log('Google Drive linked successfully');
+            } else {
+                setLinked(false);
+                setDisplayText('Link Google Drive');
+                console.log('Error linking Google Drive');
             }
-            loadGapi();
-        }
+        });
+    };
+
+    useEffect(() => {
+        const client = google.accounts.oauth2.initCodeClient({
+            client_id: process.env.NEXT_PUBLIC_GOOGLE_DRIVE_CLIENT_ID,
+            scope: 'https://www.googleapis.com/auth/drive',
+            callback: handleCallaback,
+        })
+        setGoogleClient(client);
         fetch(`${server_base_url}/google/check_connected?userId=${0}`, {
             method: 'GET',
         }).then((response) => response.json())
@@ -44,47 +56,9 @@ const GoogleDriveLinker = () => {
         });
     }, []);
 
-    useEffect(() => {
-        if (accessToken !== '' && refreshToken !== '' && idToken !== '') {
-            setLinking(true);
-            setDisplayText('Linking...');
-            fetch(`${server_base_url}/google/setup_token`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    idToken: idToken,
-                    accessToken: accessToken,
-                    refreshToken: refreshToken,
-                }),
-            }).then((response) => {
-                setLinking(false);
-                console.log('response:', response);
-                if (response.ok) {
-                    setLinked(true);
-                    setDisplayText('Google Drive Linked');
-                    console.log('Google Drive linked successfully');
-                } else {
-                    setLinked(false);
-                    setDisplayText('Link Google Drive');
-                    console.log('Error linking Google Drive');
-                }
-            });
-        }
-    }, [accessToken, refreshToken]);
-
     const handleSignIn = () => {
-        if (gapiLoaded) {
-            const response = gapi.auth2.getAuthInstance()
-            .currentUser.get().getAuthResponse();
-            setIdToken(response.id_token);
-            setAccessToken(response.access_token);
-            gapi.auth2.getAuthInstance().grantOfflineAccess().then((authResult: any) => {
-                setRefreshToken(authResult.code);
-            });
-        } else {
-            console.log('Google API not loaded yet');
+        if (googleClient) {
+            googleClient.requestCode();
         }
     };
     

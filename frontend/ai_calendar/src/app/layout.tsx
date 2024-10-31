@@ -4,6 +4,7 @@ import "./globals.css";
 import NavBar from "./components/nav_bar";
 import ThemeProviderWrapper from "./theme";
 import { Box } from "@mui/system";
+import Script from "next/script";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -28,6 +29,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <Script 
+        src="https://accounts.google.com/gsi/client"
+        strategy="afterInteractive"/>
+      </head>
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <ThemeProviderWrapper>
           <NavBar />

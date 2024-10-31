@@ -1,16 +1,15 @@
 import os.path
 from dotenv import load_dotenv
 from googleapiclient.discovery import build
-from googleapiclient.errors import HttpError
 from models.google_model import GoogleDB
 from google.oauth2.credentials import Credentials
-from google.oauth2 import id_token
-from google.auth.transport import requests as google_requests
+from googleapiclient.discovery import build
 from milvus.milvus_client import milvus_client
 from googleapiclient.http import MediaIoBaseDownload
 from ai.embedder import get_embeddings
 from services.text_processor_service import get_text_difference, text_to_sentences, text_preprocessing
 import PyPDF2
+import requests
 import io
 from flask import current_app as app
 
@@ -18,6 +17,8 @@ load_dotenv()
 CLIENT_ID = os.environ.get("CLIENT_ID")
 API_KEY = os.environ.get("API_KEY")
 CLIENT_SECRET = os.environ.get("CLIENT_SECRET")
+PDF_MIME_TYPE = "application/pdf"
+GOOGLE_DOC_MIME_TYPE = "application/vnd.google-apps.document"
 
 def init_cred(access_token: str, refresh_token: str) -> Credentials:
     return Credentials(
@@ -31,10 +32,41 @@ def init_cred(access_token: str, refresh_token: str) -> Credentials:
 
 def get_cred(user_id: int) -> Credentials:
     access_token, refresh_token = GoogleDB.get_tokens(user_id)
-    app.logger.info("access_token: " + access_token)
-    app.logger.info("refresh_token: " + refresh_token)
-    # TODO check if the token is expired
     return init_cred(access_token, refresh_token)
+
+def update_token(user_id: int, refresh_token: str) -> Credentials | None:
+    response = requests.post("https://oauth2.googleapis.com/token",
+                                data={
+                                    "client_id": CLIENT_ID,
+                                    "client_secret": CLIENT_SECRET,
+                                    "refresh_token": refresh_token,
+                                    "grant_type": "refresh_token"
+                                })
+    if response.status_code != 200:
+        app.logger.error("Failed to update token")
+        return None
+    response = response.json()
+    access_token = response["access_token"]
+    GoogleDB.update_token(user_id, access_token, refresh_token)
+    return init_cred(access_token, refresh_token)
+
+def build_service(user_id: int, creds: Credentials):
+    """
+    if the token is expired, update the token
+    return the service object from build
+    if failed to update token, return None
+    """
+    try:
+        return build("drive", "v3", credentials=creds)
+    except Exception as e:
+        # check if its caused by expired token
+        if "Invalid Credentials" in str(e):
+            creds = update_token(user_id, creds.refresh_token)
+            if not creds:
+                return None
+            return build("drive", "v3", credentials=creds)
+        app.logger.error("error building service: " + str(e))
+        raise
 
 def get_doc(user_id: int, file_id: str) -> tuple | None:
     """
@@ -44,22 +76,28 @@ def get_doc(user_id: int, file_id: str) -> tuple | None:
         return None
     cred = get_cred(user_id)
     app.logger.info("cred: " + str(cred))
-    service = build("drive", "v3", credentials=cred)
+    service = build_service(user_id, cred)
+    if not service:
+        return None, None
     file_info = None
     try:
         file_info = service.files().get(fileId=file_id).execute()
+        return get_doc_content(user_id, file_info, cred) if file_info else None, None
     except Exception as e:
         app.logger.error("error: " + str(e))
         return None, None
-    if file_info:
-        return get_doc_content(file_info, cred)
-    
-def get_doc_content(file_info: dict, creds: Credentials) -> tuple:
-    service = build("drive", "v3", credentials=creds)
+
+def get_doc_content(user_id: int, file_info: dict, creds: Credentials) -> tuple:
+    service = build_service(user_id, creds)
+    if not service:
+        return "", ""
     metadata = "file name: " + file_info["name"]
     text = ""
-    if file_info["mimeType"] == "application/pdf":
-        request = service.files().get_media(fileId=file_info["id"])
+    if file_info["mimeType"] == PDF_MIME_TYPE:
+        try:
+            request = service.files().get_media(fileId=file_info["id"])
+        except Exception as e:
+            app.logger.error("error when getting doc content: " + str(e))
         fh = io.BytesIO()
         downloader = MediaIoBaseDownload(fh, request)
         done = False
@@ -74,21 +112,25 @@ def get_doc_content(file_info: dict, creds: Credentials) -> tuple:
             except Exception as e:
                 app.logger.error("error while extracting text: " + str(e))
                 app.logger.error("page: " + str(page))
-    elif file_info["mimeType"] == "application/vnd.google-apps.document":
-        request = service.files().export_media(fileId=file_info["id"], mimeType="text/plain")
+    elif file_info["mimeType"] == GOOGLE_DOC_MIME_TYPE:
+        try:
+            request = service.files().export_media(fileId=file_info["id"], mimeType="text/plain")
+        except Exception as e:
+            # check if its caused by expired token
+            app.logger.error("error when getting doc content: " + str(e))
         text = request.execute().decode("utf-8")
+
     # clean up the text
     text = text_preprocessing(text)
-    # app.logger.info("text: " + text)
     app.logger.info("metadata: " + metadata)
     return text, metadata
 
 def doc_process(file_info: dict, creds: Credentials, user_id: int) -> None:
     """
-    Process the document
+    embed the document and store in milvus
     """
     app.logger.info("processing file: " + str(file_info))
-    text, metadata = get_doc_content(file_info, creds)
+    text, metadata = get_doc_content(user_id, file_info, creds)
     # calculate embeddings
     embeddings, embedding_range = get_embeddings(text, metadata)
     app.logger.info("embedding length: " + str(len(embeddings)))
@@ -96,18 +138,27 @@ def doc_process(file_info: dict, creds: Credentials, user_id: int) -> None:
     milvus_client.inserts(user_id, file_info["id"], embeddings, embedding_range)
 
 def google_drive_setup(user_id: int, 
-                       token: str,
-                       refresh_token: str,
-                       access_token: str) -> None:
+                       code: str) -> None:
     """
     Sets up the refresh token for the user in the database and
     request for push notification for all files
     """
-    # verify the id_token
-    try:
-        idInfo = id_token.verify_oauth2_token(token, google_requests.Request(), CLIENT_ID)
-    except ValueError:
-        return {"error": "Invalid token"}
+    # get the access token and refresh token
+    response = requests.post("https://oauth2.googleapis.com/token",
+                                data={
+                                    "code": code,
+                                    "client_id": CLIENT_ID,
+                                    "client_secret": CLIENT_SECRET,
+                                    "redirect_uri": "http://localhost:3000",
+                                    "grant_type": "authorization_code"
+                                })
+    if response.status_code != 200:
+        return {"error": "Failed to get access token"}
+    response = response.json()
+    access_token = response["access_token"]
+    refresh_token = response["refresh_token"]
+    app.logger.info("access_token: " + access_token)
+    app.logger.info("refresh_token: " + refresh_token)
     GoogleDB.add_token(user_id, access_token, refresh_token)
     GoogleDB.set_syncing(user_id, True)
     creds = init_cred(access_token, refresh_token)
