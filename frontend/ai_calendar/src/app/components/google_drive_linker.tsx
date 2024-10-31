@@ -2,8 +2,6 @@
 
 import React, { useEffect } from 'react';
 import { Button, Typography } from '@mui/material';
-import { jwtDecode } from 'jwt-decode';
-
 
 const server_base_url = process.env.NEXT_PUBLIC_SERVER_BASE_URL;
 
