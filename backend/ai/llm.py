@@ -210,7 +210,7 @@ The content is in the following format:
                 "end_date": "iso date string",
                 "priority": "int",
                 "estimated_time": "int", # in hours
-                "completed": "bool" # (False or True)
+                "completed": "bool" # (false or true)
             }
         },
         ...

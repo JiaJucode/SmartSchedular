@@ -16,10 +16,13 @@ def document_context_extraction(message: str, user_id: int) -> str:
     context = {}
     for embedding in question_embeddings:
         context.update(milvus_client.get(user_id, embedding))
+    app.logger.info("context: " + str(context))
     result = ""
     if len(context) > 0:
         for file_id, ranges in context.items():
             content, metadata = get_doc(user_id, file_id)
+            app.logger.info("content: " + str(content))
+            app.logger.info("metadata: " + str(metadata))
             if content:
                 content = text_to_sentences(content)
                 result += "metadata: " + metadata + "\n" + "file content: "
@@ -43,7 +46,7 @@ def handle_chat_message(message: str, str_current_date: str, tags: list, context
         app.logger.info(e)
         app.logger.info(response)
         app.logger.info("failed to parse response")
-        return {"error": "invalid response from AI"}
+        return {"error": "invalid response from AI"}, context
     app.logger.info("response: " + str(content))
     # check if response is valid
     try:
@@ -51,14 +54,7 @@ def handle_chat_message(message: str, str_current_date: str, tags: list, context
     except ValidationError as e:
         app.logger.info(e)
         app.logger.info("response does not follow schema")
-        return {"error": "invalid response from AI"}
+        return {"error": "invalid response from AI"}, context
     
     return content, context
 
-
-    
-
-    
-
-    
-    

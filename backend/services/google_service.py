@@ -68,21 +68,25 @@ def build_service(user_id: int, creds: Credentials):
         app.logger.error("error building service: " + str(e))
         raise
 
+def metadata_builder(file_info: dict) -> str:
+    return "file name: " + file_info["name"]
+
 def get_doc(user_id: int, file_id: str) -> tuple | None:
     """
     Get the document from Google Drive
     """
     if GoogleDB.check_connected(user_id) is False:
-        return None
+        return None, None
     cred = get_cred(user_id)
-    app.logger.info("cred: " + str(cred))
     service = build_service(user_id, cred)
     if not service:
         return None, None
     file_info = None
     try:
         file_info = service.files().get(fileId=file_id).execute()
-        return get_doc_content(user_id, file_info, cred) if file_info else None, None
+        if file_info:
+            return (*get_doc_content(user_id, file_info, cred), )
+        return None, None
     except Exception as e:
         app.logger.error("error: " + str(e))
         return None, None
@@ -91,7 +95,7 @@ def get_doc_content(user_id: int, file_info: dict, creds: Credentials) -> tuple:
     service = build_service(user_id, creds)
     if not service:
         return "", ""
-    metadata = "file name: " + file_info["name"]
+    metadata = metadata_builder(file_info)
     text = ""
     if file_info["mimeType"] == PDF_MIME_TYPE:
         try:
