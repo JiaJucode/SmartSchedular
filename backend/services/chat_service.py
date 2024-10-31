@@ -25,11 +25,8 @@ def document_context_extraction(message: str, user_id: int) -> str:
             if content:
                 content = text_to_sentences(content)
                 result += "metadata: " + metadata + "\n" + "file content: "
-                app.logger.info("content size: " + str(len(content)))
                 for start, end in ranges:
                     sub_content = content[start:end + 1]
-                    app.logger.info("range: " + str(start) + " " + str(end))
-                    app.logger.info("sub content: " + str(sub_content))
                     result += " ".join([str(sent) for sent in sub_content])
     return result
 
