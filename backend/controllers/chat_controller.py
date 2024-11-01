@@ -32,5 +32,9 @@ def query():
     if not context:
         context = ""
 
-    response, context_used = handle_chat_message(message, current_date, tags, context, user_id)
-    return jsonify({"response": response, "context": context_used}), 200
+    response, context_used, document_segments = handle_chat_message(
+        message, current_date, tags, context, user_id)
+    if not context_used:
+        return jsonify({"error": response}), 500
+    return jsonify({"response": response, "context": context_used, 
+                    "document_segments": document_segments}), 200

@@ -5,12 +5,14 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs from "dayjs";
 import { Box, Button, TextField, Typography } from "@mui/material";
 import * as calendarApi from "../utils/calendar_api_funcs";
+import { DocumentSegment } from '../chat/page';
 
 type CalendarBoxProps = {
     suggestedEvents: Event[];
+    reference_docs: DocumentSegment[];
 }
 
-const CalendarBox: React.FC<CalendarBoxProps> = ({suggestedEvents}) => {
+const CalendarBox: React.FC<CalendarBoxProps> = ({suggestedEvents, reference_docs}) => {
     const [events, setEvents] = useState<Event[]>([]);
 
     useEffect(() => {
@@ -24,7 +26,8 @@ const CalendarBox: React.FC<CalendarBoxProps> = ({suggestedEvents}) => {
     function handleAdd(index: number): void {
         const newEvent = events[index];
         calendarApi.addEvent(newEvent.title, newEvent.startDateTime, newEvent.endDateTime, 
-            newEvent.description, newEvent.tags, (() => {}));
+            newEvent.description, newEvent.tags, (() => {}), reference_docs);
+        // TODO: maybe handle this differently
         setEvents(events.filter((_, i) => i !== index));
     }
 

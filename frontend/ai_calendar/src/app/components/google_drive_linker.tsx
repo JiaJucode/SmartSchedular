@@ -61,7 +61,8 @@ const GoogleDriveLinker = () => {
     };
     
     return (
-        <Button onClick={handleSignIn} disabled={linking || linked}>
+        <Button onClick={handleSignIn}>
+        {/* <Button onClick={handleSignIn} disabled={linking || linked}> */}
             <Typography sx={{ fontSize: '1.2em', color: 'primary.contrastText', textTransform: 'none' }}>
                 {displayText}
             </Typography>

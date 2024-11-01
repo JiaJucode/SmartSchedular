@@ -6,13 +6,15 @@ import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
 import * as taskApi from '../utils/task_api_funcs';
+import { DocumentSegment } from '../chat/page';
 
 type TaskBoxProps = {
     suggestedTasks: Task[];
     parentId: number;
+    reference_docs: DocumentSegment[];
 }
 
-const TaskBox: React.FC<TaskBoxProps> = ({suggestedTasks, parentId}) => {
+const TaskBox: React.FC<TaskBoxProps> = ({suggestedTasks, parentId, reference_docs}) => {
     const [tasks, setTasks] = useState<Task[]>([]);
 
     useEffect(() => {
@@ -28,6 +30,7 @@ const TaskBox: React.FC<TaskBoxProps> = ({suggestedTasks, parentId}) => {
     }
 
     const handleAdd = (index: number) => {
+        // TODO: send the reference_doc_ids with the request for linking task to document segments
         taskApi.addTask(parentId, (() => {}), tasks[index]);
         setTasks(prevTasks => prevTasks.filter((_, i) => i !== index));
     }

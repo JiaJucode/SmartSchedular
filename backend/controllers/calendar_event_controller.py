@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify, request
 from flask_cors import CORS
 from services.calendar_event_service import *
+from services.rag_linking_service import link_document_segments_to_event
 
 bp = Blueprint("calendar_event_controller", __name__)
 
@@ -46,6 +47,7 @@ def add_event():
         "startDatetime": ISO datetime string,
         "endDatetime": ISO datetime string,
         "description": str
+        "documentSegments": List[Dict[str, (int, int)]]
 
     Returns:
         {"id": int}
@@ -55,9 +57,13 @@ def add_event():
     str_start_datetime = request.json.get("startDatetime")
     str_end_datetime = request.json.get("endDatetime")
     description = request.json.get("description")
-    id = add_calendar_event(title, tags, str_start_datetime, 
+    document_segments = request.json.get("documentSegments")
+    user_id = 0
+    event_id = add_calendar_event(title, tags, str_start_datetime, 
                             str_end_datetime, description)
-    return jsonify({"id": id})
+    if len(document_segments) > 0:
+        link_document_segments_to_event(user_id, event_id, document_segments)
+    return jsonify({"id": event_id})
 
 @bp.route("/edit_event", methods=["POST"])
 def edit_event():

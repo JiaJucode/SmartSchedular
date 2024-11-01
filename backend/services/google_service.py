@@ -1,7 +1,7 @@
 import os.path
 from dotenv import load_dotenv
 from googleapiclient.discovery import build
-from models.google_model import GoogleDB
+from models.google_model import GoogleAuthenDB
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from milvus.milvus_client import milvus_client
@@ -31,7 +31,7 @@ def init_cred(access_token: str, refresh_token: str) -> Credentials:
     )
 
 def get_cred(user_id: int) -> Credentials:
-    access_token, refresh_token = GoogleDB.get_tokens(user_id)
+    access_token, refresh_token = GoogleAuthenDB.get_tokens(user_id)
     return init_cred(access_token, refresh_token)
 
 def update_token(user_id: int, refresh_token: str) -> Credentials | None:
@@ -47,7 +47,7 @@ def update_token(user_id: int, refresh_token: str) -> Credentials | None:
         return None
     response = response.json()
     access_token = response["access_token"]
-    GoogleDB.update_token(user_id, access_token, refresh_token)
+    GoogleAuthenDB.update_token(user_id, access_token, refresh_token)
     return init_cred(access_token, refresh_token)
 
 def build_service(user_id: int, creds: Credentials):
@@ -75,7 +75,7 @@ def get_doc(user_id: int, file_id: str) -> tuple | None:
     """
     Get the document from Google Drive
     """
-    if GoogleDB.check_connected(user_id) is False:
+    if GoogleAuthenDB.check_connected(user_id) is False:
         return None, None
     cred = get_cred(user_id)
     service = build_service(user_id, cred)
@@ -163,8 +163,8 @@ def google_drive_setup(user_id: int,
     refresh_token = response["refresh_token"]
     app.logger.info("access_token: " + access_token)
     app.logger.info("refresh_token: " + refresh_token)
-    GoogleDB.add_token(user_id, access_token, refresh_token)
-    GoogleDB.set_syncing(user_id, True)
+    GoogleAuthenDB.add_token(user_id, access_token, refresh_token)
+    GoogleAuthenDB.set_syncing(user_id, True)
     creds = init_cred(access_token, refresh_token)
     # if creds and creds.expired and creds.refresh_token:
     #     creds.refresh(Request())
@@ -183,7 +183,7 @@ def google_drive_setup(user_id: int,
     # for each file, get content, calculate embedding and store in milvus
     for file in files["files"]:
         doc_process(file, creds, user_id)
-    GoogleDB.set_syncing(user_id, False)
+    GoogleAuthenDB.set_syncing(user_id, False)
 
     return {"message": "Refresh token set up successfully"}
 

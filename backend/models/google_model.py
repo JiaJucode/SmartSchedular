@@ -2,7 +2,7 @@ from models.db_pool import get_connection, return_connection
 
 
 
-class GoogleDB:
+class GoogleAuthenDB:
     def __init__(self) -> None:
         pass
 
@@ -41,7 +41,7 @@ class GoogleDB:
             (user_id,)
         )
         if cursor.fetchone():
-            GoogleDB.update_token(user_id, access_token, refresh_token)
+            GoogleAuthenDB.update_token(user_id, access_token, refresh_token)
             return_connection(conn, cursor)
             return
         cursor.execute(

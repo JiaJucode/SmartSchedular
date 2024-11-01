@@ -24,6 +24,11 @@ interface ChatMessage {
     events?: Event[];
 }
 
+export interface DocumentSegment {
+    id: number;
+    segment_range: [number, number];
+}
+
 const server_base_url = process.env.NEXT_PUBLIC_SERVER_BASE_URL;
 
 const welcomeMessage = 'Welcome! You can add, update, delete, or ' + 
@@ -37,6 +42,7 @@ const ChatPage = () => {
     const chatBottomRef = useRef<HTMLDivElement>(null);
     const [replyWaiting, setReplyWaiting] = useState(false);
     const [chatTags, setChatTags] = useState<string[]>([]);
+    const [currentDocuments, setCurrentDocuments] = useState<DocumentSegment[]>([]);
 
     useEffect(() => {
         // setMessages(testChatMessages);
@@ -132,6 +138,14 @@ const ChatPage = () => {
                 if ('context' in response) {
                     setHiddenContext(prevContext => [...prevContext, response.context]);
                 }
+                if ('document_ids' in response) {
+                    // TODO: parse the reponse
+                    console.log(response.document_ids);
+                    setCurrentDocuments(response.document_ids);
+                }
+                else {
+                    setCurrentDocuments([]);
+                }
             }
             else {
                 // TODO: handle error
@@ -188,9 +202,12 @@ const ChatPage = () => {
                                 {message.tasks !== undefined && message.parentId !== undefined ? (
                                     <TaskBox 
                                         suggestedTasks={message.tasks} 
-                                        parentId={message.parentId}/>
+                                        parentId={message.parentId}
+                                        reference_docs={currentDocuments}
+                                        />
                                 ) : message.events !== undefined ? (
-                                    <CalendarBox suggestedEvents={message.events} />
+                                    <CalendarBox suggestedEvents={message.events} 
+                                    reference_docs={currentDocuments} />
                                 ) : null
                                 }
                             </Box>

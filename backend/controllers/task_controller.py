@@ -2,6 +2,7 @@ from flask import Blueprint, jsonify, request
 from flask_cors import CORS
 from services.task_service import *
 from services.task_schedular_service import get_time_left_to_schedule
+from services.rag_linking_service import link_document_segments_to_task
 
 bp = Blueprint("task_controller", __name__)
 
@@ -52,9 +53,11 @@ def add_task():
         "priority": int,
         "estimatedTime": int | None,
         "completed": bool
+        "documentSegments": List[Dict[str, Any]]
     Returns:
         {"id": int,` "timeLeft": int}
     """
+    app.logger.info("add_task received: %s", request.json)
     parent_id = request.json.get("parentId")
     title = request.json.get("title")
     description = request.json.get("description")
@@ -63,9 +66,13 @@ def add_task():
     priority = request.json.get("priority")
     estimated_time = request.json.get("estimatedTime")
     completed = request.json.get("completed")
-    id = service_add_task(parent_id, title, description, start_date, end_date, 
+    document_segments = request.json.get("documentSegments")
+    user_id = 0
+    task_id = service_add_task(parent_id, title, description, start_date, end_date, 
                           priority, estimated_time, completed)
-    return jsonify({"id": id})
+    if len(document_segments) > 0:
+        link_document_segments_to_task(user_id, task_id, document_segments)
+    return jsonify({"id": task_id})
 
 @bp.route("/update_task", methods=["POST"])
 def update_task():

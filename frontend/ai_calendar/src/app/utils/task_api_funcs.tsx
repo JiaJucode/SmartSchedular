@@ -1,4 +1,5 @@
 import { Task } from '../tasks/page';
+import { DocumentSegment } from '../chat/page';
 
 const server_base_url = process.env.NEXT_PUBLIC_SERVER_BASE_URL;
 
@@ -15,7 +16,8 @@ const defaultNewTask = {
 };
 
 export const addTask = 
-(parentId: number, setTasks: React.Dispatch<React.SetStateAction<Task[]>>, taskDetails: Task=defaultNewTask) => {
+(parentId: number, setTasks: React.Dispatch<React.SetStateAction<Task[]>>, 
+    taskDetails: Task=defaultNewTask, documentSegments: DocumentSegment[] = []) => {
     fetch(`${server_base_url}/task/add_task`, {
         method: 'POST',
         headers: {
@@ -24,6 +26,7 @@ export const addTask =
         body: JSON.stringify({
             ...taskDetails,
             parentId: parentId,
+            documentSegments: documentSegments,
         })
     }
     ).then((response) => response.json())

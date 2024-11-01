@@ -122,23 +122,16 @@ class MyMilvusClient:
         else:
             app.logger.info("insert success")
 
-    def get(self, user_id: int, embedding: List[float], difference_threshold: int = 0.3) -> List[Dict]:
+    def get(self, user_id: int, embedding: List[float], difference_threshold: int = 0.3) -> Dict[str, List[tuple]]:
         """
         return the fetched content in json format
         """
         """
         results in format:
-        [
-            {
-                "id": 1,
-                "user_id": 1,
-                "embedding": [0.1, 0.2, 0.3, ...],
-                "start_sentence_index": 0,
-                "end_sentence_index": 10,
-                "file_id": "file_id",
-            },
+        {
+            file_id: [(start_sentence_index, end_sentence_index), ...],
             ...
-        ]
+        }
         return the fetched content in json format
         """
         # search only returns the id and distance

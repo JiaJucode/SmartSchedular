@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, request
 from flask_cors import CORS
 from services.google_service import google_drive_setup
-from models.google_model import GoogleDB
+from models.google_model import GoogleAuthenDB
 
 bp = Blueprint("google_controller", __name__)
 
@@ -44,6 +44,6 @@ def check_connected():
     user_id = request.args.get("userId")
     if not user_id:
         return jsonify({"error": "userId is required"}), 400
-    connected = GoogleDB.check_connected(user_id)
-    syncing = GoogleDB.check_syncing(user_id)
+    connected = GoogleAuthenDB.check_connected(user_id)
+    syncing = GoogleAuthenDB.check_syncing(user_id)
     return jsonify({"connected": connected, "syncing": syncing})

@@ -3,6 +3,7 @@ from typing import List, Dict
 from datetime import datetime
 from services.task_schedular_service import schedule_task, deschedule_task,\
     update_scheduled_task, get_calendar_id_for_task
+from services.rag_linking_service import unlink_document_segment
 from flask import current_app as app
 
 def get_tasks_by_parent_id(parent_id: int) -> List[Dict]:
@@ -113,6 +114,9 @@ def service_update_task(id: int, title: str | None,
             "completed": completed
         })
     
+    # if task is linked with any document segments, cut the link
+    unlink_document_segment(id, is_task=True)
+    
 def service_delete_task(id: int) -> None:
     """
     params:
@@ -122,6 +126,7 @@ def service_delete_task(id: int) -> None:
     """
     deschedule_task(id)
     TaskDB.delete_task(id)
+    unlink_document_segment(id, is_task=True)
 
 def schedule_task_from_id(task_id: int) -> int:
     """

@@ -8,7 +8,7 @@ from datetime import datetime
 from services.text_processor_service import ner_extraction, text_to_sentences
 import json
 
-def document_context_extraction(message: str, user_id: int) -> str:
+def document_context_extraction(message: str, user_id: int) -> tuple:
     """
     extract document context from message
     """
@@ -28,14 +28,17 @@ def document_context_extraction(message: str, user_id: int) -> str:
                 for start, end in ranges:
                     sub_content = content[start:end + 1]
                     result += " ".join([str(sent) for sent in sub_content])
-    return result
+    return result, context
 
 def handle_chat_message(message: str, str_current_date: str, tags: list, context: str, user_id: int) -> dict:
     """
     return response following the schema
     """
-    context += "\n" + ner_extraction(message, datetime.fromisoformat(str_current_date))
-    context += "\n from documents: \n" + document_context_extraction(message, user_id)
+    # TODO: send the context relavent to RAG documents(ids)
+    generated_context = ner_extraction(context, datetime.fromisoformat(str_current_date))
+    document_context, document_Segments = document_context_extraction(message, user_id)
+    generated_context += "\n from documents: \n" + document_context
+    context += "\n" + generated_context
     app.logger.info("context: " + context)
     response = generate_response(message, str_current_date, tags, context)
     # parse string json
@@ -45,7 +48,7 @@ def handle_chat_message(message: str, str_current_date: str, tags: list, context
         app.logger.info(e)
         app.logger.info(response)
         app.logger.info("failed to parse response")
-        return {"error": "invalid response from AI"}, context
+        return "invalid response from AI", None
     app.logger.info("response: " + str(content))
     # check if response is valid
     try:
@@ -53,7 +56,7 @@ def handle_chat_message(message: str, str_current_date: str, tags: list, context
     except ValidationError as e:
         app.logger.info(e)
         app.logger.info("response does not follow schema")
-        return {"error": "invalid response from AI"}, context
+        return "invalid response from AI", None
     
-    return content, context
+    return content, generated_context, document_Segments
 
