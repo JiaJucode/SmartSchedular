@@ -37,6 +37,7 @@ const GoogleDriveLinker = () => {
     };
 
     useEffect(() => {
+        // @ts-ignore
         const client = google.accounts.oauth2.initCodeClient({
             client_id: process.env.NEXT_PUBLIC_GOOGLE_DRIVE_CLIENT_ID,
             scope: 'https://www.googleapis.com/auth/drive',

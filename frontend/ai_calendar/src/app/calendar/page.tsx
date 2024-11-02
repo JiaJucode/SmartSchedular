@@ -28,7 +28,7 @@ const CalendarPage = () => {
     }
 
     const handleDateChange = (
-        value: Values, 
+        value: any, 
         event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
         setSelectedDate(value as Date);
     }

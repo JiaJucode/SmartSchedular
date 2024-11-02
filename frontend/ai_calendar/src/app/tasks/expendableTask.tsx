@@ -40,7 +40,7 @@ const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft, s
         setExpandedTasks(newExpandedTasks);
     }
 
-    const handleSchedule = (id: number, hoursLeft: number | null) => {
+    const handleSchedule = async (id: number, hoursLeft: number | null) => {
         if (hoursLeft === 0) {
             taskApi.descheduleTask(id);
             setTasks(prevTasks => {
@@ -53,7 +53,7 @@ const ExpandableTask: React.FC<ExpandableTaskProps> = ({parentId, paddingLeft, s
             });
         }
         else {
-            const timeLeft = taskApi.scheduleTask(id);
+            const timeLeft = await taskApi.scheduleTask(id);
             setTasks(prevTasks => {
                 return prevTasks.map((task) => {
                     if (task.id === id) {
