@@ -2,6 +2,7 @@ from flask import Blueprint, jsonify, request
 from flask_cors import CORS
 from services.google_service import google_drive_setup
 from models.google_model import GoogleAuthenDB
+from flask import current_app as app
 
 bp = Blueprint("google_controller", __name__)
 
@@ -14,7 +15,7 @@ def setup_refresh_token():
         {"message": str}
     """
     code = request.json.get("code")
-    # temporary user_id = 0
+    # temporary user_id
     user_id = 0
 
     if not code:
@@ -22,6 +23,7 @@ def setup_refresh_token():
     
     result = google_drive_setup(user_id, code)
     if "error" in result:
+        app.logger.error(result["error"])
         return jsonify(result), 400
     return jsonify(result)
 

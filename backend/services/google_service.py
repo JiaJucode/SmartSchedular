@@ -17,6 +17,7 @@ load_dotenv()
 CLIENT_ID = os.environ.get("CLIENT_ID")
 API_KEY = os.environ.get("API_KEY")
 CLIENT_SECRET = os.environ.get("CLIENT_SECRET")
+WEB_ADDRESS = os.environ.get("WEB_ADDRESS")
 PDF_MIME_TYPE = "application/pdf"
 GOOGLE_DOC_MIME_TYPE = "application/vnd.google-apps.document"
 
@@ -153,10 +154,11 @@ def google_drive_setup(user_id: int,
                                     "code": code,
                                     "client_id": CLIENT_ID,
                                     "client_secret": CLIENT_SECRET,
-                                    "redirect_uri": "http://localhost:3000",
+                                    "redirect_uri": WEB_ADDRESS,
                                     "grant_type": "authorization_code"
                                 })
     if response.status_code != 200:
+        app.logger.info("response: " + str(response))
         return {"error": "Failed to get access token"}
     response = response.json()
     access_token = response["access_token"]
