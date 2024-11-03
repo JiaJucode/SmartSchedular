@@ -5,8 +5,6 @@ from services.rag_linking_service import link_document_segments_to_event
 
 bp = Blueprint("calendar_event_controller", __name__)
 
-CORS(bp, resources={r"/*": {"origins": "http://localhost:3000"}})
-
 @bp.route("/get_events", methods=["GET"])
 def get_events():
     """

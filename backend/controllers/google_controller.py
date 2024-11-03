@@ -5,8 +5,6 @@ from models.google_model import GoogleAuthenDB
 
 bp = Blueprint("google_controller", __name__)
 
-CORS(bp, resources={r"/*": {"origins": "http://localhost:3000"}})
-
 @bp.route("/setup_token", methods=["POST"])
 def setup_refresh_token():
     """

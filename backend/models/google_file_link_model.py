@@ -14,8 +14,7 @@ class GoogleFileLinkDB:
                 file_id TEXT,
                 file_segment_start INTEGER,
                 file_segment_end INTEGER,
-                user_id INTEGER,
-                FOREIGN KEY (user_id) REFERENCES users(id)
+                user_id INTEGER
             )
             """
         )

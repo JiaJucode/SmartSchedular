@@ -12,7 +12,6 @@ const GoogleDriveLinker = () => {
     const [displayText, setDisplayText] = React.useState('Link Google Drive');
 
     const handleCallaback = (response: any) => {
-        console.log('response:', response);
         fetch(`${server_base_url}/google/setup_token`, {
             method: 'POST',
             headers: {

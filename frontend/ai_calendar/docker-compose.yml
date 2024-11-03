@@ -1,0 +1,11 @@
+services:
+  frontend:
+    build: .
+    networks:
+      - my_shared_network
+    ports:
+      - "3000:3000"
+
+networks:
+  my_shared_network:
+    external: true

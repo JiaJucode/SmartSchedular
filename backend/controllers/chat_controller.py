@@ -5,8 +5,6 @@ from flask import current_app as app
 
 bp = Blueprint("chat_controller", __name__)
 
-CORS(bp, resources={r"/*": {"origins": "http://localhost:3000"}})
-
 @bp.route("/query", methods=["POST"])
 def query():
     """
