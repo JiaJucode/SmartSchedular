@@ -153,7 +153,7 @@ def check_and_update_push_notification(access_token: str, user_id: str) -> None:
     If the expiration time is less than 1 day, update the push notification
     """
     expiration_time = GoogleAuthenDB.get_expiration_time(user_id)
-    if expiration_time > int(time.time() - 24 * 60 * 60) * 1000:
+    if expiration_time > int(time.time() - 24 * 60 * 60):
         push_notification_setup(access_token, user_id)
 
 def push_notification_setup(access_token: str, user_id: int) -> bool:
@@ -173,7 +173,7 @@ def push_notification_setup(access_token: str, user_id: int) -> bool:
     app.logger.info("page token: " + page_token)
 
     channel_id = str(uuid.uuid4())
-    expiration_time = int(time.time() +  30 * 24 * 60 * 60) * 1000 # 30 days
+    expiration_time = int(time.time() +  30 * 24 * 60 * 60) # 30 days
 
     for _ in range(3):
         response = requests.post(
@@ -186,7 +186,7 @@ def push_notification_setup(access_token: str, user_id: int) -> bool:
                 "id": channel_id,
                 "type": "web_hook",
                 "address": WEB_ADDRESS + "/backend/google/push_notification",
-                "expiration": expiration_time
+                "expiration": expiration_time * 1000
             })
         if response.status_code == 200:
             GoogleAuthenDB.update_push_notification(user_id, channel_id, page_token, expiration_time)
