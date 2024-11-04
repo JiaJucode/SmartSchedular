@@ -1,5 +1,5 @@
 from models.db_pool import get_connection, return_connection
-
+import time
 
 
 class GoogleAuthenDB:
@@ -11,12 +11,12 @@ class GoogleAuthenDB:
         # TODO: link user_id to user table
         # TODO: redis the syncing status
 
-        # cursor.execute(
-        #     """
-        #     DROP TABLE IF EXISTS google_drive_tokens
-        #     """
-        # )
-        # conn.commit()
+        cursor.execute(
+            """
+            DROP TABLE IF EXISTS google_drive_tokens
+            """
+        )
+        conn.commit()
         
         cursor.execute(
             """
@@ -24,6 +24,9 @@ class GoogleAuthenDB:
                 user_id INTEGER PRIMARY KEY,
                 refresh_token TEXT NOT NULL,
                 access_token TEXT NOT NULL,
+                channel_id TEXT,
+                page_token TEXT,
+                expiration_time INTEGER,
                 is_syncing BOOLEAN DEFAULT FALSE
             )
             """
@@ -31,7 +34,8 @@ class GoogleAuthenDB:
         conn.commit()
         return_connection(conn, cursor)
 
-    def add_token(user_id: int, access_token: str, refresh_token: str) -> None:
+    def add_token(user_id: int, access_token: str, refresh_token: str,
+                  channel_id: str, page_token: str, expiration_time: int) -> None:
         conn, cursor = get_connection()
         # Try to add the token, if it already exists, update it
         cursor.execute(
@@ -46,10 +50,10 @@ class GoogleAuthenDB:
             return
         cursor.execute(
             """
-            INSERT INTO google_drive_tokens (user_id, refresh_token, access_token)
-            VALUES (%s, %s, %s)
+            INSERT INTO google_drive_tokens (user_id, refresh_token, access_token, channel_id, page_token, expiration_time)
+            VALUES (%s, %s, %s, %s, %s, %s)
             """,
-            (user_id, refresh_token, access_token)
+            (user_id, refresh_token, access_token, channel_id, page_token, expiration_time)
         )
         conn.commit()
         return_connection(conn, cursor)
@@ -121,3 +125,77 @@ class GoogleAuthenDB:
             return False
         return_connection(conn, cursor)
         return result[0]
+    
+    def get_user(channel_id: str) -> dict:
+        """
+        Returns:
+            {"user_id": int, "access_token": str, "refresh_token": str}
+        """
+        conn, cursor = get_connection()
+        cursor.execute(
+            """
+            SELECT user_id, access_token, refresh_token, page_token FROM google_drive_tokens
+            WHERE channel_id = %s
+            """,
+            (channel_id,)
+        )
+        result = cursor.fetchone()
+        return_connection(conn, cursor)
+        return {
+            "user_id": result[0], 
+            "access_token": result[1], 
+            "refresh_token": result[2],
+            "page_token": result[3]
+        } if result else None
+
+    def update_page_token(user_id: str, page_token: str) -> None:
+        conn, cursor = get_connection()
+        cursor.execute(
+            """
+            UPDATE google_drive_tokens
+            SET page_token = %s
+            WHERE user_id = %s
+            """,
+            (page_token, user_id)
+        )
+        conn.commit()
+        return_connection(conn, cursor)
+    
+    def update_channel_id(user_id: int, channel_id: str) -> None:
+        conn, cursor = get_connection()
+        cursor.execute(
+            """
+            UPDATE google_drive_tokens
+            SET channel_id = %s
+            WHERE user_id = %s
+            """,
+            (channel_id, user_id)
+        )
+        conn.commit()
+        return_connection(conn, cursor)
+
+    def get_expiration_time(user_id: int) -> int:
+        conn, cursor = get_connection()
+        cursor.execute(
+            """
+            SELECT expiration_time FROM google_drive_tokens
+            WHERE user_id = %s
+            """,
+            (user_id,)
+        )
+        result = cursor.fetchone()
+        return_connection(conn, cursor)
+        return result[0] if result else 0
+    
+    def update_expiration_time(user_id: int, expiration_time: int) -> None:
+        conn, cursor = get_connection()
+        cursor.execute(
+            """
+            UPDATE google_drive_tokens
+            SET expiration_time = %s
+            WHERE user_id = %s
+            """,
+            (expiration_time, user_id)
+        )
+        conn.commit()
+        return_connection(conn, cursor)

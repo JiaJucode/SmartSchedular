@@ -1,8 +1,9 @@
 from flask import Blueprint, jsonify, request
 from flask_cors import CORS
-from services.google_service import google_drive_setup
+from services.google_service import google_drive_setup, update_changes
 from models.google_model import GoogleAuthenDB
 from flask import current_app as app
+from urllib.parse import urlparse, parse_qs
 
 bp = Blueprint("google_controller", __name__)
 
@@ -30,7 +31,34 @@ def setup_refresh_token():
 # TODO: receive push notification from google drive
 @bp.route("/push_notification", methods=["POST"])
 def push_notification():
-    pass
+    """
+    header example:
+    X-Real-Ip: 66.249.83.75
+    X-Forwarded-For: 66.249.83.75
+    X-Forwarded-Proto: https
+    Connection: close
+    Content-Length: 0
+    Accept: */*
+    X-Goog-Channel-Id: db4912dc-2500-4ab6-b717-3c45a29360fe
+    X-Goog-Channel-Expiration: Sun, 03 Nov 2024 20:20:09 GMT
+    X-Goog-Resource-State: change
+    X-Goog-Message-Number: 330465
+    X-Goog-Resource-Id: 5TzSs6V-L1-e8yG4kk3114sNKoo
+    X-Goog-Resource-Uri: https://www.googleapis.com/drive/v3/changes?alt=json&pageToken=241
+    User-Agent: APIs-Google; (+https://developers.google.com/webmasters/APIs-Google.html)
+    Accept-Encoding: gzip, deflate, br
+    """
+    app.logger.info(str(request.headers))
+    resource_uri = request.headers.get("X-Goog-Resource-Uri")
+    if not resource_uri:
+        return jsonify({"error": "resource uri is required"}), 400
+    resource_uri = urlparse(resource_uri)
+    query_params = parse_qs(resource_uri.query)
+    page_token = query_params.get("pageToken", [None])[0]
+    channel_id = request.headers.get("X-Goog-Channel-Id")
+    update_changes(channel_id, page_token)
+
+    return jsonify({"message": "success"}), 200
 
 @bp.route("/check_connected", methods=["GET"])
 def check_connected():

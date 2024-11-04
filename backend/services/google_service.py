@@ -10,7 +10,9 @@ from ai.embedder import get_embeddings
 from services.text_processor_service import get_text_difference, text_to_sentences, text_preprocessing
 import PyPDF2
 import requests
+import uuid
 import io
+import time
 from flask import current_app as app
 
 load_dotenv()
@@ -93,6 +95,9 @@ def get_doc(user_id: int, file_id: str) -> tuple | None:
         return None, None
 
 def get_doc_content(user_id: int, file_info: dict, creds: Credentials) -> tuple:
+    """
+    Return: content, metadata
+    """
     service = build_service(user_id, creds)
     if not service:
         return "", ""
@@ -142,6 +147,53 @@ def doc_process(file_info: dict, creds: Credentials, user_id: int) -> None:
     # store in milvus
     milvus_client.inserts(user_id, file_info["id"], embeddings, embedding_range)
 
+def check_and_update_push_notification(access_token: str, user_id: str) -> None:
+    """
+    Check if the push notification is still valid
+    If the expiration time is less than 1 day, update the push notification
+    """
+    expiration_time = GoogleAuthenDB.get_expiration_time(user_id)
+    if expiration_time > int(time.time() - 24 * 60 * 60) * 1000:
+        push_notification_setup(access_token, user_id)
+
+def push_notification_setup(access_token: str, user_id: int) -> bool:
+    """
+    Set up push notification for the user
+    """
+    # get page token
+    response = requests.get(
+        "https://www.googleapis.com/drive/v3/changes/startPageToken",
+        headers={
+            "Authorization": "Bearer " + access_token
+        })
+    if response.status_code != 200:
+        app.logger.error("Failed to get page token: " + str(response.text))
+        return False
+    page_token = response.json()["startPageToken"]
+    app.logger.info("page token: " + page_token)
+
+    channel_id = str(uuid.uuid4())
+    expiration_time = int(time.time() +  30 * 24 * 60 * 60) * 1000 # 30 days
+
+    for _ in range(3):
+        response = requests.post(
+            "https://www.googleapis.com/drive/v3/changes/watch?pageToken=" + page_token,
+            headers={
+                "Authorization": "Bearer " + access_token,
+                "Content-Type": "application/json"
+            },
+            json={
+                "id": channel_id,
+                "type": "web_hook",
+                "address": WEB_ADDRESS + "/backend/google/push_notification",
+                "expiration": expiration_time
+            })
+        if response.status_code == 200:
+            GoogleAuthenDB.update_push_notification(user_id, channel_id, page_token, expiration_time)
+            return True
+    app.logger.error("Failed to set up push notification: " + str(response.text))
+    return False
+
 def google_drive_setup(user_id: int, 
                        code: str) -> None:
     """
@@ -158,20 +210,14 @@ def google_drive_setup(user_id: int,
                                     "grant_type": "authorization_code"
                                 })
     if response.status_code != 200:
-        app.logger.info("response: " + str(response))
+        app.logger.info("response: " + str(response.text))
         return {"error": "Failed to get access token"}
     response = response.json()
     access_token = response["access_token"]
     refresh_token = response["refresh_token"]
     app.logger.info("access_token: " + access_token)
     app.logger.info("refresh_token: " + refresh_token)
-    GoogleAuthenDB.add_token(user_id, access_token, refresh_token)
-    GoogleAuthenDB.set_syncing(user_id, True)
     creds = init_cred(access_token, refresh_token)
-    # if creds and creds.expired and creds.refresh_token:
-    #     creds.refresh(Request())
-    # if not creds.valid:
-    #     app.logger.info("Invalid credentials")
 
     service = build("drive", "v3", credentials=creds)
     files = service.files().list(
@@ -180,14 +226,75 @@ def google_drive_setup(user_id: int,
         q="mimeType='application/vnd.google-apps.document' or mimeType='application/pdf'"
         ).execute()
     app.logger.info("results: " + str(files))
-    # request for push notification
-    # get all files
-    # for each file, get content, calculate embedding and store in milvus
+
+    # process each file
     for file in files["files"]:
         doc_process(file, creds, user_id)
-    GoogleAuthenDB.set_syncing(user_id, False)
+    
+    # set up push notification
+    success = push_notification_setup(access_token, user_id)
+    if not success:
+        return {"error": "Failed to set up push notification"}
+    GoogleAuthenDB.add_token(user_id, access_token, refresh_token)
 
     return {"message": "Refresh token set up successfully"}
+
+# TODO refresh notification channel after expires
+# TODO: test this
+def update_changes(channel_id: str) -> None:
+    user_info = GoogleAuthenDB.get_user(channel_id)
+    if not user_info:
+        return
+    user_id = user_info[0]
+    access_token = user_info[1]
+    refresh_token = user_info[2]
+    old_page_token = user_info[3]
+    page_token = old_page_token
+
+    GoogleAuthenDB.set_syncing(user_id, True)
+    cred = init_cred(access_token, refresh_token)
+    file_changes = {}
+    try:
+        service = build("drive", "v3", credentials=cred)
+        while True:
+            response = service.changes().list(
+                pageToken=page_token,
+                spaces="drive"
+            ).execute()
+            for change in response.get("changes", []):
+                file_id = change["fileId"]
+                if file_id not in file_changes:
+                    file_changes[file_id] = change["time"]
+            temp_page_token = response.get("nextPageToken")
+            if not temp_page_token:
+                # update page_token
+                GoogleAuthenDB.update_page_token(user_id, page_token)
+                break
+            page_token = temp_page_token
+
+        for file_id, time in file_changes.items():
+            # get the current version and newest version
+            revisions = service.revisions().list(fileId=file_id).execute()
+            if not revisions:
+                continue
+            # find the revision closest to the time but not after
+            old_revision_id = None
+            for revision in revisions["revisions"]:
+                if revision["modifiedTime"] <= time:
+                    old_revision_id = revision["id"]
+                    break
+            if not old_revision_id:
+                continue
+
+            # get the old file
+            old_metadata = service.revisions().get(fileId=file_id, revisionId=old_revision_id)
+            export_links = old_metadata["exportLinks"]
+            app.logger.info("export links: " + str(export_links))
+
+    except Exception as e:
+        app.logger.error("error: " + str(e))
+        
+    GoogleAuthenDB.set_syncing(user_info[0], False)
 
 # TODO: test this
 def update_from_file_change(user_id: int, file_id: str, file_metadata: str, old_file: str, new_file: str) -> None:
