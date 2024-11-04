@@ -34,8 +34,7 @@ class GoogleAuthenDB:
         conn.commit()
         return_connection(conn, cursor)
 
-    def add_token(user_id: int, access_token: str, refresh_token: str,
-                  channel_id: str, page_token: str, expiration_time: int) -> None:
+    def add_token(user_id: int, access_token: str, refresh_token: str) -> None:
         conn, cursor = get_connection()
         # Try to add the token, if it already exists, update it
         cursor.execute(
@@ -50,10 +49,10 @@ class GoogleAuthenDB:
             return
         cursor.execute(
             """
-            INSERT INTO google_drive_tokens (user_id, refresh_token, access_token, channel_id, page_token, expiration_time)
-            VALUES (%s, %s, %s, %s, %s, %s)
+            INSERT INTO google_drive_tokens (user_id, refresh_token, access_token)
+            VALUES (%s, %s, %s)
             """,
-            (user_id, refresh_token, access_token, channel_id, page_token, expiration_time)
+            (user_id, refresh_token, access_token)
         )
         conn.commit()
         return_connection(conn, cursor)
@@ -187,15 +186,15 @@ class GoogleAuthenDB:
         return_connection(conn, cursor)
         return result[0] if result else 0
     
-    def update_expiration_time(user_id: int, expiration_time: int) -> None:
+    def update_push_notification(user_id: int, channel_id: str, page_token: str, expiration_time: int) -> None:
         conn, cursor = get_connection()
         cursor.execute(
             """
             UPDATE google_drive_tokens
-            SET expiration_time = %s
+            SET channel_id = %s, page_token = %s, expiration_time = %s
             WHERE user_id = %s
             """,
-            (expiration_time, user_id)
+            (channel_id, page_token, expiration_time, user_id)
         )
         conn.commit()
         return_connection(conn, cursor)

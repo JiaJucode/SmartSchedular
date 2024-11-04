@@ -49,14 +49,8 @@ def push_notification():
     Accept-Encoding: gzip, deflate, br
     """
     app.logger.info(str(request.headers))
-    resource_uri = request.headers.get("X-Goog-Resource-Uri")
-    if not resource_uri:
-        return jsonify({"error": "resource uri is required"}), 400
-    resource_uri = urlparse(resource_uri)
-    query_params = parse_qs(resource_uri.query)
-    page_token = query_params.get("pageToken", [None])[0]
     channel_id = request.headers.get("X-Goog-Channel-Id")
-    update_changes(channel_id, page_token)
+    update_changes(channel_id)
 
     return jsonify({"message": "success"}), 200
 
