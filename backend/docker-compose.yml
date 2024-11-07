@@ -9,7 +9,12 @@ services:
       - .env
     networks:
       - my_shared_network
+    volumes:
+      - file-storage-data:/local_storage
 
 networks:
   my_shared_network:
     external: true
+
+volumes:
+  file-storage-data:

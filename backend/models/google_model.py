@@ -18,6 +18,7 @@ class GoogleAuthenDB:
                 refresh_token TEXT NOT NULL,
                 access_token TEXT NOT NULL,
                 channel_id TEXT,
+                resource_id TEXT,
                 page_token TEXT,
                 expiration_time INTEGER,
                 is_syncing BOOLEAN DEFAULT FALSE
@@ -126,7 +127,7 @@ class GoogleAuthenDB:
         conn, cursor = get_connection()
         cursor.execute(
             """
-            SELECT user_id, access_token, refresh_token, page_token FROM google_drive_tokens
+            SELECT user_id, access_token, refresh_token, page_token, resource_id FROM google_drive_tokens
             WHERE channel_id = %s
             """,
             (channel_id,)
@@ -153,18 +154,23 @@ class GoogleAuthenDB:
         conn.commit()
         return_connection(conn, cursor)
     
-    def update_channel_id(user_id: int, channel_id: str) -> None:
+    def get_channel_info(user_id: int) -> dict | None:
         conn, cursor = get_connection()
         cursor.execute(
             """
-            UPDATE google_drive_tokens
-            SET channel_id = %s
+            SELECT channel_id, resource_id FROM google_drive_tokens
             WHERE user_id = %s
             """,
-            (channel_id, user_id)
+            (user_id,)
         )
-        conn.commit()
+        result = cursor.fetchone()
         return_connection(conn, cursor)
+        if result is None:
+            return None
+        return {
+            "channel_id": result[0],
+            "resource_id": result[1]
+        }
 
     def get_expiration_time(user_id: int) -> int:
         conn, cursor = get_connection()
@@ -179,7 +185,8 @@ class GoogleAuthenDB:
         return_connection(conn, cursor)
         return result[0] if result else 0
     
-    def update_push_notification(user_id: int, channel_id: str, page_token: str, expiration_time: int) -> None:
+    def update_push_notification(user_id: int, channel_id: str,
+                                 page_token: str, expiration_time: int) -> None:
         conn, cursor = get_connection()
         cursor.execute(
             """
@@ -188,6 +195,19 @@ class GoogleAuthenDB:
             WHERE user_id = %s
             """,
             (channel_id, page_token, expiration_time, user_id)
+        )
+        conn.commit()
+        return_connection(conn, cursor)
+
+    def update_resource_id(user_id: int, resource_id: str) -> None:
+        conn, cursor = get_connection()
+        cursor.execute(
+            """
+            UPDATE google_drive_tokens
+            SET resource_id = %s
+            WHERE user_id = %s
+            """,
+            (resource_id, user_id)
         )
         conn.commit()
         return_connection(conn, cursor)

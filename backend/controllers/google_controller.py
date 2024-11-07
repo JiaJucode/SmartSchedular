@@ -50,7 +50,8 @@ def push_notification():
     """
     app.logger.info(str(request.headers))
     channel_id = request.headers.get("X-Goog-Channel-Id")
-    update_changes(channel_id)
+    resource_id = request.headers.get("X-Goog-Resource-Id")
+    update_changes(channel_id, resource_id)
 
     return jsonify({"message": "success"}), 200
 

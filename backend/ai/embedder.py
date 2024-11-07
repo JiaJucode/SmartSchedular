@@ -23,6 +23,8 @@ def get_embeddings(text: str, metadata: str) -> Tuple[List[str], List[Tuple[int,
         List of embeddings with the text chunk sentence index range
         [embedding, ...], [(start_index, end_index), ...]
     """
+    if len(text) == 0:
+        return [], []
     chunks = text_splitter.split_text_metadata_aware(text, metadata + " at 200-300: ")
     ranges = get_chunks_sentence_range(text, chunks)
     chunks_with_metadata = [f"{metadata} at {ranges[i][0]}-{ranges[i][1]}: {chunk}"

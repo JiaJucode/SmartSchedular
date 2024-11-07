@@ -6,6 +6,7 @@ from services.task_service import get_tasks_by_parent_id, get_tasks_by_date_rang
 from datetime import datetime
 from typing import List
 from flask import current_app as app
+import re
 
 nlp = spacy.load("en_core_web_sm")
 d = difflib.Differ()
@@ -16,6 +17,17 @@ abbreviation_map = {
     "etc.": "and so on",
     "vs.": "versus",
     "etc": "and so on",
+    "Mr.": "Mister",
+    "Mrs.": "Missus",
+    "Dr.": "Doctor",
+    "Prof.": "Professor",
+    "St.": "Saint",
+    "Co.": "Company",
+    "Ltd.": "Limited",
+    "Inc.": "Incorporated",
+    "Jr.": "Junior",
+    "Sr.": "Senior",
+    "vs.": "versus",
 }
 
 
@@ -50,8 +62,9 @@ def text_preprocessing(text: str) -> str:
 
 def text_to_sentences(text: str) -> List[str]:
     text_sentences = list(nlp(text).sents)
-    text_sentences = [t.strip() for sentence in text_sentences 
-                      for t in str(sentence).split("\n") if t and t.strip() != ""]
+    text_sentences = [t for sentence in text_sentences
+                      for t in re.split(r'(.*\r?\n)', str(sentence)) 
+                      if t.strip() != "" and t.strip() != "\n"]
     return text_sentences
 
 def get_text_difference(text1: str, text2: str) -> str:
@@ -79,6 +92,8 @@ def get_text_difference(text1: str, text2: str) -> str:
 def get_chunks_sentence_range(original_text: str, chunks: List[str]) -> List[tuple]:
     """
     return the sentence range of each chunk
+        [(start_sentence_index, end_sentence_index), ...]
+        end_sentence_index is inclusive
     """
     original_text_sentences = text_to_sentences(original_text)
     # split the result into smaller sentences withouth the new line character
@@ -87,17 +102,18 @@ def get_chunks_sentence_range(original_text: str, chunks: List[str]) -> List[tup
     for chunk in chunks:
         # find the start sentence index
         while start_sentence_index < len(original_text_sentences) \
-            and not chunk.startswith(str(original_text_sentences[start_sentence_index])):
+            and not chunk.startswith(str(original_text_sentences[start_sentence_index]).strip()):
             start_sentence_index += 1
         # find the end sentence index
         i = start_sentence_index
         while True and i < len(original_text_sentences) \
-            and not chunk.endswith(str(original_text_sentences[i])):
+            and not chunk.endswith(str(original_text_sentences[i]).strip()):
             i += 1
         if start_sentence_index >= len(original_text_sentences) or i >= len(original_text_sentences):
             app.logger.error("unable to find sentence range for chunk: " + chunk)
             break
         chunk_ranges.append((start_sentence_index, i))
         start_sentence_index += 1
+    app.logger.info("chunks: " + str(chunks))
     app.logger.info("chunk_ranges: " + str(chunk_ranges))
     return chunk_ranges

@@ -164,6 +164,7 @@ class MyMilvusClient:
         return results
     
     def delete(self, file_id: str, start_sentence_index: int, end_sentence_index: int) -> None:
+        app.logger.info("deleting: " + file_id + " " + str(start_sentence_index) + " " + str(end_sentence_index))
         self.client.delete(
             collection_name="task",
             filter='file_id == "{}" && start_sentence_index == {} && end_sentence_index == {}'
@@ -178,9 +179,15 @@ class MyMilvusClient:
         chunk_ranges = []
         for item in results:
             chunk_ranges.append((item["start_sentence_index"], item["end_sentence_index"]))
+        app.logger.info("chunk_ranges from milvus: " + str(chunk_ranges))
         return chunk_ranges
         
-    def update_segment(self, user_id: int, file_id: str, old_range: tuple, embedding: List[float] | None, embedding_range: tuple) -> None:
+    def update_segment(self, user_id: int, file_id: str, old_range: tuple, 
+                       embedding: List[float] | None, embedding_range: tuple) -> None:
+        app.logger.info("updating_segment:")
+        app.logger.info("file_id: " + file_id)
+        app.logger.info("old_range: " + str(old_range))
+        app.logger.info("embedding_range: " + str(embedding_range))
         current_item = self.client.query(
             collection_name="task",
             filter='user_id == {} && file_id == "{}" && start_sentence_index == {} && end_sentence_index == {}'

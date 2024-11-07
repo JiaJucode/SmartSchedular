@@ -2,6 +2,7 @@ import os.path
 from dotenv import load_dotenv
 from googleapiclient.discovery import build
 from models.google_model import GoogleAuthenDB
+from models.file_storage_model import FileStorageModel
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from milvus.milvus_client import milvus_client
@@ -141,11 +142,33 @@ def doc_process(file_info: dict, creds: Credentials, user_id: int) -> None:
     """
     app.logger.info("processing file: " + str(file_info))
     text, metadata = get_doc_content(user_id, file_info, creds)
+    # store in file_storage
+    FileStorageModel.create_file(file_info["id"], text)
     # calculate embeddings
     embeddings, embedding_range = get_embeddings(text, metadata)
     app.logger.info("embedding length: " + str(len(embeddings)))
     # store in milvus
     milvus_client.inserts(user_id, file_info["id"], embeddings, embedding_range)
+
+def cancel_push_notification(user_id: str, access_token) -> None:
+    channel_info = GoogleAuthenDB.get_channel_info(user_id)
+    if not channel_info or not channel_info["channel_id"] or not channel_info["resource_id"]:
+        app.logger.error("not enough channel info")
+        return
+    response = requests.post(
+        "https://www.googleapis.com/drive/v3/channels/stop",
+        headers={
+            "Authorization": "Bearer " + access_token,
+            "Content-Type": "application/json"
+        },
+        json={
+            "id": channel_info["channel_id"],
+            "resourceId": channel_info["resource_id"]
+        })
+    if response.status_code != 204:
+        app.logger.error("Failed to cancel push notification: " + str(response.text))
+    return
+
 
 def check_and_update_push_notification(access_token: str, user_id: str) -> None:
     """
@@ -161,6 +184,7 @@ def push_notification_setup(access_token: str, user_id: int) -> bool:
     Set up push notification for the user
     """
     # get page token
+    cancel_push_notification(user_id, access_token)
     response = requests.get(
         "https://www.googleapis.com/drive/v3/changes/startPageToken",
         headers={
@@ -241,19 +265,27 @@ def google_drive_setup(user_id: int,
 
 # TODO refresh notification channel after expires
 # TODO: test this
-def update_changes(channel_id: str) -> None:
+def update_changes(channel_id: str, resource_id: str) -> None:
     user_info = GoogleAuthenDB.get_user(channel_id)
+    access_token = GoogleAuthenDB.get_tokens(0)[0]
+    app.logger.info("access token: " + access_token)
     if not user_info:
+        app.logger.error("no user associated with the channel id")
+        app.logger.error("channel_id: " + channel_id)
+        app.logger.error("resource_id: " + resource_id)
+        # cance
         return
-    user_id = user_info[0]
-    access_token = user_info[1]
-    refresh_token = user_info[2]
-    old_page_token = user_info[3]
+    user_id = user_info["user_id"]
+    access_token = user_info["access_token"]
+    refresh_token = user_info["refresh_token"]
+    old_page_token = user_info["page_token"]
     page_token = old_page_token
+
+    GoogleAuthenDB.update_resource_id(user_id, resource_id)
 
     GoogleAuthenDB.set_syncing(user_id, True)
     cred = init_cred(access_token, refresh_token)
-    file_changes = {}
+    file_changes = set()
     try:
         service = build("drive", "v3", credentials=cred)
         while True:
@@ -262,9 +294,10 @@ def update_changes(channel_id: str) -> None:
                 spaces="drive"
             ).execute()
             for change in response.get("changes", []):
+                app.logger.info("change: " + str(change))
                 file_id = change["fileId"]
                 if file_id not in file_changes:
-                    file_changes[file_id] = change["time"]
+                    file_changes.add(file_id)
             temp_page_token = response.get("nextPageToken")
             if not temp_page_token:
                 # update page_token
@@ -272,36 +305,38 @@ def update_changes(channel_id: str) -> None:
                 break
             page_token = temp_page_token
 
-        for file_id, time in file_changes.items():
-            # get the current version and newest version
-            revisions = service.revisions().list(fileId=file_id).execute()
-            if not revisions:
-                continue
-            # find the revision closest to the time but not after
-            old_revision_id = None
-            for revision in revisions["revisions"]:
-                if revision["modifiedTime"] <= time:
-                    old_revision_id = revision["id"]
-                    break
-            if not old_revision_id:
-                continue
-
-            # get the old file
-            old_metadata = service.revisions().get(fileId=file_id, revisionId=old_revision_id)
-            export_links = old_metadata["exportLinks"]
-            app.logger.info("export links: " + str(export_links))
+        app.logger.info("file changes: " + str(file_changes))
+        # process each file
+        for file_id in file_changes:
+            content = FileStorageModel.get_file_content(file_id)
+            file_info = service.files().get(fileId=file_id).execute()
+            if not content:
+                app.logger.info("failed to get content from file_storage")
+                doc_process(file_info, cred, user_id)
+            else:
+                app.logger.info("old content:")
+                app.logger.info(content)
+                new_content, metadata = get_doc_content(user_id, file_info, cred)
+                app.logger.info("new content:")
+                app.logger.info(new_content)
+                # segment comparison
+                update_from_file_change(user_id, file_id, metadata, content, new_content)
+                FileStorageModel.update_file(file_id, new_content)
 
     except Exception as e:
         app.logger.error("error: " + str(e))
         
-    GoogleAuthenDB.set_syncing(user_info[0], False)
+    GoogleAuthenDB.set_syncing(user_id, False)
 
-# TODO: test this
 def update_from_file_change(user_id: int, file_id: str, file_metadata: str, old_file: str, new_file: str) -> None:
+    app.logger.info("new file: " + repr(new_file))
     new_sentences = text_to_sentences(new_file)
+    app.logger.info("new sentences: " + str([str(sent) for sent in new_sentences]))
     diffs = get_text_difference(old_file, new_file)
+    app.logger.info("diffs: " + str(diffs))
     # get all segments from google_drive_files_usage db and 
-    segments = milvus_client.get_chunk_ranges(user_id, file_id)
+    segments = milvus_client.get_chunk_ranges(file_id)
+    app.logger.info("segments: " + str(segments))
     segments.sort(key=lambda x: x[0])
     accu_shift = 0
     shift_buffer = {}
@@ -313,7 +348,12 @@ def update_from_file_change(user_id: int, file_id: str, file_metadata: str, old_
 
         # update the segment diffs
         diffs = [diff for diff in diffs if diff[0] >= start]
-        segment_diffs = [diff for diff in diffs if diff[0] <= end]
+        # if last segment, then use the rest of the diffs
+        if end == segments[-1][1]:
+            app.logger.info("last segment: " + str(diffs))
+            segment_diffs = diffs
+        else:
+            segment_diffs = [diff for diff in diffs if diff[0] <= end]
 
         # if shift is 0, buffer is empty and no diff, copy the rest of the segments and break
         if len(diffs) == 0 and len(shift_buffer) == 0 and accu_shift == 0:
@@ -321,17 +361,18 @@ def update_from_file_change(user_id: int, file_id: str, file_metadata: str, old_
 
         # if shift is not 0 and no change in the segment, update the segment range and continue
         if len(segment_diffs) == 0:
-            milvus_client.update_segment_range(user_id, file_id, (start, end), (start + accu_shift, end + accu_shift))
+            milvus_client.update_segment(user_id, file_id, (start, end), None, (start + accu_shift, end + accu_shift))
             continue
         insert_or_delete = [diff for diff in segment_diffs if diff[1] == "insert" or diff[1] == "delete"]
-        if len(insert_or_delete) > 0:
-            # for updating subsequent segment indices
-            for change in insert_or_delete:
-                if change[1] == "insert":
-                    shift_buffer[change[0]] = 1
-                elif change[1] == "delete":
-                    shift_buffer[change[0]] = -1
-        shift_between = sum([shift for i, shift in shift_buffer.items() if i <= end])
+        app.logger.info("insert or delete: " + str(insert_or_delete))
+        # for updating subsequent segment indices
+        for change in insert_or_delete:
+            if change[1] == "insert":
+                shift_buffer[change[0]] = 1
+            elif change[1] == "delete":
+                shift_buffer[change[0]] = -1
+        app.logger.info("shift_buffer: " + str(shift_buffer))
+        shift_between = sum([shift for shift in shift_buffer.values()])
 
         # check if there is any insert or replace
         insert_or_replace = [diff for diff in segment_diffs if diff[1] == "insert" or diff[1] == "replace"]
@@ -341,7 +382,10 @@ def update_from_file_change(user_id: int, file_id: str, file_metadata: str, old_
             embeddings, index_ranges = get_embeddings(" ".join(
                 [str(sent) for sent in new_sentences[start + accu_shift:end + accu_shift + shift_between]]), file_metadata)
             # update the current segment and insert the rest
+            app.logger.info("index within segment: " + str(index_ranges))
             index_ranges = [(start + accu_shift + b, start + accu_shift + e) for b, e in index_ranges]
+            app.logger.info("updating segment from " + str(start) + " to " + str(end))
+            app.logger.info("embedding range: " + str(index_ranges))
             milvus_client.update_segment(user_id, file_id, (start, end), embeddings[0], index_ranges[0])
             for i in range(1, len(embeddings)):
                 milvus_client.inserts(user_id, file_id, embeddings[i], index_ranges[i])
@@ -353,7 +397,7 @@ def update_from_file_change(user_id: int, file_id: str, file_metadata: str, old_
                 # if yes, delete the segment from milvus
                 if len(segment_diffs) == end - start + 1:
                     # delete from milvus
-                    milvus_client.delete_segment(user_id, file_id, (start, end))
+                    milvus_client.delete(file_id, start, end)
                     continue
                 else:
                     # calculate the new embedding
@@ -363,3 +407,11 @@ def update_from_file_change(user_id: int, file_id: str, file_metadata: str, old_
                          new_sentences[start + accu_shift:end + accu_shift + shift_between]]), file_metadata)
                     milvus_client.update_segment(user_id, file_id, (start, end), embeddings[0],
                                                     (start + accu_shift, end + accu_shift + shift_between))
+                    FileStorageModel.update_file(file_id, new_file)
+        
+
+# curl -i -X POST https://www.googleapis.com/drive/v3/channels/stop      
+# -H "Authorization: Bearer "      -H "Content-Type: application/json"      -d '{
+#            "id": "",
+#            "resourceId": ""
+#          }'
