@@ -48,7 +48,7 @@ def push_notification():
     User-Agent: APIs-Google; (+https://developers.google.com/webmasters/APIs-Google.html)
     Accept-Encoding: gzip, deflate, br
     """
-    app.logger.info(str(request.headers))
+    # app.logger.info(str(request.headers))
     channel_id = request.headers.get("X-Goog-Channel-Id")
     resource_id = request.headers.get("X-Goog-Resource-Id")
     update_changes(channel_id, resource_id)

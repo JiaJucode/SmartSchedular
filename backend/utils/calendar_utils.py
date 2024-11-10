@@ -2,10 +2,14 @@ from datetime import datetime, timedelta
 from typing import List, Dict
 from queue import PriorityQueue
 from collections import deque
+from flask import current_app as app
 
 def get_empty_timeslots_util(current_events: List[Dict], 
                          start_datetime: datetime, end_datetime: datetime) -> List[Dict]:
     event_times = []
+    app.logger.info("current_events: " + str(current_events))
+    app.logger.info("start_datetime: " + str(start_datetime))
+    app.logger.info("end_datetime: " + str(end_datetime))
     for event in current_events:
         event_times.append((event['start_datetime'], True, event['id']))
         event_times.append((event['end_datetime'], False, event['id']))

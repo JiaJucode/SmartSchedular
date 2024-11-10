@@ -5,11 +5,11 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs from "dayjs";
 import { Box, Button, TextField, Typography } from "@mui/material";
 import * as calendarApi from "../utils/calendar_api_funcs";
-import { DocumentSegment } from '../chat/page';
+import { DocumentSegments } from '../chat/page';
 
 type CalendarBoxProps = {
     suggestedEvents: Event[];
-    reference_docs: DocumentSegment[];
+    reference_docs: DocumentSegments;
 }
 
 const CalendarBox: React.FC<CalendarBoxProps> = ({suggestedEvents, reference_docs}) => {
@@ -55,13 +55,13 @@ const CalendarBox: React.FC<CalendarBoxProps> = ({suggestedEvents, reference_doc
                             margin: '5px', backgroundColor: 'primary.dark', 
                             color: 'primary.contrastText' }}
                             onClick = {() => handleDelete(index)}>
-                            DELETE
+                            CANCEL
                         </Button>
-                        <Button sx={{ width: '60px', height: '40px', 
+                        <Button sx={{ width: '70px', height: '40px', 
                             margin: '5px', backgroundColor: 'primary.dark', 
                             color: 'primary.contrastText' }}
                             onClick = {() => handleAdd(index)}>
-                            ADD
+                            EXECUTE
                         </Button>
                     </Box>
                     <TextField

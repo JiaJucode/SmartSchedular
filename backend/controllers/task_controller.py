@@ -51,7 +51,9 @@ def add_task():
         "priority": int,
         "estimatedTime": int | None,
         "completed": bool
-        "documentSegments": List[Dict[str, Any]]
+        "documentSegments": {
+            file_id: [(start, end), ...]
+        }
     Returns:
         {"id": int,` "timeLeft": int}
     """

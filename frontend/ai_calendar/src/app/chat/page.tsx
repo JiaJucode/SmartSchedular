@@ -24,10 +24,9 @@ interface ChatMessage {
     events?: Event[];
 }
 
-export interface DocumentSegment {
-    id: number;
-    segment_range: [number, number];
-}
+export interface DocumentSegments {
+    [key: string]: [number, number][];
+  }
 
 const server_base_url = process.env.NEXT_PUBLIC_SERVER_BASE_URL;
 
@@ -42,16 +41,13 @@ const ChatPage = () => {
     const chatBottomRef = useRef<HTMLDivElement>(null);
     const [replyWaiting, setReplyWaiting] = useState(false);
     const [chatTags, setChatTags] = useState<string[]>([]);
-    const [currentDocuments, setCurrentDocuments] = useState<DocumentSegment[]>([]);
+    const [currentDocuments, setCurrentDocuments] = useState<DocumentSegments>({});
+    const [regenerateResponse, setRegenerateResponse] = useState(false);
 
     useEffect(() => {
         // setMessages(testChatMessages);
         chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, []);
-
-    useEffect(() => {
-        console.log("messages: ", messages);
-    }, [messages]);
 
     const sendRequest = () => {
         const lastTag = messages[messages.length - 1].tag;
@@ -67,6 +63,9 @@ const ChatPage = () => {
                 }
             }
         }
+        setMessages(prevMessages => [...prevMessages,
+            {isUser: false, tag: lastTag, message: 'generating response...'}]);
+
         fetch(`${server_base_url}/chat/query`, {
             method: 'POST',
             headers: {
@@ -79,11 +78,18 @@ const ChatPage = () => {
                 context: context,
             })
         })
-        .then((response) => response.json())
+        .then((response) => {
+            if (!response.ok) {
+                setMessages(prevMessages => [...prevMessages.slice(0, -1),
+                    {isUser: false, tag: lastTag, message: 'Error in response'}]);
+                setReplyWaiting(false);
+                setRegenerateResponse(true);
+            }
+            return response.json();
+        })
         .then((data: any) => {
-            console.log(data);
+            console.log("received data: ", data);
             if ('response' in data) {
-                console.log(data.response);
                 const response = data.response;
                 const content = response.content;
                 if (!(response.tag in chatTags)) {
@@ -91,17 +97,16 @@ const ChatPage = () => {
                 }
                 switch (response.action_type) {
                     case 'question':
-                        setMessages(prevMessages => [...prevMessages, 
+                        setMessages(prevMessages => [...prevMessages.slice(0, -1),
                             {isUser: false, tag: response.tag, message: content.response}]);
                         break;
                     case 'chat':
-                        setMessages(prevMessages => [...prevMessages, 
+                        setMessages(prevMessages => [...prevMessages.slice(0, -1),
                             {isUser: false, tag: response.tag, message: content.response}]);
                         break;
                     case 'task':
                         console.log("content: ", content);
-                        console.log("parent id: ", content.parent_id);
-                        setMessages(prevMessages => [...prevMessages, 
+                        setMessages(prevMessages => [...prevMessages.slice(0, -1),
                             {isUser: false, tag: response.tag, message: content.message,
                                 parentId: content.parent_id, tasks: content.tasks.map((item: any) => {
                                     return {
@@ -119,7 +124,7 @@ const ChatPage = () => {
                         )}]);
                         break;
                     case 'calendar':
-                        setMessages(prevMessages => [...prevMessages, 
+                        setMessages(prevMessages => [...prevMessages.slice(0, -1),
                             {isUser: false, tag: response.tag, message: content.message,
                             events: content.events.map((item: any) => {
                                 return {
@@ -135,26 +140,25 @@ const ChatPage = () => {
                     default:
                         break;
                 }
-                if ('context' in response) {
-                    setHiddenContext(prevContext => [...prevContext, response.context]);
-                }
-                if ('document_ids' in response) {
-                    // TODO: parse the reponse
-                    console.log(response.document_ids);
-                    setCurrentDocuments(response.document_ids);
-                }
-                else {
-                    setCurrentDocuments([]);
-                }
             }
             else {
                 // TODO: handle error
                 console.log('Error in response');
             }
+            if ('context' in data) {
+                setHiddenContext(prevContext => [...prevContext, data.context]);
+            }
+            if ('document_segments' in data) {
+                console.log(data.document_segments);
+                setCurrentDocuments(data.document_segments);
+            }
+            else {
+                setCurrentDocuments({});
+            }
             chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+            setReplyWaiting(false);
+            setMessage('');
         });
-        setReplyWaiting(false);
-        setMessage('');
     }
 
     const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
@@ -212,44 +216,60 @@ const ChatPage = () => {
                                 }
                             </Box>
                         ))}
+                        <div ref={chatBottomRef} />
                     </Stack>
-                    <div ref={chatBottomRef} />
                     <Box sx={{ width: '90%', height: '65px', display: 'flex', justifyContent: 'center',
                         backgroundColor: 'primary.dark', position: 'fixed', bottom: 0
                      }}>
-                    <TextField variant='standard' multiline fullWidth value={message} 
-                        disabled={replyWaiting}
-                        onKeyDown={(e) => handleKeyDown(e)}
-                        onChange={(e) => setMessage(e.target.value)}
-                        slotProps={{
-                            input: {
-                                disableUnderline: true,
-                                endAdornment: (
-                                    <InputAdornment position="end">
-                                        <IconButton onClick={sendRequest}>
-                                            <SearchIcon sx={{ color: 'white' }} />
-                                        </IconButton>
-                                    </InputAdornment>
-                                )
-                            }
-                        }}
-                        sx={{
-                            position: 'fixed',
-                            bottom: 10, width: '70%',
-                            minheight: '55px',
-                            padding: 1,
-                            opacity: 0.99,
-                            borderRadius: 7,
-                            backgroundColor: 'primary.light',
-                            '& .MuiInputBase-input': {
-                                fontSize: 25, // Apply font size to the input text
-                                color: 'primary.contrastText',
-                            },
-                            '& .MuiOutlinedInput-root.Mui-disabled': {
-                                // backgroundColor: 'primary.main',
-                                // borderRadius: 7,
-                            }
-                        }}/>
+                        {/* button for regenerate last response */}
+                        {regenerateResponse ? (
+                            <Button onClick={() => {
+                                setRegenerateResponse(false);
+                                const lastMessage = messages[messages.length - 2];
+                                setMessages(prevMessages => [...prevMessages.slice(0, -2)]);
+                                console.log("last message: ", lastMessage);
+                                setMessage(lastMessage.message);
+                                sendRequest();
+                            }}
+                            variant='text'
+                            sx={{ position: 'standard', bottom: '45px', marginLeft: '70%',
+                            height: '30px', color: 'red', fontSize: '15px' }}>
+                                Regenerate Last Response
+                            </Button>)
+                        : null}
+                        <TextField variant='standard' multiline fullWidth value={message} 
+                            disabled={replyWaiting}
+                            onKeyDown={(e) => handleKeyDown(e)}
+                            onChange={(e) => setMessage(e.target.value)}
+                            slotProps={{
+                                input: {
+                                    disableUnderline: true,
+                                    endAdornment: (
+                                        <InputAdornment position="end">
+                                            <IconButton onClick={sendRequest}>
+                                                <SearchIcon sx={{ color: 'white' }} />
+                                            </IconButton>
+                                        </InputAdornment>
+                                    )
+                                }
+                            }}
+                            sx={{
+                                position: 'fixed',
+                                bottom: 10, width: '70%',
+                                minheight: '55px',
+                                padding: 1,
+                                opacity: 0.99,
+                                borderRadius: 7,
+                                backgroundColor: 'primary.light',
+                                '& .MuiInputBase-input': {
+                                    fontSize: 25, // Apply font size to the input text
+                                    color: 'primary.contrastText',
+                                },
+                                '& .MuiOutlinedInput-root.Mui-disabled': {
+                                    // backgroundColor: 'primary.main',
+                                    // borderRadius: 7,
+                                }
+                            }}/>
                     </Box>
         </Box>
     );

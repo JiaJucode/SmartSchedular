@@ -3,7 +3,7 @@ from typing import List, Dict
 from datetime import datetime
 from services.task_schedular_service import schedule_task, deschedule_task,\
     update_scheduled_task, get_calendar_id_for_task
-from services.rag_linking_service import unlink_document_segment
+from services.rag_linking_service import unlink_generated_item
 from flask import current_app as app
 
 def get_tasks_by_parent_id(parent_id: int) -> List[Dict]:
@@ -39,8 +39,8 @@ def get_tasks_by_date_range(str_start_date: str, str_end_date: str) -> List[Dict
         },
         ...]
     """
-    start_date = datetime.fromisoformat(str_start_date)
-    end_date = datetime.fromisoformat(str_end_date)
+    start_date = datetime.fromisoformat(str_start_date).replace(tzinfo=None)
+    end_date = datetime.fromisoformat(str_end_date).replace(tzinfo=None)
     tasks = TaskDB.get_tasks_by_date_range(start_date, end_date)
     return tasks
 
@@ -64,15 +64,16 @@ def service_add_task(parent_id: int, title: str,
     start_date = None
     end_date = None
     if str_start_date is not None:
-        start_date = datetime.fromisoformat(str_start_date)
+        start_date = datetime.fromisoformat(str_start_date).replace(tzinfo=None)
     if str_end_date is not None:
-        end_date = datetime.fromisoformat(str_end_date)
+        end_date = datetime.fromisoformat(str_end_date).replace(tzinfo=None)
 
     event_id = TaskDB.add_task(parent_id, title, description, start_date, end_date,
                             priority, estimated_time, completed)
     
     # TODO: this should be a user setting, to automatically schedule tasks
-    if start_date is not None and end_date is not None and estimated_time is not None:
+    if start_date is not None and end_date is not None \
+        and estimated_time is not None and parent_id != 0:
         schedule_task({
             "id": event_id,
             "title": title,
@@ -95,9 +96,9 @@ def service_update_task(id: int, title: str | None,
     start_date = None
     end_date = None
     if str_start_date is not None:
-        start_date = datetime.fromisoformat(str_start_date)
+        start_date = datetime.fromisoformat(str_start_date).replace(tzinfo=None)
     if str_end_date is not None:
-        end_date = datetime.fromisoformat(str_end_date)
+        end_date = datetime.fromisoformat(str_end_date).replace(tzinfo=None)
     TaskDB.update_task(id, title, description, start_date, end_date, 
                    priority, estimated_time, completed)
     
@@ -115,7 +116,7 @@ def service_update_task(id: int, title: str | None,
         })
     
     # if task is linked with any document segments, cut the link
-    unlink_document_segment(id, is_task=True)
+    unlink_generated_item(id, is_task=True)
     
 def service_delete_task(id: int) -> None:
     """
@@ -124,9 +125,12 @@ def service_delete_task(id: int) -> None:
     Returns:
         None
     """
-    deschedule_task(id)
-    TaskDB.delete_task(id)
-    unlink_document_segment(id, is_task=True)
+    all_ids = TaskDB.get_child_hierarchy_ids(id)
+    for i in range(len(all_ids) - 1, -1, -1):
+        for id in all_ids[i]:
+            deschedule_task(id)
+            unlink_generated_item(id, is_task=True)
+            TaskDB.delete_task(id)
 
 def schedule_task_from_id(task_id: int) -> int:
     """

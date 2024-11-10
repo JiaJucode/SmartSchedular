@@ -14,7 +14,7 @@ llm = NVIDIA(
     model="nvidia/llama-3.1-nemotron-51b-instruct",
     nvidia_api_key=api_key,
     base_url="https://integrate.api.nvidia.com/v1",
-    temperature=0.8,
+    temperature=0.7,
     max_tokens=3000,
 )
 
@@ -158,6 +158,8 @@ response_schema = {
 system_content = \
 """You are an assistant that helps user with scheduling and task management. Your goal is to analyze user input for tasks and create an effective schedule that prioritizes actions based on logical order and dependencies. Ensure your responses are conversational, user-friendly, and context-aware.
 
+Schedule calendar when its a fixed time event, schedule task when there is something to do within the time range provided by start_date and end_date.
+
 When there is a list of tasks to schedule, consider the following guidelines:
 
 1. **Task Dependencies**: Identify if certain tasks need to be completed before others based on common practices. For example, if a user mentions "reading through lecture notes" and "doing tutorials," these should typically be completed before tasks like "doing past papers" or "creating a cheat sheet." Avoid asking the user for clarification when the order is clear.
@@ -192,9 +194,11 @@ If the action_type is "chat", the content is the response to the user query in t
 {
     "response": "string"
 }
-If the action_type is "task", parent_id is the id of the project tasks fed as reference data, if no project fits the tasks, use parent_id = 0 to create a new project, the first task for the new project is the project itself. 
-Task ids should be -1 when action is add, otherwise use the reference data id. The start_date and end_date is a possible range for the task, the estimated_time is the
-actual time needed to complete the task.
+If the action_type is "task", parent_id is the id of the project tasks fed as reference data, if no project fits the tasks, use parent_id = 0 to create a new task as the project name. If creating a new task as project, the first task should just describe the project.
+Task ids should be -1 when action is add, otherwise use the reference data id. 
+For task, start_date and end_date must have 00:00:00 as time, make difference between start_date and end_date to be as large as possible according to user input and context.
+estimated_time is the actual time needed to complete the task, estimated_time <= (end_date - start_date).hours / 2
+Try keeping priority of tasks the same(0) unless there is a very clear indication of priority in the user input.
 The content is in the following format:
 {
     "message": "string",
@@ -209,8 +213,8 @@ The content is in the following format:
                 "start_date": "iso date string",
                 "end_date": "iso date string",
                 "priority": "int",
-                "estimated_time": "int", # in hours
-                "completed": "bool" # (false or true)
+                "estimated_time": "int", # in whole hours
+                "completed": false or true without quotes
             }
         },
         ...
@@ -236,8 +240,9 @@ The content is in the following format:
     ]
 }
 """
-
-def generate_response(message, current_date, all_tags, context = "", user_id = 0):
+# TODO: move decoder to here
+# TODO: move chat history out of context, directly pass it into the messages
+def generate_response(message, current_date, all_tags, context = ""):
     context = "document context: " + context
     relevant_text = context
     user_content = json.dumps({

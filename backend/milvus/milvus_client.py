@@ -33,6 +33,11 @@ class MyMilvusClient:
             nlist=64
         )
 
+        # self.client.delete(
+        #     collection_name="task",
+        #     filter="id >= 0"
+        # )
+
         if not self.client.has_collection("task"):
             self.client.create_collection(
                 collection_name="task", 
@@ -88,11 +93,6 @@ class MyMilvusClient:
         )
         print("collection description: " + str(res))
 
-        # self.client.delete(
-        #     collection_name="task",
-        #     filter="id >= 0"
-        # )
-
     def inserts(self, user_id: int, file_id: str, embeddings: List[List[float]], embedding_range: List[tuple]) -> None:
         """
         If file_id is in the collection, data can be duplicated
@@ -122,10 +122,7 @@ class MyMilvusClient:
         else:
             app.logger.info("insert success")
 
-    def get(self, user_id: int, embedding: List[float], difference_threshold: int = 0.3) -> Dict[str, List[tuple]]:
-        """
-        return the fetched content in json format
-        """
+    def get(self, user_id: int, embedding: List[float], difference_threshold: int = 0.2) -> Dict[str, List[tuple]]:
         """
         results in format:
         {
@@ -138,13 +135,14 @@ class MyMilvusClient:
         search_result = self.client.search(
             collection_name="task",
             data=[embedding],
-            limit=10,
+            limit=5,
             search_params={"metric_type": "COSINE"},
             filter='user_id == {}'.format(user_id)
         )[0]
         results = {}
         if len(search_result) > 0:
             for item in search_result:
+                app.logger.info("distance: " + str(item["distance"]))
                 if item["distance"] > difference_threshold:
                     # fetch the content if closeness is higher than threshold
                     result = self.client.query(

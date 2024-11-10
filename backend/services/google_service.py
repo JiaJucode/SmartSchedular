@@ -6,6 +6,7 @@ from models.file_storage_model import FileStorageModel
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from milvus.milvus_client import milvus_client
+from services.rag_linking_service import update_document_segment, delete_document_segment
 from googleapiclient.http import MediaIoBaseDownload
 from ai.embedder import get_embeddings
 from services.text_processor_service import get_text_difference, text_to_sentences, text_preprocessing
@@ -75,25 +76,25 @@ def build_service(user_id: int, creds: Credentials):
 def metadata_builder(file_info: dict) -> str:
     return "file name: " + file_info["name"]
 
-def get_doc(user_id: int, file_id: str) -> tuple | None:
+def get_doc_metadata(user_id: int, file_id: str) -> str:
     """
-    Get the document from Google Drive
+    Get metadata of the document
     """
     if GoogleAuthenDB.check_connected(user_id) is False:
-        return None, None
+        return None
     cred = get_cred(user_id)
     service = build_service(user_id, cred)
     if not service:
-        return None, None
+        return None
     file_info = None
     try:
         file_info = service.files().get(fileId=file_id).execute()
         if file_info:
-            return (*get_doc_content(user_id, file_info, cred), )
-        return None, None
+            return metadata_builder(file_info)
+        return None
     except Exception as e:
         app.logger.error("error: " + str(e))
-        return None, None
+        return None
 
 def get_doc_content(user_id: int, file_info: dict, creds: Credentials) -> tuple:
     """
@@ -239,11 +240,9 @@ def google_drive_setup(user_id: int,
     response = response.json()
     access_token = response["access_token"]
     refresh_token = response["refresh_token"]
-    app.logger.info("access_token: " + access_token)
-    app.logger.info("refresh_token: " + refresh_token)
     creds = init_cred(access_token, refresh_token)
 
-    service = build("drive", "v3", credentials=creds)
+    service = build_service(user_id, creds)
     files = service.files().list(
         pageSize=100, 
         fields="files(id, name, mimeType)",
@@ -264,7 +263,6 @@ def google_drive_setup(user_id: int,
     return {"message": "Refresh token set up successfully"}
 
 # TODO refresh notification channel after expires
-# TODO: test this
 def update_changes(channel_id: str, resource_id: str) -> None:
     user_info = GoogleAuthenDB.get_user(channel_id)
     access_token = GoogleAuthenDB.get_tokens(0)[0]
@@ -287,14 +285,13 @@ def update_changes(channel_id: str, resource_id: str) -> None:
     cred = init_cred(access_token, refresh_token)
     file_changes = set()
     try:
-        service = build("drive", "v3", credentials=cred)
+        service = build_service(user_id, cred)
         while True:
             response = service.changes().list(
                 pageToken=page_token,
                 spaces="drive"
             ).execute()
             for change in response.get("changes", []):
-                app.logger.info("change: " + str(change))
                 file_id = change["fileId"]
                 if file_id not in file_changes:
                     file_changes.add(file_id)
@@ -314,11 +311,7 @@ def update_changes(channel_id: str, resource_id: str) -> None:
                 app.logger.info("failed to get content from file_storage")
                 doc_process(file_info, cred, user_id)
             else:
-                app.logger.info("old content:")
-                app.logger.info(content)
                 new_content, metadata = get_doc_content(user_id, file_info, cred)
-                app.logger.info("new content:")
-                app.logger.info(new_content)
                 # segment comparison
                 update_from_file_change(user_id, file_id, metadata, content, new_content)
                 FileStorageModel.update_file(file_id, new_content)
@@ -329,17 +322,15 @@ def update_changes(channel_id: str, resource_id: str) -> None:
     GoogleAuthenDB.set_syncing(user_id, False)
 
 def update_from_file_change(user_id: int, file_id: str, file_metadata: str, old_file: str, new_file: str) -> None:
-    app.logger.info("new file: " + repr(new_file))
     new_sentences = text_to_sentences(new_file)
-    app.logger.info("new sentences: " + str([str(sent) for sent in new_sentences]))
     diffs = get_text_difference(old_file, new_file)
     app.logger.info("diffs: " + str(diffs))
     # get all segments from google_drive_files_usage db and 
     segments = milvus_client.get_chunk_ranges(file_id)
-    app.logger.info("segments: " + str(segments))
     segments.sort(key=lambda x: x[0])
     accu_shift = 0
     shift_buffer = {}
+    app.logger.info("segments: " + str(segments))
     for start, end in segments:
         # clean up shift buffer
         old_shifts = [shift for i, shift in shift_buffer.items() if i < start]
@@ -364,14 +355,12 @@ def update_from_file_change(user_id: int, file_id: str, file_metadata: str, old_
             milvus_client.update_segment(user_id, file_id, (start, end), None, (start + accu_shift, end + accu_shift))
             continue
         insert_or_delete = [diff for diff in segment_diffs if diff[1] == "insert" or diff[1] == "delete"]
-        app.logger.info("insert or delete: " + str(insert_or_delete))
         # for updating subsequent segment indices
         for change in insert_or_delete:
             if change[1] == "insert":
                 shift_buffer[change[0]] = 1
             elif change[1] == "delete":
                 shift_buffer[change[0]] = -1
-        app.logger.info("shift_buffer: " + str(shift_buffer))
         shift_between = sum([shift for shift in shift_buffer.values()])
 
         # check if there is any insert or replace
@@ -379,16 +368,18 @@ def update_from_file_change(user_id: int, file_id: str, file_metadata: str, old_
         if len(insert_or_replace) > 0:
             # might need to split the segment
             # get embedding for the new segment/s from embedder
-            embeddings, index_ranges = get_embeddings(" ".join(
-                [str(sent) for sent in new_sentences[start + accu_shift:end + accu_shift + shift_between]]), file_metadata)
+            raw_text = " ".join([str(sent) for sent in 
+                                new_sentences[start + accu_shift:end + accu_shift + shift_between + 1]])
+            embeddings, index_ranges = get_embeddings(raw_text, file_metadata)
             # update the current segment and insert the rest
             app.logger.info("index within segment: " + str(index_ranges))
             index_ranges = [(start + accu_shift + b, start + accu_shift + e) for b, e in index_ranges]
             app.logger.info("updating segment from " + str(start) + " to " + str(end))
             app.logger.info("embedding range: " + str(index_ranges))
-            milvus_client.update_segment(user_id, file_id, (start, end), embeddings[0], index_ranges[0])
-            for i in range(1, len(embeddings)):
-                milvus_client.inserts(user_id, file_id, embeddings[i], index_ranges[i])
+            try:
+                update_document_segment(user_id, file_id, (start, end), embeddings, index_ranges, raw_text)
+            except Exception as e:
+                app.logger.error("error updating segment: " + str(e))
 
         else:
             # check if there are any deletes
@@ -397,17 +388,17 @@ def update_from_file_change(user_id: int, file_id: str, file_metadata: str, old_
                 # if yes, delete the segment from milvus
                 if len(segment_diffs) == end - start + 1:
                     # delete from milvus
-                    milvus_client.delete(file_id, start, end)
+                    delete_document_segment(file_id, start, end)
                     continue
                 else:
                     # calculate the new embedding
                     # update milvus
-                    embeddings, _ = get_embeddings(" ".join(
-                        [str(sent) for sent in 
-                         new_sentences[start + accu_shift:end + accu_shift + shift_between]]), file_metadata)
-                    milvus_client.update_segment(user_id, file_id, (start, end), embeddings[0],
-                                                    (start + accu_shift, end + accu_shift + shift_between))
-                    FileStorageModel.update_file(file_id, new_file)
+                    raw_text = " ".join([str(sent) for sent in 
+                                        new_sentences[start + accu_shift:end + accu_shift + shift_between + 1]])
+                    embeddings, _ = get_embeddings(raw_text, file_metadata)
+                    update_document_segment(user_id, file_id, (start, end), embeddings,
+                                            [(start + accu_shift, end + accu_shift + shift_between)]
+                                            , raw_text)
         
 
 # curl -i -X POST https://www.googleapis.com/drive/v3/channels/stop      

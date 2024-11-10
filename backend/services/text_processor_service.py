@@ -30,7 +30,6 @@ abbreviation_map = {
     "vs.": "versus",
 }
 
-
 def ner_extraction(message: str, today: datetime) -> str:
     parsed_message = nlp(message)
     # filter out dates
@@ -52,19 +51,31 @@ def ner_extraction(message: str, today: datetime) -> str:
     return results
 
 def text_preprocessing(text: str) -> str:
-    text = text.replace("\n-", ".\n")
-    text = text.replace("\n–", ".\n")
-    text = text.replace("\n•", ".\n")
+    # text = text.replace("\n-", ".\n")
+    # text = text.replace("\n–", ".\n")
+    # text = text.replace("\n•", ".\n")
     for abbr, replacement in abbreviation_map.items():
         text = text.replace(abbr, replacement)
     return text
 
 
 def text_to_sentences(text: str) -> List[str]:
-    text_sentences = list(nlp(text).sents)
+    doc = nlp(text)
+    text_sentences = [sent.text for sent in doc.sents]
     text_sentences = [t for sentence in text_sentences
-                      for t in re.split(r'(.*\r?\n)', str(sentence)) 
-                      if t.strip() != "" and t.strip() != "\n"]
+                      for t in re.split(r'(?:(\s*\r?\n\s*)+)', str(sentence)) if t != ""]
+    # reattach back the delimiters
+    final_text_sentences = []
+    current_sentence = ""
+    for i in range(len(text_sentences)):
+        if text_sentences[i].strip() == "":
+            current_sentence += text_sentences[i]
+        else:
+            if current_sentence != "":
+                final_text_sentences.append(current_sentence)
+            current_sentence = text_sentences[i]
+    if current_sentence != "":
+        final_text_sentences.append(current_sentence)
     return text_sentences
 
 def get_text_difference(text1: str, text2: str) -> str:
@@ -99,6 +110,8 @@ def get_chunks_sentence_range(original_text: str, chunks: List[str]) -> List[tup
     # split the result into smaller sentences withouth the new line character
     chunk_ranges = []
     start_sentence_index = 0
+    if len(chunks[0]) >= len(original_text):
+        return [(0, len(original_text_sentences) - 1)]
     for chunk in chunks:
         # find the start sentence index
         while start_sentence_index < len(original_text_sentences) \
@@ -106,14 +119,22 @@ def get_chunks_sentence_range(original_text: str, chunks: List[str]) -> List[tup
             start_sentence_index += 1
         # find the end sentence index
         i = start_sentence_index
-        while True and i < len(original_text_sentences) \
-            and not chunk.endswith(str(original_text_sentences[i]).strip()):
-            i += 1
+        while i < len(original_text_sentences):
+            if chunk.endswith(str(original_text_sentences[i]).strip()):
+                # if there's a next sentence and if it's part of the chunk
+                if i + 1 < len(original_text_sentences) and str(original_text_sentences[i + 1]).strip() in chunk:
+                    # If the next sentence is part of the chunk, continue looping
+                    i += 1
+                else:
+                    # If the next sentence isn't part of the chunk, exit the loop
+                    break
+            else:
+                # If the current sentence doesn't match, increment `i` to check the next sentence
+                i += 1
         if start_sentence_index >= len(original_text_sentences) or i >= len(original_text_sentences):
-            app.logger.error("unable to find sentence range for chunk: " + chunk)
+            app.logger.error("unable to find sentence range for chunk: " + repr(chunk))
             break
         chunk_ranges.append((start_sentence_index, i))
         start_sentence_index += 1
-    app.logger.info("chunks: " + str(chunks))
     app.logger.info("chunk_ranges: " + str(chunk_ranges))
     return chunk_ranges

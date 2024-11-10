@@ -2,6 +2,7 @@ from datetime import datetime, timedelta, time
 from models.task_calendar_link_model import TaskCalendarLinkDB
 from models.calendar_model import CalendarEventDB
 from utils.calendar_utils import get_empty_timeslots_util, add_event, trim_events
+from flask import current_app as app
 from typing import List, Dict
 
 # TODO: prevent 2 reschedule tasks from running at the same time for the same user
@@ -23,21 +24,18 @@ def get_free_timeslots(start_datetime: datetime, end_datetime: datetime,
     end_work_time = time(17, 0, 0)
     if start_datetime.time() > end_work_time:
         start_datetime += timedelta(days=1)
-        start_datetime = start_datetime.replace(hour=0, minute=0, second=0)
+        start_datetime = start_datetime.replace(hour=start_work_time.hour, minute=start_work_time.minute)
+    if start_datetime.time() < start_work_time:
+        start_datetime = start_datetime.replace(hour=start_work_time.hour, minute=start_work_time.minute)
     # for each day
-    for i in range((end_datetime - start_datetime).days + 1):
-        if total_time >= required_free_time:
-            break
-        current_date = start_datetime + timedelta(days=i)
-        current_date += timedelta(hours=start_work_time.hour, minutes=start_work_time.minute)
-        end_datetime = current_date \
-            + timedelta(hours=end_work_time.hour, minutes=end_work_time.minute) \
-            - timedelta(hours=start_work_time.hour, minutes=start_work_time.minute)
+    for _ in range((end_datetime - start_datetime).days + 1):
+        end_datetime = start_datetime.replace(hour=end_work_time.hour, minute=end_work_time.minute)
         current_events_day = [event for event in current_events if 
-                              event['start_datetime'].date() == current_date.date()]
-        timeslots.extend(get_empty_timeslots_util(current_events_day, current_date, end_datetime))
-        total_time += end_datetime - current_date
-
+                              event['start_datetime'].date() == start_datetime.date()]
+        timeslots.extend(get_empty_timeslots_util(current_events_day, start_datetime, end_datetime))
+        total_time += end_datetime - start_datetime
+        start_datetime += timedelta(days=1)
+        start_datetime = start_datetime.replace(hour=start_work_time.hour, minute=start_work_time.minute)
     return timeslots
 
 def schedule_task(task) -> int:
@@ -124,7 +122,8 @@ def get_calendar_events_for_task(task_id: int) -> List[int]:
     calendar_ids = TaskCalendarLinkDB.get_calendar_id_for_task(task_id)
     calendar_events = []
     for calendar_id in calendar_ids:
-        calendar_events.extend(CalendarEventDB.get_event(calendar_id))
+        calendar_events.append(CalendarEventDB.get_event(calendar_id))
+    app.logger.info("calendar_events: " + str(calendar_events))
     return calendar_events
 
 def update_scheduled_task(task) -> int:
@@ -146,6 +145,7 @@ def update_scheduled_task(task) -> int:
     if task['start_datetime'] is None and task['end_datetime'] is None and task['estimated_time'] is None:
         # find all events linked to task
         events = get_calendar_events_for_task(task['id'])
+        app.logger.info("events: " + str(events))
         for event in events:
             title = task['title'] if task['title'] is not None else event['title']
             description = task['description'] if task['description'] is not None \

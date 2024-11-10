@@ -13,6 +13,7 @@ class TaskDB:
 
     def create_table():
         conn, cursor = get_connection()
+
         cursor.execute(
             """
             CREATE TABLE IF NOT EXISTS tasks (
@@ -101,25 +102,25 @@ class TaskDB:
         conn, cursor = get_connection()
         query = sql.SQL(
             """
-            SELECT * FROM task_links
+            SELECT child_id FROM task_links
             WHERE parent_id = {parent_id}
             """
         ).format(
             parent_id=sql.Literal(parent_id)
         )
         cursor.execute(query)
-        try: 
-            child_ids = [row[1] for row in cursor.fetchall()]
-            return_connection(conn, cursor)
-            return [TaskDB.get_task(child_id) for child_id in child_ids]
-        except:
-            return_connection(conn, cursor)
-            return []
+        child_ids = [row[0] for row in cursor.fetchall()]
+        return_connection(conn, cursor)
+        return [TaskDB.get_task(child_id) for child_id in child_ids]
     
-    def update_task(id: int | None, title: str | None,
-                    description: str | None, start_datetime: datetime | None,
-                    end_datetime: datetime | None, priority: int | None,
-                    estimated_time: int | None, completed: bool | None) -> None:
+    def update_task(id: int | None, 
+                    title: str | None = None,
+                    description: str | None = None,
+                    start_datetime: datetime | None = None,
+                    end_datetime: datetime | None = None,
+                    priority: int | None = None,
+                    estimated_time: int | None = None,
+                    completed: bool | None = None) -> None:
         conn, cursor = get_connection()
         if (id == 0):
             raise ValueError("id cannot be root task")
@@ -180,6 +181,25 @@ class TaskDB:
         conn.commit()
         return_connection(conn, cursor)
         return task_id
+    
+    def get_child_hierarchy_ids(parent_id: int) -> List[List[int]]:
+        conn, cursor = get_connection()
+        all_ids = [[parent_id]]
+        parent_ids = [parent_id]
+        while len(parent_ids) > 0:
+            query = sql.SQL(
+                """
+                SELECT child_id FROM task_links
+                WHERE parent_id IN ({parent_ids})
+                """
+            ).format(
+                parent_ids=sql.SQL(', ').join([sql.Literal(id) for id in parent_ids])
+            )
+            cursor.execute(query)
+            parent_ids = [row[0] for row in cursor.fetchall()]
+            all_ids.append(parent_ids)
+        return_connection(conn, cursor)
+        return all_ids
     
     def delete_task(id: int) -> None:
         conn, cursor = get_connection()

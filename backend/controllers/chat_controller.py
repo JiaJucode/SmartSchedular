@@ -16,6 +16,10 @@ def query():
     Returns:
         {
             "response": str,
+            "context": str,
+            "document_segments": {
+                "file_id": [(start, end), ...]
+            }
         }
     """
     tags = request.json.get("allTags")

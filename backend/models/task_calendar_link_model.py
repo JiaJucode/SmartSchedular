@@ -1,5 +1,6 @@
 from typing import List
 from models.db_pool import get_connection, return_connection
+from flask import current_app as app
 
 
 class TaskCalendarLinkDB:
@@ -52,7 +53,10 @@ class TaskCalendarLinkDB:
             WHERE task_id = %s
             """, (task_id,)
         )
-        calendar_ids = [row[0] for row in cursor.fetchall()]
+        result = cursor.fetchall()
+        if len(result) == 0:
+            return []
+        calendar_ids = [row[0] for row in result]
         return_connection(conn, cursor)
         return calendar_ids
     

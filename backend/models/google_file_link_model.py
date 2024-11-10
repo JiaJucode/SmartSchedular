@@ -1,5 +1,6 @@
 from models.db_pool import get_connection, return_connection
 from typing import List, Dict
+from flask import current_app as app
 
 class GoogleFileLinkDB:
     def __init__(self) -> None:
@@ -54,14 +55,24 @@ class GoogleFileLinkDB:
             file_segment_start: int, 
             file_segment_end: int) -> None:
         conn, cursor = get_connection()
+        # check if link already exists
         cursor.execute(
             """
-            INSERT INTO google_file_links (file_id, file_segment_start, file_segment_end, user_id)
-            VALUES (%s, %s, %s, %s)
-            RETURNING link_id
+            SELECT link_id FROM google_file_links
+            WHERE file_id = %s AND file_segment_start = %s AND file_segment_end = %s AND user_id = %s
             """, (file_id, file_segment_start, file_segment_end, user_id)
         )
-        link_id = cursor.fetchone()[0]
+        link_id = cursor.fetchone()
+        if link_id is None:
+            cursor.execute(
+                """
+                INSERT INTO google_file_links (file_id, file_segment_start, file_segment_end, user_id)
+                VALUES (%s, %s, %s, %s)
+                RETURNING link_id
+                """, (file_id, file_segment_start, file_segment_end, user_id)
+            )
+            link_id = cursor.fetchone()
+        link_id = link_id[0]
         cursor.execute(
             """
             INSERT INTO task_google_file_links (task_id, link_id)
@@ -113,14 +124,27 @@ class GoogleFileLinkDB:
         try:
             link_id = cursor.fetchone()[0]
         except TypeError:
-            return []
+            return {
+                "tasks": [],
+                "calendar_events": []
+            }
         cursor.execute(
             """
             SELECT task_id FROM task_google_file_links
             WHERE link_id = %s
             """, (link_id,)
         )
-        task_ids = [row[0] for row in cursor.fetchall()]
+        result = cursor.fetchall()
+        app.logger.info("result: " + str(result))
+        # print all rows in tasks_google_file_links
+        cursor.execute(
+            """
+            SELECT * FROM task_google_file_links
+            """
+        )
+        app.logger.info("all rows in task_google_file_links: " + str(cursor.fetchall()))
+
+        task_ids = [row[0] for row in result]
         cursor.execute(
             """
             SELECT calendar_id FROM calendar_google_file_links
@@ -138,6 +162,7 @@ class GoogleFileLinkDB:
         """
         Delete
         """
+        link_ids = []
         conn, cursor = get_connection()
         if isTask:
             cursor.execute(
@@ -149,12 +174,13 @@ class GoogleFileLinkDB:
             link_ids = cursor.fetchall()
             if len(link_ids) == 0:
                 return
-            cursor.execute(
-                """
-                DELETE FROM task_google_file_links
-                WHERE task_id = %s
-                """, (item_id,)
-            )
+            for link_id in link_ids:
+                cursor.execute(
+                    """
+                    DELETE FROM task_google_file_links
+                    WHERE link_id = %s
+                    """, (link_id[0],)
+                )
         else:
             cursor.execute(
                 """
@@ -165,12 +191,13 @@ class GoogleFileLinkDB:
             link_ids = cursor.fetchall()
             if len(link_ids) == 0:
                 return
-            cursor.execute(
-                """
-                DELETE FROM calendar_google_file_links
-                WHERE calendar_id = %s
-                """, (item_id,)
-            )
+            for link_id in link_ids:
+                cursor.execute(
+                    """
+                    DELETE FROM calendar_google_file_links
+                    WHERE link_id = %s
+                    """, (link_id[0],)
+                )
         for link_id in link_ids:
             cursor.execute(
                 """
@@ -179,4 +206,64 @@ class GoogleFileLinkDB:
                 """, (link_id[0],)
             )
         conn.commit()
+        return_connection(conn, cursor)
+
+    def delete_segment_link(file_id: str, start_sentence_index: int, end_sentence_index: int) -> None:
+        conn, cursor = get_connection()
+        # get link_id
+        cursor.execute(
+            """
+            SELECT link_id FROM google_file_links
+            WHERE file_id = %s AND file_segment_start = %s AND file_segment_end = %s
+            """, (file_id, start_sentence_index, end_sentence_index)
+        )
+        link_id = cursor.fetchone()[0]
+        # delete from task_google_file_links
+        cursor.execute(
+            """
+            DELETE FROM task_google_file_links
+            WHERE link_id = %s
+            """, (link_id,)
+        )
+        # delete from calendar_google_file_links
+        cursor.execute(
+            """
+            DELETE FROM calendar_google_file_links
+            WHERE link_id = %s
+            """, (link_id,)
+        )
+        # delete from google_file_links
+        cursor.execute(
+            """
+            DELETE FROM google_file_links
+            WHERE link_id = %s
+            """, (link_id,)
+        )
+        conn.commit()
+        return_connection(conn, cursor)
+
+    def update_segment_link(user_id: int, file_id: str, old_range: tuple, 
+                       new_ranges: List[tuple]) -> None:
+        if len(new_ranges) == 0:
+            return
+        # update current google_file_links with first new range
+        conn, cursor = get_connection()
+        cursor.execute(
+            """
+            UPDATE google_file_links
+            SET file_segment_start = %s, file_segment_end = %s
+            WHERE file_id = %s AND file_segment_start = %s AND file_segment_end = %s AND user_id = %s
+            """, (new_ranges[0][0], new_ranges[0][1], file_id, old_range[0], old_range[1], user_id)
+        )
+        conn.commit()
+        
+        # create new google_file_links for the rest of the new ranges
+        for new_range in new_ranges[1:]:
+            cursor.execute(
+                """
+                INSERT INTO google_file_links (file_id, file_segment_start, file_segment_end, user_id)
+                VALUES (%s, %s, %s, %s)
+                """, (file_id, new_range[0], new_range[1], user_id)
+            )
+            conn.commit()
         return_connection(conn, cursor)

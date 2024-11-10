@@ -1,5 +1,5 @@
 import { Event } from '../calendar/day';
-import { DocumentSegment } from '../chat/page';
+import { DocumentSegments } from '../chat/page';
 
 const server_base_url = process.env.NEXT_PUBLIC_SERVER_BASE_URL;
 
@@ -25,7 +25,7 @@ export const fetchEvents = (startDateTime: Date, endDateTime: Date,
 export const addEvent = (title: string, startDateTime: Date, endDateTime: Date,
     description: string, tags: string[], 
     setEvents: React.Dispatch<React.SetStateAction<Event[]>>,
-    documentSegments: DocumentSegment[] = []) => {
+    documentSegments: DocumentSegments = {}) => {
     fetch(`${server_base_url}/calendar/add_event`, {
         method: 'POST',
         headers: {

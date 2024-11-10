@@ -6,33 +6,62 @@ import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
 import * as taskApi from '../utils/task_api_funcs';
-import { DocumentSegment } from '../chat/page';
+import { DocumentSegments } from '../chat/page';
 
 type TaskBoxProps = {
     suggestedTasks: Task[];
     parentId: number;
-    reference_docs: DocumentSegment[];
+    reference_docs: DocumentSegments;
 }
 
 const TaskBox: React.FC<TaskBoxProps> = ({suggestedTasks, parentId, reference_docs}) => {
     const [tasks, setTasks] = useState<Task[]>([]);
+    const [project_task, setProjectTask] = useState<Task[]>([]);
+    const [realParentId, setRealParentId] = useState<number>(0);
+    const [pendingExecutions, setPendingExecutions] = useState<Task[]>([]);
 
     useEffect(() => {
-        console.log("suggestedTasks: ", suggestedTasks);
-        setTimeout(() => {
-            console.log("suggestedTasks: ", suggestedTasks);
+        if (parentId !== 0) {
             setTasks(suggestedTasks);
-        }, 1000);
-    }, [suggestedTasks]);
+            setRealParentId(parentId);
+        }
+        else {
+            setProjectTask([suggestedTasks[0]]);
+            if (suggestedTasks.length > 1) {
+                setTasks(suggestedTasks.slice(1));
+            }
+            else {
+                setTasks([suggestedTasks[0]]);
+            }
+            setRealParentId(0);
+        }
+    }, [suggestedTasks, parentId, reference_docs]);
+
+    useEffect(() => {
+        if (project_task.length > 1) {
+            setRealParentId(project_task[1].id);
+        }
+    }, [project_task]);
+
+    useEffect(() => {
+        if (pendingExecutions.length > 0 && realParentId !== 0) {
+            taskApi.addTask(realParentId, setProjectTask, pendingExecutions[0], reference_docs);
+            setPendingExecutions(pendingExecutions.slice(1));
+        }
+    }, [pendingExecutions, realParentId]);
 
     const handleDelete = (index: number) => {
         setTasks(prevTasks => prevTasks.filter((_, i) => i !== index));
     }
 
     const handleAdd = (index: number) => {
-        // TODO: send the reference_doc_ids with the request for linking task to document segments
-        taskApi.addTask(parentId, (() => {}), tasks[index]);
+        // if parentId is 0, then setup the project task before adding the first task
+        if (realParentId === 0 && project_task.length > 0) {
+            taskApi.addTask(realParentId, setProjectTask, project_task[0]);
+        }
+        setPendingExecutions(prevExecutions => [...prevExecutions, tasks[index]]);
         setTasks(prevTasks => prevTasks.filter((_, i) => i !== index));
+
     }
 
 
@@ -60,13 +89,13 @@ const TaskBox: React.FC<TaskBoxProps> = ({suggestedTasks, parentId, reference_do
                             margin: '5px', backgroundColor: 'primary.dark', 
                             color: 'primary.contrastText' }}
                             onClick = {() => handleDelete(index)}>
-                            DELETE
+                            CANCEL
                         </Button>
-                        <Button sx={{ width: '60px', height: '40px', 
+                        <Button sx={{ width: '70px', height: '40px', 
                             margin: '5px', backgroundColor: 'primary.dark', 
                             color: 'primary.contrastText' }}
                             onClick = {() => handleAdd(index)}>
-                            ADD
+                            EXECUTE
                         </Button>
                     </Box>
                     <TextField
@@ -98,7 +127,12 @@ const TaskBox: React.FC<TaskBoxProps> = ({suggestedTasks, parentId, reference_do
                                     disableOpenPicker
                                     value={dayjs(task.startDate)}
                                     onChange={(date) => {
-                                        // send update task request to backend
+                                        setTasks(prevTasks => prevTasks.map((task, i) => {
+                                            if (i === index && date !== null) {
+                                                task.startDate = date.toDate();
+                                            }
+                                            return task;
+                                        }));
                                     }}
                                     sx={{
                                         width: '70%',
@@ -127,7 +161,12 @@ const TaskBox: React.FC<TaskBoxProps> = ({suggestedTasks, parentId, reference_do
                                 disableOpenPicker
                                 value={dayjs(task.endDate)}
                                 onChange={(date) => {
-                                    // send update task request to backend
+                                    setTasks(prevTasks => prevTasks.map((task, i) => {
+                                        if (i === index && date !== null) {
+                                            task.endDate = date.toDate();
+                                        }
+                                        return task;
+                                    }));
                                 }}
                                 sx={{
                                     width: '70%',

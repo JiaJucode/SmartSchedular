@@ -10,6 +10,7 @@ class GoogleAuthenDB:
         conn, cursor = get_connection()
         # TODO: link user_id to user table
         # TODO: redis the syncing status
+        # drop table if exists
         
         cursor.execute(
             """

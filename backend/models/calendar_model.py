@@ -2,6 +2,7 @@ from psycopg2 import sql
 from datetime import datetime
 from typing import List, Optional, Dict
 from models.db_pool import get_connection, return_connection
+from flask import current_app as app
 
 # for deleting link before removing event
 from models.task_calendar_link_model import TaskCalendarLinkDB
