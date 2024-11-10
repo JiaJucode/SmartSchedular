@@ -1,11 +1,16 @@
+"use client";
 
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 const HomePage = () => {
-    return (
-        <div>
-        <h1>Home Page</h1>
-        </div>
-    );
+    const router = useRouter();
+
+    useEffect(() => {
+        router.push("/calendar");
+    }, []);
+
+    return null;
 };
 
 export default HomePage;
