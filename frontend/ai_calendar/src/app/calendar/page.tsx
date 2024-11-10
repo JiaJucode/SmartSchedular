@@ -45,9 +45,9 @@ const CalendarPage = () => {
                         backgroundColor: 'primary.contrastText', width: '94%', marginLeft: '3%',
                         marginTop: '20px', marginBottom: '10px'}} />
                     <Box sx={{ paddingTop: 2 }}>
-                        <Typography variant='h6' paddingLeft={1} paddingBottom={'10px'}>
+                        {/* <Typography variant='h6' paddingLeft={1} paddingBottom={'10px'}>
                         Event Sources Filters:
-                        </Typography>
+                        </Typography> */}
                         <Stack>
                             {Object.keys(eventSources).map((key, index) => {
                                 return (

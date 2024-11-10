@@ -43,11 +43,9 @@ def unlink_generated_item(item_id: int, is_task: bool) -> None:
 def update_document_segment(user_id: int, file_id: str, old_range: tuple, 
                             embeddings: List[float] | None, index_ranges: List[tuple],
                             raw_text: str) -> None:
-    GoogleFileLinkDB.update_segment_link(user_id, file_id, old_range, index_ranges)
-    milvus_client.update_segment(user_id, file_id, old_range, embeddings[0], index_ranges[0])
     for i in range(1, len(embeddings)):
         milvus_client.inserts(user_id, file_id, embeddings[i], index_ranges[i])
-    # TODO: if there is linked task or event,
+    # if there is linked task or event,
     # get the task/event, get the segment text, pass it to the model, check if update to the task/event is needed
     # if so, update the task/event, link the segments used by model to the task/event
     linked_items = GoogleFileLinkDB.get_linked_items(user_id, file_id, old_range[0], old_range[1])
@@ -95,6 +93,10 @@ def update_document_segment(user_id: int, file_id: str, old_range: tuple,
             "end_datetime": calendar_info["end_datetime"]
         }
         all_calendar_info.append(info)
+
+    GoogleFileLinkDB.update_segment_link(user_id, file_id, old_range, index_ranges)
+    milvus_client.update_segment(user_id, file_id, old_range, embeddings[0], index_ranges[0])
+
     if len(all_calendar_info) > 0:
         result = update_changes(all_calendar_info, datetime.now().isoformat(), raw_text)
         app.logger.info("result: " + str(result))

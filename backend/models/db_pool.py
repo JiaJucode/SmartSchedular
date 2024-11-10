@@ -7,7 +7,7 @@ SCHEDULING_DATABASE_URL = os.getenv('SCHEDULING_DATABASE_URL')
 for i in range(5):
     try:
         scheduling_connection_pool = pool.ThreadedConnectionPool(
-            minconn=1,
+            minconn=10,
             maxconn=50,
             dsn=SCHEDULING_DATABASE_URL
         )

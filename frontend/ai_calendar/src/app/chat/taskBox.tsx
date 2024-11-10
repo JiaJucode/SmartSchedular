@@ -35,6 +35,7 @@ const TaskBox: React.FC<TaskBoxProps> = ({suggestedTasks, parentId, reference_do
             }
             setRealParentId(0);
         }
+        console.log(reference_docs);
     }, [suggestedTasks, parentId, reference_docs]);
 
     useEffect(() => {

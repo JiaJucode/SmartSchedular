@@ -85,12 +85,14 @@ def get_doc_metadata(user_id: int, file_id: str) -> str:
     cred = get_cred(user_id)
     service = build_service(user_id, cred)
     if not service:
+        app.logger.error("failed to build service")
         return None
     file_info = None
     try:
         file_info = service.files().get(fileId=file_id).execute()
         if file_info:
             return metadata_builder(file_info)
+        app.logger.error("failed to get file info")
         return None
     except Exception as e:
         app.logger.error("error: " + str(e))
@@ -239,6 +241,7 @@ def google_drive_setup(user_id: int,
         return {"error": "Failed to get access token"}
     response = response.json()
     access_token = response["access_token"]
+    app.logger.info("access token: " + access_token)
     refresh_token = response["refresh_token"]
     creds = init_cred(access_token, refresh_token)
 
@@ -265,13 +268,10 @@ def google_drive_setup(user_id: int,
 # TODO refresh notification channel after expires
 def update_changes(channel_id: str, resource_id: str) -> None:
     user_info = GoogleAuthenDB.get_user(channel_id)
-    access_token = GoogleAuthenDB.get_tokens(0)[0]
-    app.logger.info("access token: " + access_token)
     if not user_info:
         app.logger.error("no user associated with the channel id")
         app.logger.error("channel_id: " + channel_id)
         app.logger.error("resource_id: " + resource_id)
-        # cance
         return
     user_id = user_info["user_id"]
     access_token = user_info["access_token"]
@@ -401,8 +401,7 @@ def update_from_file_change(user_id: int, file_id: str, file_metadata: str, old_
                                             , raw_text)
         
 
-# curl -i -X POST https://www.googleapis.com/drive/v3/channels/stop      
-# -H "Authorization: Bearer "      -H "Content-Type: application/json"      -d '{
-#            "id": "",
-#            "resourceId": ""
-#          }'
+# curl -i -X POST https://www.googleapis.com/drive/v3/channels/stop \
+#   -H "Authorization: Bearer " \
+#   -H "Content-Type: application/json" \
+#   -d '{"id": "", "resourceId": ""}'

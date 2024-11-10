@@ -181,7 +181,14 @@ const TasksPage = () => {
                                 height: '40px', overflow: 'hidden', textOverflow: 'ellipsis' }}
                             onClick={() => setSelectedProject(project.id)}>
                                 <LiveSyncTextfield task_id={project.id} fieldKey='title' textValue={project.title}
-                                setTextValue={(title) => taskApi.updateTask(project.id, 'title', title)} 
+                                setTextValue={(title) => 
+                                    setProjects(projects.map((task) => {
+                                        if (task.id === project.id) {
+                                            return {...task, title: title}
+                                        }
+                                        return task;
+                                    }))
+                                } 
                                 numberOnly={false} />
                             </Button>
                             <Button onClick={() => deleteProject(project.id)}

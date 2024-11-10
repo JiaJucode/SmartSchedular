@@ -8,6 +8,26 @@ class GoogleFileLinkDB:
 
     def create_table() -> None:
         conn, cursor = get_connection()
+
+        # drop tables   
+        # cursor.execute(
+        #     """
+        #     DROP TABLE IF EXISTS task_google_file_links
+        #     """
+        # )
+        # conn.commit()
+        # cursor.execute(
+        #     """
+        #     DROP TABLE IF EXISTS calendar_google_file_links
+        #     """
+        # )
+        # conn.commit()
+        # cursor.execute(
+        #     """
+        #     DROP TABLE IF EXISTS google_file_links
+        #     """
+        # )
+        # conn.commit()
         cursor.execute(
             """
             CREATE TABLE IF NOT EXISTS google_file_links (
@@ -46,6 +66,7 @@ class GoogleFileLinkDB:
             """
         )
         conn.commit()
+
         return_connection(conn, cursor)
 
     def add_task_link(
@@ -124,6 +145,7 @@ class GoogleFileLinkDB:
         try:
             link_id = cursor.fetchone()[0]
         except TypeError:
+            return_connection(conn, cursor)
             return {
                 "tasks": [],
                 "calendar_events": []
@@ -173,6 +195,7 @@ class GoogleFileLinkDB:
             )
             link_ids = cursor.fetchall()
             if len(link_ids) == 0:
+                return_connection(conn, cursor)
                 return
             for link_id in link_ids:
                 cursor.execute(
@@ -190,6 +213,7 @@ class GoogleFileLinkDB:
             )
             link_ids = cursor.fetchall()
             if len(link_ids) == 0:
+                return_connection(conn, cursor)
                 return
             for link_id in link_ids:
                 cursor.execute(

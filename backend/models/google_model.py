@@ -10,7 +10,6 @@ class GoogleAuthenDB:
         conn, cursor = get_connection()
         # TODO: link user_id to user table
         # TODO: redis the syncing status
-        # drop table if exists
         
         cursor.execute(
             """
@@ -114,10 +113,9 @@ class GoogleAuthenDB:
             (user_id,)
         )
         result = cursor.fetchone()
-        if result is None:
-            return_connection(conn, cursor)
-            return False
         return_connection(conn, cursor)
+        if result is None:
+            return False
         return result[0]
     
     def get_user(channel_id: str) -> dict:

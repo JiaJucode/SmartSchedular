@@ -204,6 +204,7 @@ class TaskDB:
     def delete_task(id: int) -> None:
         conn, cursor = get_connection()
         if (id == 0):
+            return_connection(conn, cursor)
             raise ValueError("id cannot be root task")
         
         # get all children of task
